@@ -58,8 +58,18 @@ npm run tauri android build -- --apk                 # Android
 npm run tauri build -- --bundles msi,nsis            # Windows (sur Windows)
 ```
 
-La CI GitHub ([`.github/workflows/build.yml`](.github/workflows/build.yml)) produit les trois plateformes à chaque push
-sur `main`, et un brouillon de release avec empreintes SHA-256 pour chaque tag `vX.Y.Z`.
+### Intégration continue
+
+- [`ci.yml`](.github/workflows/ci.yml) : types, tests TS et Rust, lint, à chaque push sur n'importe quelle branche et
+  à chaque pull request.
+- [`build.yml`](.github/workflows/build.yml) : paquets Linux, Android et Windows.
+  - **À la demande** : onglet *Actions* → *Build* → *Run workflow*, puis saisir la branche (ou un tag, un commit) et
+    cocher les plateformes. Les paquets se téléchargent depuis les *artifacts* de l'exécution.
+    Avec `gh` : `gh workflow run build.yml -f ref=init -f windows=false`.
+  - **Sur un tag `vX.Y.Z`** : les trois plateformes, puis un brouillon de release avec les empreintes SHA-256.
+    Le tag doit correspondre à la version de `package.json`, sinon le build s'arrête.
+
+GitHub n'affiche le bouton *Run workflow* que si le workflow est présent sur la branche par défaut du dépôt.
 
 ### Signature de l'APK
 
