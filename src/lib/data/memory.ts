@@ -1,4 +1,4 @@
-import type { Attempt, Category, Quiz, QuizSummary } from '$lib/domain/types';
+import type { Answer, Attempt, Category, Quiz, QuizSummary } from '$lib/domain/types';
 import type { Repository } from './repository';
 
 const clone = <T>(v: T): T => structuredClone(v);
@@ -12,6 +12,7 @@ export class MemoryRepository implements Repository {
   private categories = new Map<string, Category>();
   private quizzes = new Map<string, Quiz>();
   private attempts = new Map<string, Attempt>();
+  private answers = new Map<string, Map<string, Answer>>();
   private settings = new Map<string, string>();
 
   async listCategories() {
@@ -35,17 +36,35 @@ export class MemoryRepository implements Repository {
   }
   async deleteQuiz(id: string) {
     this.quizzes.delete(id);
-    for (const [k, a] of this.attempts) if (a.quizId === id) this.attempts.delete(k);
+    for (const [k, a] of this.attempts)
+      if (a.quizId === id) {
+        this.attempts.delete(k);
+        this.answers.delete(k);
+      }
   }
 
   async listAttempts(quizId?: string) {
     return [...this.attempts.values()]
       .filter((a) => !quizId || a.quizId === quizId)
       .sort((a, b) => b.startedAt.localeCompare(a.startedAt))
-      .map(clone);
+      .map(({ quizSnapshot: _snapshot, ...rest }) => clone(rest));
+  }
+  async getAttempt(id: string) {
+    const a = this.attempts.get(id);
+    return a ? clone(a) : null;
   }
   async saveAttempt(a: Attempt) {
-    this.attempts.set(a.id, clone(a));
+    const previous = this.attempts.get(a.id);
+    this.attempts.set(a.id, clone({ ...a, quizSnapshot: a.quizSnapshot ?? previous?.quizSnapshot ?? null }));
+  }
+
+  async listAnswers(attemptId: string) {
+    return [...(this.answers.get(attemptId)?.values() ?? [])].map(clone);
+  }
+  async saveAnswer(attemptId: string, answer: Answer) {
+    const map = this.answers.get(attemptId) ?? new Map<string, Answer>();
+    map.set(answer.questionId, clone(answer));
+    this.answers.set(attemptId, map);
   }
 
   async getSetting(key: string) {

@@ -1,7 +1,8 @@
 import { getRepository, type Repository } from '$lib/data';
 import { seedDemo } from '$lib/data/seed';
 import { progressOf, type ProgressInfo } from '$lib/domain/progress';
-import type { Attempt, Category, QuizSummary } from '$lib/domain/types';
+import { startAttempt } from '$lib/domain/session';
+import type { Attempt, AttemptMode, Category, QuizSummary } from '$lib/domain/types';
 import { i18n, setLang } from '$lib/i18n/index.svelte';
 
 export interface QuizEntry {
@@ -30,7 +31,7 @@ class AppState {
       .map((quiz) => ({
         quiz,
         category: this.categories.find((c) => c.id === quiz.categoryId),
-        info: progressOf(byQuiz.get(quiz.id) ?? []),
+        info: progressOf(byQuiz.get(quiz.id) ?? [], quiz.questionCount),
       }));
   });
 
@@ -61,6 +62,34 @@ class AppState {
     this.categories = categories;
     this.quizzes = quizzes;
     this.attempts = attempts;
+  }
+
+  /** Accès direct au stockage (écrans de passage). */
+  async repo(): Promise<Repository> {
+    if (!this.#repo) await this.init();
+    if (!this.#repo) throw new Error(this.error ?? 'repository unavailable');
+    return this.#repo;
+  }
+
+  /** Démarre une tentative et renvoie son identifiant. */
+  async startQuiz(quizId: string, mode: AttemptMode, onlyQuestionIds?: string[]): Promise<string> {
+    const repo = await this.repo();
+    const quiz = await repo.getQuiz(quizId);
+    if (!quiz) throw new Error(`quiz ${quizId} not found`);
+    const attempt = startAttempt(quiz, mode, { onlyQuestionIds });
+    await repo.saveAttempt(attempt);
+    await this.reload();
+    return attempt.id;
+  }
+
+  /** Abandonne une tentative en cours (elle ne compte plus dans la progression). */
+  async abandon(attemptId: string) {
+    const repo = await this.repo();
+    const attempt = await repo.getAttempt(attemptId);
+    if (attempt && attempt.status === 'in_progress') {
+      await repo.saveAttempt({ ...attempt, status: 'abandoned', quizSnapshot: undefined });
+      await this.reload();
+    }
   }
 
   async changeLang(lang: string) {

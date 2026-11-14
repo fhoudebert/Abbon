@@ -7,8 +7,16 @@ Une seule base de code HTML5 / TypeScript, empaquetée avec [Tauri 2](https://v2
 
 Logiciel libre sous licence [MIT](LICENSE).
 
-> **État : lot 0 (socle).** Le projet compile, stocke ses données dans SQLite, s'affiche en français et en anglais et
-> liste des QCM de démonstration (à faire / en cours / faits). Le passage des QCM arrive au lot 1, l'éditeur au lot 2.
+> **État : lot 1 (passage des QCM).** Fiche de chaque QCM, passage en mode entraînement (correction après chaque
+> question) ou examen (correction à la fin, chrono facultatif), reprise après fermeture, récapitulatif, corrigé,
+> « refaire les erreurs ». Les QCM sont pour l'instant des données de démonstration : l'éditeur arrive au lot 2.
+
+### Raccourcis clavier (passage d'un QCM)
+
+| Touche | Action |
+|---|---|
+| `1` … `9` | Cocher / décocher la réponse correspondante |
+| `Entrée` | Valider (entraînement), question suivante, ou terminer |
 
 ## Prérequis
 
@@ -88,9 +96,10 @@ Puis déclarer dans les secrets du dépôt : `ANDROID_KEYSTORE_BASE64`, `ANDROID
 
 ```
 src/
-  lib/domain/    modèle, calcul du score, statuts de progression — TypeScript pur, testé
+  lib/domain/    modèle, score, progression, moteur de passage (session.ts) — TypeScript pur, testé
   lib/data/      interface Repository ; SQLite (Tauri) et mémoire (navigateur) ; données de démo
   lib/i18n/      messages fr / en, pluriels, formats Intl
+  lib/session.svelte.ts  tentative ouverte à l'écran : réponses, chrono, enregistrement
   lib/components/
   routes/        écrans (SvelteKit en mode SPA)
 src-tauri/

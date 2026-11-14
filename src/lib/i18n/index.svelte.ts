@@ -18,4 +18,11 @@ export const t = (key: MessageKey, params?: Record<string, string | number>) =>
 
 export const pct = (ratio: number) => formatPercent(i18n.lang, ratio);
 
+/** Date et heure courtes dans la langue de l'interface. */
+export const fmtDate = (iso: string) =>
+  new Intl.DateTimeFormat(i18n.lang, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso));
+
+/** Nombre localisé (ex. 1,5 en français). */
+export const fmtNum = (n: number) => new Intl.NumberFormat(i18n.lang, { maximumFractionDigits: 2 }).format(n);
+
 export { SUPPORTED, type UiLang } from './translate';

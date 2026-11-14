@@ -11,12 +11,20 @@ pub const DB_URL: &str = "sqlite:abbon.db";
 /// Migrations versionnées, appliquées dans l'ordre au chargement de la base.
 /// Ne jamais modifier une migration publiée : en ajouter une nouvelle.
 pub fn migrations() -> Vec<Migration> {
-    vec![Migration {
-        version: 1,
-        description: "schema_initial",
-        sql: include_str!("../migrations/0001_init.sql"),
-        kind: MigrationKind::Up,
-    }]
+    vec![
+        Migration {
+            version: 1,
+            description: "schema_initial",
+            sql: include_str!("../migrations/0001_init.sql"),
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 2,
+            description: "attempt_snapshot",
+            sql: include_str!("../migrations/0002_attempt_snapshot.sql"),
+            kind: MigrationKind::Up,
+        },
+    ]
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

@@ -16,8 +16,11 @@ export interface ProgressInfo {
  * - À faire : aucune tentative (les tentatives abandonnées ne comptent pas).
  * - En cours : au moins une tentative « en cours » (prioritaire).
  * - Fait : au moins une tentative terminée.
+ *
+ * Si `questionCount` est fourni, les tentatives partielles (ex. « refaire les erreurs »)
+ * comptent pour le statut mais pas pour le dernier et le meilleur score.
  */
-export function progressOf(attempts: readonly Attempt[]): ProgressInfo {
+export function progressOf(attempts: readonly Attempt[], questionCount?: number): ProgressInfo {
   const running = attempts
     .filter((a) => a.status === 'in_progress')
     .sort((a, b) => b.startedAt.localeCompare(a.startedAt));
@@ -25,11 +28,16 @@ export function progressOf(attempts: readonly Attempt[]): ProgressInfo {
     .filter((a) => a.status === 'finished')
     .sort((a, b) => (b.finishedAt ?? '').localeCompare(a.finishedAt ?? ''));
 
-  const scores = finished.length
+  const full = questionCount
+    ? finished.filter((a) => a.questionOrder.length >= questionCount)
+    : finished;
+  const ratio = (a: Attempt) => (a.maxScore ? (a.score ?? 0) / a.maxScore : 0);
+  const best = full.reduce<Attempt | undefined>((b, a) => (!b || ratio(a) > ratio(b) ? a : b), undefined);
+  const scores = full.length
     ? {
-        lastScore: finished[0].score ?? 0,
-        bestScore: Math.max(...finished.map((a) => a.score ?? 0)),
-        maxScore: finished[0].maxScore ?? undefined,
+        lastScore: full[0].score ?? 0,
+        bestScore: best?.score ?? 0,
+        maxScore: full[0].maxScore ?? undefined,
       }
     : {};
 

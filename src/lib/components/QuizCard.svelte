@@ -13,6 +13,8 @@
   const action = $derived(
     info.progress === 'in_progress' ? t('quiz.resume') : info.progress === 'done' ? t('quiz.retry') : t('quiz.start'),
   );
+  /** Reprendre va directement à la question ; sinon la fiche du QCM (choix du mode). */
+  const href = $derived(info.resumable ? `/attempt/${info.resumable.id}` : `/quiz/${quiz.id}`);
   const ratio = (score?: number) => (info.maxScore ? (score ?? 0) / info.maxScore : 0);
 </script>
 
@@ -20,7 +22,9 @@
   {#if entry.category}
     <p class="category">{localize(entry.category.name, lang)}</p>
   {/if}
-  <h3 lang={quiz.title[lang] ? lang : fallback}>{localize(quiz.title, lang, fallback)}</h3>
+  <h3 lang={quiz.title[lang] ? lang : fallback}>
+    <a class="title" href="/quiz/{quiz.id}">{localize(quiz.title, lang, fallback)}</a>
+  </h3>
   {#if quiz.description}
     <p class="desc">{localize(quiz.description, lang, fallback)}</p>
   {/if}
@@ -33,9 +37,7 @@
     {/if}
   </p>
 
-  <button class={info.progress === 'done' ? 'secondary' : ''} disabled title={t('quiz.comingSoon')}>
-    {action}
-  </button>
+  <a class="button {info.progress === 'done' ? 'secondary' : ''}" href={href}>{action}</a>
 </article>
 
 <style>
@@ -73,8 +75,15 @@
     font-size: 0.9rem;
     color: var(--muted);
   }
-  button {
+  .button {
     align-self: flex-start;
     margin-block-start: auto;
+  }
+  .title {
+    color: inherit;
+    text-decoration: none;
+  }
+  .title:hover {
+    text-decoration: underline;
   }
 </style>

@@ -1,4 +1,4 @@
-import type { Attempt, Category, Choice, Question, Quiz, QuizSummary } from '$lib/domain/types';
+import type { Answer, Attempt, Category, Choice, Question, Quiz, QuizSummary } from '$lib/domain/types';
 import type { Repository } from './repository';
 
 /**
@@ -145,32 +145,29 @@ export class SqliteRepository implements Repository {
   // ---- Tentatives ---------------------------------------------------------
 
   async listAttempts(quizId?: string): Promise<Attempt[]> {
+    const cols = ATTEMPT_COLUMNS;
     const rows = quizId
-      ? await this.db.select<Row>('SELECT * FROM attempt WHERE quiz_id = $1 ORDER BY started_at DESC', [quizId])
-      : await this.db.select<Row>('SELECT * FROM attempt ORDER BY started_at DESC');
-    return rows.map((r) => ({
-      id: String(r.id),
-      quizId: String(r.quiz_id),
-      quizVersion: Number(r.quiz_version),
-      mode: r.mode as Attempt['mode'],
-      status: r.status as Attempt['status'],
-      startedAt: String(r.started_at),
-      finishedAt: (r.finished_at as string) ?? null,
-      elapsedSec: Number(r.elapsed_sec),
-      currentIndex: Number(r.current_index),
-      questionOrder: parse(r.question_order, []),
-      score: num(r.score),
-      maxScore: num(r.max_score),
-    }));
+      ? await this.db.select<Row>(`SELECT ${cols} FROM attempt WHERE quiz_id = $1 ORDER BY started_at DESC`, [quizId])
+      : await this.db.select<Row>(`SELECT ${cols} FROM attempt ORDER BY started_at DESC`);
+    return rows.map(attemptFromRow);
+  }
+
+  async getAttempt(id: string): Promise<Attempt | null> {
+    const [row] = await this.db.select<Row>(
+      `SELECT ${ATTEMPT_COLUMNS}, quiz_snapshot FROM attempt WHERE id = $1`,
+      [id],
+    );
+    return row ? { ...attemptFromRow(row), quizSnapshot: parse<Quiz | null>(row.quiz_snapshot, null) } : null;
   }
 
   async saveAttempt(a: Attempt): Promise<void> {
     await this.db.execute(
       `INSERT INTO attempt (id, quiz_id, quiz_version, mode, status, started_at, finished_at,
-         elapsed_sec, current_index, question_order, score, max_score)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+         elapsed_sec, current_index, question_order, score, max_score, quiz_snapshot)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
        ON CONFLICT(id) DO UPDATE SET status = $5, finished_at = $7, elapsed_sec = $8,
-         current_index = $9, question_order = $10, score = $11, max_score = $12`,
+         current_index = $9, question_order = $10, score = $11, max_score = $12,
+         quiz_snapshot = COALESCE($13, quiz_snapshot)`,
       [
         a.id,
         a.quizId,
@@ -184,6 +181,37 @@ export class SqliteRepository implements Repository {
         json(a.questionOrder),
         a.score ?? null,
         a.maxScore ?? null,
+        json(a.quizSnapshot ?? null),
+      ],
+    );
+  }
+
+  async listAnswers(attemptId: string): Promise<Answer[]> {
+    const rows = await this.db.select<Row>('SELECT * FROM answer WHERE attempt_id = $1', [attemptId]);
+    return rows.map((r) => ({
+      questionId: String(r.question_id),
+      selected: parse(r.selected, []),
+      correct: r.correct == null ? null : bool(r.correct),
+      points: num(r.points),
+      timeSec: Number(r.time_sec),
+      flagged: bool(r.flagged),
+    }));
+  }
+
+  async saveAnswer(attemptId: string, a: Answer): Promise<void> {
+    await this.db.execute(
+      `INSERT INTO answer (attempt_id, question_id, selected, correct, points, time_sec, flagged)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       ON CONFLICT(attempt_id, question_id) DO UPDATE SET selected = $3, correct = $4, points = $5,
+         time_sec = $6, flagged = $7`,
+      [
+        attemptId,
+        a.questionId,
+        json(a.selected),
+        a.correct == null ? null : a.correct ? 1 : 0,
+        a.points ?? null,
+        a.timeSec,
+        a.flagged ? 1 : 0,
       ],
     );
   }
@@ -201,6 +229,26 @@ export class SqliteRepository implements Repository {
       [key, value],
     );
   }
+}
+
+const ATTEMPT_COLUMNS = `id, quiz_id, quiz_version, mode, status, started_at, finished_at,
+  elapsed_sec, current_index, question_order, score, max_score`;
+
+function attemptFromRow(r: Row): Attempt {
+  return {
+    id: String(r.id),
+    quizId: String(r.quiz_id),
+    quizVersion: Number(r.quiz_version),
+    mode: r.mode as Attempt['mode'],
+    status: r.status as Attempt['status'],
+    startedAt: String(r.started_at),
+    finishedAt: (r.finished_at as string) ?? null,
+    elapsedSec: Number(r.elapsed_sec),
+    currentIndex: Number(r.current_index),
+    questionOrder: parse(r.question_order, []),
+    score: num(r.score),
+    maxScore: num(r.max_score),
+  };
 }
 
 function quizFromRow(r: Row): Omit<Quiz, 'questions'> {

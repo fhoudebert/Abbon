@@ -89,4 +89,6 @@ export interface Attempt {
   questionOrder: string[];
   score?: number | null;
   maxScore?: number | null;
+  /** Copie du QCM au démarrage (absente des listes, présente dans getAttempt). */
+  quizSnapshot?: Quiz | null;
 }

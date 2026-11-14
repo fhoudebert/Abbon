@@ -5,11 +5,12 @@
 import { readFileSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { startAttempt } from '$lib/domain/session';
 import { demoQuizzes, seedDemo } from './seed';
 import { SqliteRepository, type SqlDriver } from './sqlite';
 
 const migrationsDir = new URL('../../../src-tauri/migrations/', import.meta.url);
-const MIGRATIONS = ['0001_init.sql'];
+const MIGRATIONS = ['0001_init.sql', '0002_attempt_snapshot.sql'];
 
 /** Convertit `$1` (syntaxe du plugin Tauri / sqlx) en `?1` (SQLite natif). */
 const toNative = (sql: string) => sql.replace(/\$(\d+)/g, '?$1');
@@ -86,5 +87,34 @@ describe('SqliteRepository', () => {
     await repo.setSetting('lang', 'en');
     await repo.setSetting('lang', 'fr');
     expect(await repo.getSetting('lang')).toBe('fr');
+  });
+
+  it('garde l’instantané du QCM et ne l’écrase pas lors des mises à jour', async () => {
+    await seedDemo(repo);
+    const quiz = (await repo.getQuiz('demo-culture'))!;
+    const attempt = startAttempt(quiz, 'exam');
+    await repo.saveAttempt(attempt);
+    // Mise à jour sans instantané (comme le fait l'écran de passage)
+    await repo.saveAttempt({ ...attempt, quizSnapshot: undefined, currentIndex: 2, elapsedSec: 42 });
+    const read = (await repo.getAttempt(attempt.id))!;
+    expect(read.quizSnapshot).toEqual(quiz);
+    expect(read).toMatchObject({ currentIndex: 2, elapsedSec: 42 });
+    const [listed] = await repo.listAttempts('demo-culture');
+    expect(listed.quizSnapshot).toBeUndefined();
+  });
+
+  it('enregistre et met à jour les réponses', async () => {
+    await seedDemo(repo);
+    const quiz = (await repo.getQuiz('demo-culture'))!;
+    const attempt = startAttempt(quiz, 'training');
+    await repo.saveAttempt(attempt);
+    const qid = quiz.questions[1].id;
+    await repo.saveAnswer(attempt.id, { questionId: qid, selected: ['x'], correct: null, points: null, timeSec: 3, flagged: true });
+    await repo.saveAnswer(attempt.id, { questionId: qid, selected: ['x', 'y'], correct: false, points: 0, timeSec: 9, flagged: false });
+    expect(await repo.listAnswers(attempt.id)).toEqual([
+      { questionId: qid, selected: ['x', 'y'], correct: false, points: 0, timeSec: 9, flagged: false },
+    ]);
+    await repo.deleteQuiz('demo-culture');
+    expect(await repo.listAnswers(attempt.id)).toEqual([]);
   });
 });

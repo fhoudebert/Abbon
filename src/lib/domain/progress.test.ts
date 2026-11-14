@@ -39,4 +39,14 @@ describe('progressOf', () => {
     ]);
     expect(info).toMatchObject({ progress: 'done', lastScore: 6, bestScore: 8, maxScore: 10 });
   });
+  it('ignore les tentatives partielles pour les scores', () => {
+    const info = progressOf(
+      [
+        attempt({ score: 1, maxScore: 1, questionOrder: ['a'], finishedAt: '2026-11-05T10:00:00Z' }),
+        attempt({ score: 2, maxScore: 3, questionOrder: ['a', 'b', 'c'], finishedAt: '2026-11-04T10:00:00Z' }),
+      ],
+      3,
+    );
+    expect(info).toMatchObject({ progress: 'done', lastScore: 2, bestScore: 2, maxScore: 3 });
+  });
 });

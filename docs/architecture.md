@@ -23,6 +23,23 @@ Quatre couches, de la plus stable à la plus dépendante de la plateforme.
   (`src/lib/domain/progress.ts`).
 - Chaque tentative enregistre la version du QCM, pour que ses résultats restent cohérents si le QCM est modifié.
 
+## Passage d'un QCM (lot 1)
+
+- `domain/session.ts` contient toute la logique, en fonctions pures : démarrage, ordre des questions et des choix,
+  correction d'une réponse, fin de tentative, visibilité du corrigé, chrono.
+- **Ordre aléatoire reproductible** : questions et choix sont mélangés avec une graine dérivée de l'identifiant de la
+  tentative (et de la question). Une tentative reprise retrouve exactement le même ordre, sans rien stocker de plus.
+- **Instantané** : au démarrage, la tentative enregistre une copie du QCM (`attempt.quiz_snapshot`, migration 2). La
+  reprise, le récapitulatif et le corrigé utilisent cette copie, même si le QCM a été modifié depuis.
+- **Enregistrement continu** : chaque réponse est écrite dès qu'elle change ; le temps (total et par question) est
+  écrit toutes les 5 s, à chaque changement de question et quand l'application passe en arrière-plan (le chrono
+  s'arrête alors). Fermer l'application ne perd donc rien.
+- **Entraînement** : « Valider » corrige la question, affiche l'explication et verrouille la réponse.
+  **Examen** : aucune correction avant la fin ; à la fin du temps imparti, la tentative est close automatiquement.
+- **Corrigé** : selon le réglage du QCM — jamais, après la fin, ou seulement après réussite.
+- **Refaire les erreurs** : nouvelle tentative limitée aux questions ratées. Ces tentatives partielles comptent
+  pour le statut (fait / en cours) mais pas pour le dernier et le meilleur score.
+
 ## Internationalisation
 
 - Interface : `src/lib/i18n/fr.ts` est la référence ; `en.ts` est typé à partir de lui (une clé manquante empêche la
