@@ -1,0 +1,91 @@
+<p align="center"><img src="assets/abbon-icon.png" width="120" alt=""></p>
+
+# Abbon
+
+Application de QCM hors ligne pour s'entraîner aux certifications (informatique, langues) et à la culture générale.
+Une seule base de code HTML5 / TypeScript, empaquetée avec [Tauri 2](https://v2.tauri.app) pour **Linux**, **Android** et **Windows**.
+
+Logiciel libre sous licence [MIT](LICENSE).
+
+> **État : lot 0 (socle).** Le projet compile, stocke ses données dans SQLite, s'affiche en français et en anglais et
+> liste des QCM de démonstration (à faire / en cours / faits). Le passage des QCM arrive au lot 1, l'éditeur au lot 2.
+
+## Prérequis
+
+| Outil | Version |
+|---|---|
+| Node.js | 22.13 ou plus récent |
+| Rust | 1.90 ou plus récent (`rustup`) |
+| Linux | `libwebkit2gtk-4.1-dev`, `libxdo-dev`, `libssl-dev`, `libayatana-appindicator3-dev`, `librsvg2-dev` |
+| Android | Android Studio (SDK + NDK), Java 17+, cibles Rust Android — voir [la doc Tauri](https://v2.tauri.app/start/prerequisites/#android) |
+| Windows | Microsoft C++ Build Tools ; WebView2 (installé d'office sur Windows 10 récent et 11) |
+
+Sous Debian / Ubuntu :
+
+```sh
+sudo apt install libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev \
+  libayatana-appindicator3-dev librsvg2-dev
+```
+
+## Développement
+
+```sh
+npm install
+npm run tauri dev          # application de bureau (SQLite)
+npm run dev                # interface seule dans un navigateur (stockage en mémoire)
+```
+
+Android (appareil branché en USB, débogage activé) :
+
+```sh
+npm run tauri android init   # une fois
+npm run tauri android dev
+```
+
+## Vérifications
+
+```sh
+npm run check              # types TypeScript + Svelte
+npm test                   # tests du domaine, de l'i18n et du SQL (SQLite de Node)
+cd src-tauri && cargo test # tests Rust (migrations)
+```
+
+## Paquets
+
+```sh
+npm run tauri build -- --bundles deb,rpm,appimage    # Linux
+npm run tauri android build -- --apk                 # Android
+npm run tauri build -- --bundles msi,nsis            # Windows (sur Windows)
+```
+
+La CI GitHub ([`.github/workflows/build.yml`](.github/workflows/build.yml)) produit les trois plateformes à chaque push
+sur `main`, et un brouillon de release avec empreintes SHA-256 pour chaque tag `vX.Y.Z`.
+
+### Signature de l'APK
+
+L'APK est distribué directement (hors Play Store). Toutes les versions doivent être signées **avec la même clé**,
+sinon Android refuse la mise à jour. Créer la clé une fois et la sauvegarder hors du poste :
+
+```sh
+keytool -genkeypair -v -keystore abbon.jks -keyalg RSA -keysize 4096 -validity 10000 -alias abbon
+base64 -w0 abbon.jks   # valeur du secret ANDROID_KEYSTORE_BASE64
+```
+
+Puis déclarer dans les secrets du dépôt : `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`,
+`ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`. Sans ces secrets, la CI produit un APK de debug.
+
+## Organisation du code
+
+```
+src/
+  lib/domain/    modèle, calcul du score, statuts de progression — TypeScript pur, testé
+  lib/data/      interface Repository ; SQLite (Tauri) et mémoire (navigateur) ; données de démo
+  lib/i18n/      messages fr / en, pluriels, formats Intl
+  lib/components/
+  routes/        écrans (SvelteKit en mode SPA)
+src-tauri/
+  migrations/    schéma SQLite versionné (ne jamais modifier une migration publiée)
+  src/lib.rs     enveloppe Tauri minimale : plugin SQL + migrations
+```
+
+Voir [docs/architecture.md](docs/architecture.md).
