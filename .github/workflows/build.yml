@@ -139,7 +139,6 @@ jobs:
     environment: android-release
     env:
       NDK_VERSION: 27.2.12479018
-      HAS_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
       VERSION: ${{ needs.prepare.outputs.version }}
       # Serveur de mises à jour par défaut, intégré à la compilation.
       ABBON_UPDATE_URL: ${{ vars.ABBON_SITE_URL }}
@@ -169,10 +168,15 @@ jobs:
       - run: npm ci
       - name: Projet Android
         run: npx tauri android init --ci
+      # Comme dans le workflow Android de mogichex : le secret est lu dans une étape (et non dans
+      # l'environnement du job), puis le résultat est transmis aux étapes suivantes.
       - name: Clé de signature
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
-          if [ "$HAS_KEYSTORE" = true ]; then
-            echo "Clé trouvée : APK de release signé."
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "HAS_KEYSTORE=true" >> "$GITHUB_ENV"
+            echo "Clé trouvée dans l'environnement android-release : APK de release signé."
           elif [ "${{ github.ref_type }}" = tag ]; then
             echo "::error::Secret ANDROID_KEYSTORE_BASE64 absent de l'environnement android-release : une release doit être signée."
             exit 1
@@ -263,7 +267,9 @@ jobs:
           - { image: 'fedora:latest', kind: rpm }
           - { image: 'ubuntu:24.04', kind: appimage }
     container: ${{ matrix.image }}
-    name: smoke ${{ matrix.image }} (${{ matrix.kind }})
+    # Nom fixe : GitHub y ajoute lui-même les valeurs de la matrice (« smoke-linux (debian:12, deb) »).
+    # Avec un nom construit sur matrix.*, un job ignoré s'affichait tel quel : « smoke ${{ matrix.image }} … ».
+    name: smoke-linux
     steps:
       # Pas de git dans les images de base : récupération du dépôt par l'API (archive).
       - uses: actions/checkout@v4

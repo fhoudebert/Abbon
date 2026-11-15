@@ -102,7 +102,7 @@ npm run tauri build -- --bundles msi,nsis            # Windows (sur Windows)
 - [`build.yml`](.github/workflows/build.yml) : paquets Linux, Android et Windows.
   - **À la demande** : onglet *Actions* → *Build* → *Run workflow*, puis saisir la branche (ou un tag, un commit) et
     cocher les plateformes. Les paquets se téléchargent depuis les *artifacts* de l'exécution.
-    Avec `gh` : `gh workflow run build.yml --ref init -f ref=init -f windows=false`.
+    Avec `gh` : `gh workflow run build.yml --ref main -f ref=main -f windows=false`.
     Attention : GitHub exécute le fichier de workflow de la branche choisie dans « Use workflow from »
     (option `--ref`), le champ `ref` ne choisit que le code compilé. Pour tester une modification du
     workflow lui-même, choisir la même branche aux deux endroits.
@@ -131,6 +131,13 @@ signature dans **une** des deux sources suivantes ; si les deux existent, l'envi
 **Sur GitHub** : les secrets sont rangés dans l'**environnement** `android-release`
 (Settings → Environments), que le job Android déclare. Sur un tag, le build échoue si la clé manque ; sinon
 il produit un APK de debug.
+
+Deux points à vérifier si l'APK sort en debug alors que les secrets existent :
+
+- **Le fichier de workflow exécuté est celui de la branche choisie dans « Use workflow from »** (`main` par
+  défaut), pas celui de la branche compilée. La déclaration de l'environnement doit donc être présente sur `main`.
+- **Règles de déploiement de l'environnement** (*Deployment branches and tags*) : si elles sont limitées, elles
+  doivent autoriser la branche `main` **et les tags `v*`**, sinon le job Android d'une release est refusé.
 
 | Réglage de l'environnement `android-release` | Variable lue par le script | |
 |---|---|---|
