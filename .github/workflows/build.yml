@@ -11,6 +11,7 @@
 #               TAURI_UPDATER_PUBKEY  clé publique de signature des mises à jour (fichier .pub)
 #   Secrets   : TAURI_SIGNING_PRIVATE_KEY, TAURI_SIGNING_PRIVATE_KEY_PASSWORD   signature des mises à jour
 #               ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
+#   Variable  : ANDROID_CERT_SHA256 (facultative)  empreinte attendue du certificat de l'APK
 #               FTP_URL (ftp://, ftps:// ou sftp://hôte), FTP_USER, FTP_PASSWORD, FTP_DIR   dépôt du site
 # Voir docs/distribution.md.
 name: Build
@@ -113,6 +114,14 @@ jobs:
             EXTRA=(--config "$(node -p 'JSON.stringify({bundle:{createUpdaterArtifacts:true},plugins:{updater:{pubkey:process.env.ABBON_UPDATER_PUBKEY}}})')")
           fi
           npx tauri build --bundles deb,rpm,appimage "${EXTRA[@]}"
+      - name: "Nom de l'AppImage selon AppImageHub : Abbon-<version>-x86_64.AppImage"
+        working-directory: src-tauri/target/release/bundle/appimage
+        run: |
+          for f in Abbon_*_amd64.AppImage*; do
+            [ -e "$f" ] || continue
+            n=$(echo "$f" | sed -E 's/^Abbon_(.+)_amd64\.AppImage/Abbon-\1-x86_64.AppImage/')
+            mv -v "$f" "$n"
+          done
       - uses: actions/upload-artifact@v4
         with:
           name: abbon-linux-${{ needs.prepare.outputs.version }}-${{ needs.prepare.outputs.sha }}
@@ -162,20 +171,18 @@ jobs:
         if: env.HAS_KEYSTORE == 'true'
         env:
           KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ABBON_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ABBON_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ABBON_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          # Facultatif : empreinte attendue du certificat, le build échoue si la clé n'est pas la bonne.
+          ABBON_CERT_SHA256: ${{ vars.ANDROID_CERT_SHA256 }}
         run: |
           npx tauri android build --apk --ci
-          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
-          echo "$KEYSTORE" | base64 -d > "$RUNNER_TEMP/abbon.jks"
-          IN=$(find src-tauri/gen/android/app/build/outputs/apk -name '*release-unsigned.apk' | head -1)
-          "$BT/zipalign" -f -p 4 "$IN" "$RUNNER_TEMP/aligned.apk"
-          "$BT/apksigner" sign --ks "$RUNNER_TEMP/abbon.jks" --ks-pass "pass:$KS_PASS" \
-            --ks-key-alias "$KEY_ALIAS" --key-pass "pass:$KEY_PASS" \
-            --out "abbon-${VERSION}.apk" "$RUNNER_TEMP/aligned.apk"
-          "$BT/apksigner" verify "abbon-${VERSION}.apk"
-          rm "$RUNNER_TEMP/abbon.jks"
+          export ABBON_KEYSTORE_FILE="$RUNNER_TEMP/abbon.keystore"
+          trap 'rm -f "$ABBON_KEYSTORE_FILE"' EXIT
+          printf '%s' "$KEYSTORE" | base64 -d > "$ABBON_KEYSTORE_FILE"
+          # Même script que sur le poste (où il lit keystore.properties) : alignement, signature, vérification.
+          bash scripts/android/sign-apk.sh "" "$PWD/abbon-${VERSION}.apk"
 
       - name: APK de debug (pas de clé configurée)
         if: env.HAS_KEYSTORE != 'true'
@@ -268,7 +275,7 @@ jobs:
         env:
           APPIMAGE_EXTRACT_AND_RUN: '1'
         run: |
-          if [ "${{ matrix.kind }}" = appimage ]; then cmd=/usr/local/bin/abbon-appimage; else cmd=abbon; fi
+          if [ "${{ matrix.kind }}" = appimage ]; then cmd=/usr/local/bin/abbon-appimage; else cmd=Abbon; fi
           bash scripts/smoke/linux.sh "$cmd"
 
   smoke-windows:
