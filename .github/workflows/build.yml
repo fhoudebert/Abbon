@@ -115,6 +115,9 @@ jobs:
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: 21 }
       - uses: android-actions/setup-android@v3
+        with:
+          # Le paquet « tools » (demandé par défaut en v3) n'est plus distribué par Google.
+          packages: platform-tools
       - name: NDK
         run: |
           sdkmanager --install "ndk;${NDK_VERSION}"
