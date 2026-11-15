@@ -122,17 +122,28 @@ keytool -list -v -keystore abbon.keystore -alias abbon | grep SHA256   # emprein
 Le script [`scripts/android/sign-apk.sh`](scripts/android/sign-apk.sh) aligne, signe et vérifie l'APK. Il prend la
 signature dans **une** des deux sources suivantes ; si les deux existent, l'environnement l'emporte.
 
-**Sur GitHub** (variables d'environnement alimentées par les réglages du dépôt) :
+**Sur GitHub** : les secrets sont rangés dans l'**environnement** `android-release`
+(Settings → Environments), que le job Android déclare. Sur un tag, le build échoue si la clé manque ; sinon
+il produit un APK de debug.
 
-| Réglage du dépôt | Variable lue par le script | |
+| Réglage de l'environnement `android-release` | Variable lue par le script | |
 |---|---|---|
-| secret `ANDROID_KEYSTORE_BASE64` | `ABBON_KEYSTORE_FILE` (fichier décodé) | `base64 -w0 abbon.keystore` |
+| secret `ANDROID_KEYSTORE_BASE64` | `ABBON_KEYSTORE_FILE` (fichier décodé) | voir ci-dessous |
 | secret `ANDROID_KEYSTORE_PASSWORD` | `ABBON_KEYSTORE_PASSWORD` | mot de passe du magasin |
 | secret `ANDROID_KEY_ALIAS` | `ABBON_KEY_ALIAS` | défaut `abbon` |
 | secret `ANDROID_KEY_PASSWORD` | `ABBON_KEY_PASSWORD` | défaut : celui du magasin (règle du PKCS12) |
 | variable `ANDROID_CERT_SHA256` | `ABBON_CERT_SHA256` | facultatif : le build échoue si la clé n'est pas la bonne |
 
-Sans ces secrets, la CI produit un APK de debug.
+Valeur du secret `ANDROID_KEYSTORE_BASE64`, sans passer par un fichier (qui finirait par être commité) :
+
+```sh
+base64 -w0 abbon.keystore | gh secret set ANDROID_KEYSTORE_BASE64 --env android-release   # Linux
+base64 -i abbon.keystore | gh secret set ANDROID_KEYSTORE_BASE64 --env android-release    # macOS
+base64 -w0 abbon.keystore | xclip -selection clipboard    # ou copier, puis coller dans la page GitHub
+```
+
+Sous Windows (PowerShell) :
+`[Convert]::ToBase64String([IO.File]::ReadAllBytes("abbon.keystore")) | Set-Clipboard`.
 
 **Sur le poste** : déposer `abbon.keystore` et `keystore.properties` à la racine du dépôt. Ces deux fichiers
 sont **ignorés par git** (`git check-ignore -v keystore.properties abbon.keystore`), et le script refuse de signer
@@ -146,8 +157,19 @@ keyAlias=abbon
 keyPassword=…
 ```
 
+SDK, NDK et Java : le CLI Tauri **ne lit pas** `local.properties`, il lui faut `ANDROID_HOME` et `NDK_HOME`.
+[`scripts/android/env.sh`](scripts/android/env.sh) les déduit : variables d'environnement, sinon `sdk.dir`
+(et `ndk.dir`) d'un `local.properties` à la racine du dépôt, sinon `~/Android/Sdk` ; le NDK le plus récent de
+`<SDK>/ndk/` ; le JDK d'Android Studio si aucun Java n'est installé. `~` et `$HOME` y sont acceptés (Gradle, lui,
+ne les développe pas : écrire un chemin absolu si `local.properties` sert aussi à Gradle).
+
+```properties
+# local.properties (ignoré par git)
+sdk.dir=~/Android/Sdk
+```
+
 ```sh
-npm run android:apk     # tauri android build --apk, puis signature → abbon-X.Y.Z.apk
+npm run android:apk     # init du projet si besoin, tauri android build --apk, signature → abbon-X.Y.Z.apk
 ```
 
 ## Organisation du code

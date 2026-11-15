@@ -134,6 +134,9 @@ jobs:
     needs: prepare
     if: github.event_name == 'push' || inputs.android
     runs-on: ubuntu-24.04
+    # Les secrets ANDROID_* sont des secrets d'ENVIRONNEMENT (Settings → Environments → android-release) :
+    # sans cette ligne, le job ne les voit pas (valeurs vides) et produit un APK de debug.
+    environment: android-release
     env:
       NDK_VERSION: 27.2.12479018
       HAS_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
@@ -166,6 +169,16 @@ jobs:
       - run: npm ci
       - name: Projet Android
         run: npx tauri android init --ci
+      - name: Clé de signature
+        run: |
+          if [ "$HAS_KEYSTORE" = true ]; then
+            echo "Clé trouvée : APK de release signé."
+          elif [ "${{ github.ref_type }}" = tag ]; then
+            echo "::error::Secret ANDROID_KEYSTORE_BASE64 absent de l'environnement android-release : une release doit être signée."
+            exit 1
+          else
+            echo "::warning::Secret ANDROID_KEYSTORE_BASE64 absent de l'environnement android-release : APK de debug."
+          fi
 
       - name: APK de release signé
         if: env.HAS_KEYSTORE == 'true'
@@ -180,7 +193,8 @@ jobs:
           npx tauri android build --apk --ci
           export ABBON_KEYSTORE_FILE="$RUNNER_TEMP/abbon.keystore"
           trap 'rm -f "$ABBON_KEYSTORE_FILE"' EXIT
-          printf '%s' "$KEYSTORE" | base64 -d > "$ABBON_KEYSTORE_FILE"
+          # « base64 -i » ignore les retours à la ligne et espaces éventuels du secret collé.
+          printf '%s' "$KEYSTORE" | base64 -d -i > "$ABBON_KEYSTORE_FILE"
           # Même script que sur le poste (où il lit keystore.properties) : alignement, signature, vérification.
           bash scripts/android/sign-apk.sh "" "$PWD/abbon-${VERSION}.apk"
 
