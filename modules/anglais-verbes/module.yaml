@@ -2,14 +2,14 @@
 # Format des sources : docs/modules.md. Vérifier : npm run module:check ; construire : npm run module:build
 
 id: org.abbon.anglais-verbes
-version: 0.1.0
-date: 2026-11-15            # date de publication (fichier .qcm reproductible)
+version: 0.2.0
+date: 2026-11-16            # date de publication (fichier .qcm reproductible)
 title:
   fr: "Anglais : verbes irréguliers"
   en: "English: irregular verbs"
 description:
-  fr: "Prétérit, participe passé et sens des verbes irréguliers les plus fréquents. Version pilote : 23 verbes, 30 questions."
-  en: "Past simple, past participle and meaning of the most common irregular verbs. Pilot version: 23 verbs, 30 questions."
+  fr: "Prétérit, participe passé et sens des verbes irréguliers les plus fréquents. Version pilote : 23 verbes, 50 questions à cocher ou à saisir."
+  en: "Past simple, past participle and meaning of the most common irregular verbs. Pilot version: 23 verbs, 50 multiple-choice or typed questions."
 level: collège-lycée
 license: CC-BY-NC-SA-4.0     # identifiant SPDX
 authors: [Abbon]

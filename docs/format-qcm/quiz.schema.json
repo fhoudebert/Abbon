@@ -160,7 +160,9 @@
             "type": "string",
             "enum": [
               "single",
-              "multiple"
+              "multiple",
+              "short",
+              "numeric"
             ]
           },
           "prompt": {
@@ -287,6 +289,48 @@
               ],
               "additionalProperties": false
             }
+          },
+          "expected": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "accepted": {
+                    "maxItems": 50,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 500
+                    }
+                  },
+                  "caseSensitive": {
+                    "type": "boolean"
+                  },
+                  "value": {
+                    "type": "number"
+                  },
+                  "tolerance": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "unit": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 30
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [

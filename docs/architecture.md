@@ -121,6 +121,17 @@ Voir [modules.md](modules.md) pour l'usage et le format des sources.
   d'écriture de l'application ; `cli.mjs` les charge par Vite (alias `$lib`, TypeScript). La construction est
   reproductible : mêmes sources, même fichier.
 
+## Questions à saisie (lot 6 bis)
+
+- Types `short` et `numeric` : pas de `choices`, une réponse attendue dans `question.expected` (colonne JSON) ;
+  le texte saisi est dans `answer.text`. Comparaison dans `domain/typed.ts` (fonctions pures : normalisation du
+  texte, lecture d'un nombre, écart toléré) ; `scoreQuestion` les note en tout ou rien.
+- « Répondu » ne se déduit plus des cases cochées : `isAnswered` (session.ts) tient compte du texte.
+- Le texte saisi est gardé en mémoire à chaque frappe et écrit en base avec le chrono, au changement de question,
+  à la validation et à la fin.
+- Migration 5 (colonnes) ; la contrainte `CHECK` de `question.type` a été élargie dans la migration 1, aucune base
+  n'étant à reprendre (voir [feuille-de-route.md](feuille-de-route.md)).
+
 ## Limites connues
 
 - Modules : l'historique mis de côté à la désinstallation n'est pas inclus dans la sauvegarde complète ; une

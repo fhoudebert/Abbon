@@ -10,7 +10,8 @@
 import { parse as parseYaml } from 'yaml';
 import { isEmptyRich } from '$lib/domain/rich';
 import { quizVersionOf } from '$lib/domain/semver';
-import type { Category, I18nRich, I18nText, ModuleManifest, Question, Quiz } from '$lib/domain/types';
+import { parseNumber } from '$lib/domain/typed';
+import type { Category, ExpectedAnswer, I18nRich, I18nText, ModuleManifest, Question, QuestionType, Quiz } from '$lib/domain/types';
 import { CategorySchema, QuizSchema } from '$lib/interchange/format';
 import { MODULE_FORMAT, MODULE_FORMAT_VERSION, modulePrefix, ModuleSchema } from '$lib/interchange/module';
 import { toDocument, toRich } from './markdown';
@@ -52,9 +53,28 @@ export function splitFrontMatter(text: string): { meta: Record<string, unknown>;
 
 interface RawQuestion {
   id: string;
-  type?: 'single' | 'multiple';
-  /** Texte brut par langue. */
-  langs: Map<string, { prompt: string; choices: { correct: boolean; text: string }[]; explanation: string }>;
+  type?: QuestionType;
+  /** Réponse courte : respecter les majuscules (« · short · case-sensitive »). */
+  caseSensitive?: boolean;
+  /** Texte brut par langue ; `answers` : lignes « = réponse » des questions à saisie. */
+  langs: Map<string, { prompt: string; choices: { correct: boolean; text: string }[]; answers: string[]; explanation: string }>;
+}
+
+const TYPES: readonly string[] = ['single', 'multiple', 'short', 'numeric'];
+
+/**
+ * Réponse numérique d'une source : « 9,81 », « 9,81 ± 0,01 », « 9,81 ± 0,01 m/s² », « 4 faces ».
+ * Renvoie null si la ligne est illisible.
+ */
+export function parseNumericAnswer(line: string): ExpectedAnswer | null {
+  const num = '[+\\-\u2212]?[\\d.,]+(?:[eE][+\\-]?\\d+)?';
+  const m = new RegExp(`^\\s*(${num})\\s*(?:(?:±|\\+/?-)\\s*(${num}))?\\s*(.*)$`).exec(line);
+  if (!m) return null;
+  const value = parseNumber(m[1]);
+  const tolerance = m[2] === undefined ? 0 : parseNumber(m[2]);
+  if (value === null || tolerance === null) return null;
+  const unit = m[3].trim();
+  return { value, tolerance: Math.abs(tolerance), ...(unit ? { unit } : {}) };
 }
 
 /** Découpe le corps d'un fichier de QCM en questions (`## identifiant · type`). */
@@ -66,17 +86,19 @@ export function splitQuestions(body: string, mainLang: string): RawQuestion[] {
   let inCode = false;
   const cur = () => {
     if (!q) throw new Error('texte avant la première question (« ## identifiant · single »)');
-    if (!q.langs.has(lang)) q.langs.set(lang, { prompt: '', choices: [], explanation: '' });
+    if (!q.langs.has(lang)) q.langs.set(lang, { prompt: '', choices: [], answers: [], explanation: '' });
     return q.langs.get(lang)!;
   };
   for (const line of body.replace(/\r\n?/g, '\n').split('\n')) {
     if (/^\s*`{3,}/.test(line)) inCode = !inCode;
     const head = !inCode && /^##\s+(.+?)\s*$/.exec(line);
     if (head) {
-      const [, id, type] = /^(\S+)(?:\s*[·|]\s*(\S+))?$/.exec(head[1]) ?? [];
+      const [, id, type, option] = /^(\S+)(?:\s*[·|]\s*(\S+))?(?:\s*[·|]\s*(\S+))?$/.exec(head[1]) ?? [];
       if (!id) throw new Error(`titre de question illisible : « ${line} »`);
-      if (type && type !== 'single' && type !== 'multiple') throw new Error(`${id} : type « ${type} » inconnu (single ou multiple)`);
-      q = { id, type: type as RawQuestion['type'], langs: new Map() };
+      if (type && !TYPES.includes(type)) throw new Error(`${id} : type « ${type} » inconnu (${TYPES.join(', ')})`);
+      if (option && !(type === 'short' && option === 'case-sensitive'))
+        throw new Error(`${id} : option « ${option} » inconnue (seule « short · case-sensitive » existe)`);
+      q = { id, type: type as RawQuestion['type'], caseSensitive: option === 'case-sensitive' || undefined, langs: new Map() };
       out.push(q);
       lang = mainLang;
       part = 'prompt';
@@ -92,16 +114,22 @@ export function splitQuestions(body: string, mainLang: string): RawQuestion[] {
     if (!q && !line.trim()) continue;
     const c = cur();
     const choice = !inCode && /^- \[( |x|X)\]\s+(.*)$/.exec(line);
-    if (choice) {
+    const typedAnswer = !inCode && /^=\s+(.*\S)\s*$/.exec(line);
+    if (typedAnswer) {
+      if (part === 'explanation') throw new Error(`${q!.id} : une réponse suit l'explication`);
+      part = 'choices';
+      c.answers.push(typedAnswer[1]);
+    } else if (choice) {
       if (part === 'explanation') throw new Error(`${q!.id} : une réponse suit l'explication`);
       part = 'choices';
       c.choices.push({ correct: choice[1] !== ' ', text: choice[2] });
-    } else if (!inCode && part !== 'prompt' && /^>/.test(line)) {
+    } else if (!inCode && /^>/.test(line) && (part !== 'prompt' || c.prompt.trim())) {
+      // Après l'énoncé, une citation est l'explication (une question à saisie peut ne rien avoir entre les deux).
       part = 'explanation';
       c.explanation += line.replace(/^> ?/, '') + '\n';
     } else if (part === 'prompt') {
       c.prompt += line + '\n';
-    } else if (part === 'choices' && /^\s+\S/.test(line)) {
+    } else if (part === 'choices' && c.choices.length && /^\s+\S/.test(line)) {
       c.choices[c.choices.length - 1].text += '\n' + line.trim(); // suite d'une réponse, en retrait
     } else if (line.trim()) {
       throw new Error(`${q!.id} : ligne inattendue après les réponses : « ${line.trim()} »`);
@@ -233,10 +261,32 @@ export function compileModule(files: readonly SourceFile[]): Compiled {
 
         const flags = first.choices.map((c) => c.correct);
         const right = flags.filter(Boolean).length;
-        const type = raw.type ?? (right > 1 ? 'multiple' : 'single');
-        if (type === 'single' && right !== 1) err(f.path, `choix unique : exactement une bonne réponse attendue (${right} cochée(s))`, ref);
+        const type: QuestionType = raw.type ?? (first.answers.length && !flags.length ? 'short' : right > 1 ? 'multiple' : 'single');
+        const typed = type === 'short' || type === 'numeric';
+
+        // Questions à saisie : lignes « = réponse ». Les formes acceptées de toutes les langues s'additionnent.
+        let expected: ExpectedAnswer | null = null;
+        if (typed) {
+          const all = [...new Set(languages.flatMap((l) => raw.langs.get(l)?.answers ?? []).map((a) => a.trim()))];
+          if (flags.length) err(f.path, `question « ${type} » : pas de réponses à cocher (« - [ ] »), seulement des lignes « = réponse »`, ref);
+          if (!all.length) err(f.path, 'réponse attendue manquante (ligne « = réponse »)', ref);
+          if (type === 'short') expected = { accepted: all, ...(raw.caseSensitive ? { caseSensitive: true } : {}) };
+          else if (all.length > 1) err(f.path, 'réponse numérique : une seule valeur attendue (la même dans chaque langue)', ref);
+          else if (all.length) {
+            expected = parseNumericAnswer(all[0]);
+            if (!expected) err(f.path, `réponse numérique illisible : « ${all[0]} » (ex. « = 9,81 ± 0,01 m/s² »)`, ref);
+          }
+        } else if (first.answers.length) {
+          err(f.path, `ligne « = réponse » dans une question « ${type} » (types à saisie : short, numeric)`, ref);
+        }
+
+        if (typed) {
+          // rien à vérifier sur les réponses à cocher
+        } else if (type === 'single' && right !== 1) err(f.path, `choix unique : exactement une bonne réponse attendue (${right} cochée(s))`, ref);
         if (type === 'multiple' && right < 1) err(f.path, 'choix multiple : au moins une bonne réponse attendue', ref);
-        if (flags.length < 2) err(f.path, 'au moins deux réponses attendues', ref);
+        if (typed) {
+          // pas de réponses à cocher
+        } else if (flags.length < 2) err(f.path, 'au moins deux réponses attendues', ref);
         else if (flags.length < 3 || flags.length > 5) warn(f.path, `${flags.length} réponses (3 à 5 conseillées)`, ref);
 
         const prompt: I18nRich = {};
@@ -253,6 +303,7 @@ export function compileModule(files: readonly SourceFile[]): Compiled {
             if (isEmptyRich(prompt[l])) err(f.path, `énoncé vide (${l})`, ref);
             if (!t.explanation.trim()) err(f.path, `explication manquante (${l})`, ref);
             else explanation[l] = toRich(t.explanation);
+            if (typed) continue;
             if (t.choices.length !== flags.length || t.choices.some((c, k) => c.correct !== flags[k])) {
               err(f.path, `les réponses en « ${l} » ne correspondent pas à celles en « ${main} » (nombre, ordre ou cases cochées)`, ref);
               continue;
@@ -276,7 +327,8 @@ export function compileModule(files: readonly SourceFile[]): Compiled {
           points: 1,
           position: qPos,
           explanation,
-          choices: flags.map((correct, k) => ({ id: `${qId}_c${k + 1}`, content: contents[k], correct, position: k, feedback: null })),
+          choices: typed ? [] : flags.map((correct, k) => ({ id: `${qId}_c${k + 1}`, content: contents[k], correct, position: k, feedback: null })),
+          ...(typed ? { expected } : {}),
         });
       });
       if (!questions.length) err(f.path, 'aucune question');

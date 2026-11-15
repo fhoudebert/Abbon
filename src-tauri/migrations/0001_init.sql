@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS quiz (
 CREATE TABLE IF NOT EXISTS question (
   id          TEXT PRIMARY KEY,
   quiz_id     TEXT NOT NULL REFERENCES quiz(id) ON DELETE CASCADE,
-  type        TEXT NOT NULL CHECK (type IN ('single', 'multiple')),
+  type        TEXT NOT NULL CHECK (type IN ('single', 'multiple', 'short', 'numeric')),
   prompt      TEXT NOT NULL,              -- JSON i18n (document riche)
   points      REAL NOT NULL DEFAULT 1,
   position    INTEGER NOT NULL DEFAULT 0,

@@ -8,7 +8,9 @@ Une seule base de code HTML5 / TypeScript, empaquetée avec [Tauri 2](https://v2
 Logiciel libre sous licence [MIT](LICENSE). Le contenu des modules (dossier `modules/`) est sous licence
 [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.fr).
 
-> **État : lot 6 (modules de contenu).** Un module est un fichier `.qcm` versionné, installé, mis à jour et retiré
+> **État : lot 6 bis (questions à saisie).** Réponse courte et réponse numérique, en plus des choix unique et
+> multiples ; suite prévue dans [docs/feuille-de-route.md](docs/feuille-de-route.md).
+> Lot 6 (modules de contenu) : un module est un fichier `.qcm` versionné, installé, mis à jour et retiré
 > d'un bloc, avec fiches de révision ; premier module pilote : « Anglais : verbes irréguliers »
 > ([docs/modules.md](docs/modules.md)).
 > Lot 5 : accessibilité vérifiée (WCAG 2.1 AA, clair et sombre), thème et taille du texte

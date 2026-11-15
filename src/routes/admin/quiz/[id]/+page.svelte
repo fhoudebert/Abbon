@@ -356,6 +356,8 @@
         <div class="add">
           <button class="secondary" onclick={() => addQuestion('single')}>{t('qe.addSingle')}</button>
           <button class="secondary" onclick={() => addQuestion('multiple')}>{t('qe.addMultiple')}</button>
+          <button class="secondary" onclick={() => addQuestion('short')}>{t('qe.addShort')}</button>
+          <button class="secondary" onclick={() => addQuestion('numeric')}>{t('qe.addNumeric')}</button>
         </div>
       </nav>
 

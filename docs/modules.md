@@ -98,6 +98,34 @@ What is the past simple of *to go*?
   L'identifiant ne change jamais, même si l'énoncé est corrigé : il relie l'historique aux versions suivantes.
 - Viennent ensuite l'énoncé, les réponses (`- [x]` pour une bonne réponse) et l'explication (lignes `>`).
 - `### en` ouvre la même question dans une autre langue : mêmes réponses, dans le même ordre, mêmes cases cochées.
+- **Questions à saisie** : `· short` (réponse courte) ou `· numeric` (réponse numérique), avec une ligne
+  `= réponse` à la place des cases à cocher :
+
+  ```markdown
+  ## go · short
+  Écrivez le prétérit de *to go*.
+
+  = went
+
+  > *go – went – gone*.
+
+  ### en
+  Write the past simple of *to go*.
+
+  > *go – went – gone*.
+
+  ## g · numeric
+  Quelle est l'intensité de la pesanteur à Paris ?
+
+  = 9,81 ± 0,01 m/s²
+
+  > …
+  ```
+
+  Plusieurs lignes `=` donnent plusieurs formes acceptées ; celles des autres langues s'y ajoutent (`= Londres`
+  en français, `= London` en anglais : les deux sont acceptées partout). `· short · case-sensitive` fait
+  respecter les majuscules. Une réponse numérique s'écrit `= valeur`, `= valeur ± écart`, avec une unité facultative
+  à la fin.
 - Autres réglages possibles dans l'en-tête : `description`, `timeLimitSec`, `passThreshold`, `scoring`,
   `solutionVisibility`, `shuffle`.
 
@@ -122,7 +150,8 @@ ne connaît pas les modules remplace correctement un QCM plus ancien.
 ## Ce que vérifie `module:check`
 
 Erreurs (rien n'est construit) : schémas JSON du format, identifiants uniques et bien formés, exactement une bonne
-réponse en choix unique et au moins une en choix multiple, au moins deux réponses, explication présente partout,
+réponse en choix unique et au moins une en choix multiple, au moins deux réponses, réponse attendue présente et
+lisible pour une question à saisie, explication présente partout,
 chaque texte présent dans chaque langue, réponses cohérentes d'une langue à l'autre, pas de réponses en double,
 Markdown bien formé. Avertissements : moins de 3 ou plus de 5 réponses, « toutes / aucune des réponses », QCM de
 moins de 10 ou plus de 15 questions, niveau absent ou inhabituel. La commande affiche aussi le nombre de QCM et de

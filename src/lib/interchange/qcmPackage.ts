@@ -121,6 +121,8 @@ export function stripSolutions(quiz: Quiz): Quiz {
   q.questions = q.questions.map((x) => ({
     ...x,
     explanation: null,
+    // La réponse attendue est retirée ; l'unité d'une réponse numérique fait partie de l'énoncé.
+    expected: x.type === 'numeric' && x.expected?.unit ? { unit: x.expected.unit } : null,
     choices: x.choices.map(({ correct: _c, feedback: _f, ...c }) => c as Quiz['questions'][number]['choices'][number]),
   }));
   return q;

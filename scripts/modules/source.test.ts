@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { checkRequirements } from '$lib/interchange/module';
 import { buildPackage, parsePackage } from '$lib/interchange/qcmPackage';
-import { compileModule, splitQuestions, type SourceFile } from './source';
+import { compileModule, parseNumericAnswer, splitQuestions, type SourceFile } from './source';
 
 const MODULE = `id: org.abbon.test
 version: 1.2.3
@@ -149,5 +149,93 @@ describe('compilation d’un module', () => {
   it('refuse un module.yaml incomplet', () => {
     const bad = [{ path: 'module.yaml', text: MODULE.replace('version: 1.2.3', 'version: 1.2').replace('license: CC-BY-NC-SA-4.0\n', '') }, files()[1]];
     expect(errors(bad)).toEqual(expect.arrayContaining([expect.stringContaining('SemVer'), expect.stringContaining('license')]));
+  });
+});
+
+describe('questions à saisie dans les sources', () => {
+  const TYPED = `---
+id: saisie-01
+title: { fr: Saisie, en: Typing }
+level: bases
+---
+
+## go · short
+Écrivez le prétérit de *to go*.
+
+= went
+
+> *go – went – gone*.
+
+### en
+Write the past simple of *to go*.
+
+> *go – went – gone*.
+
+## capitale
+Capitale du Royaume-Uni ?
+
+= Londres
+
+> Londres.
+
+### en
+Capital of the United Kingdom?
+
+= London
+
+> London.
+
+## python · short · case-sensitive
+Nom du langage ?
+
+= Python
+
+> Avec une majuscule.
+
+### en
+Name of the language?
+
+> Capitalised.
+
+## g · numeric
+Valeur de *g* ?
+
+= 9,81 ± 0,01 m/s²
+
+> Environ 9,81.
+
+### en
+Value of *g*?
+
+> About 9.81.
+`;
+
+  it('lit les réponses attendues', () => {
+    const c = compileModule(files(TYPED));
+    expect(c.issues.filter((i) => i.level === 'error')).toEqual([]);
+    expect(c.quizzes[0].questions.map((q) => [q.type, q.choices.length, q.expected])).toEqual([
+      ['short', 0, { accepted: ['went'] }],
+      ['short', 0, { accepted: ['Londres', 'London'] }],
+      ['short', 0, { accepted: ['Python'], caseSensitive: true }],
+      ['numeric', 0, { value: 9.81, tolerance: 0.01, unit: 'm/s²' }],
+    ]);
+  });
+
+  it('lit les réponses numériques', () => {
+    expect(parseNumericAnswer('4')).toEqual({ value: 4, tolerance: 0 });
+    expect(parseNumericAnswer('-1,5e3 +/- 10')).toEqual({ value: -1500, tolerance: 10 });
+    expect(parseNumericAnswer('6 faces')).toEqual({ value: 6, tolerance: 0, unit: 'faces' });
+    expect(parseNumericAnswer('environ 4')).toBeNull();
+  });
+
+  it('signale les incohérences', () => {
+    expect(errors(files(TYPED.replace('= went\n', '')))).toEqual([expect.stringContaining('réponse attendue manquante')]);
+    expect(errors(files(TYPED.replace('= went', '- [x] went')))).toEqual(
+      expect.arrayContaining([expect.stringContaining('pas de réponses à cocher')]),
+    );
+    expect(errors(files(TYPED.replace('= 9,81 ± 0,01 m/s²', '= beaucoup')))).toEqual([expect.stringContaining('illisible')]);
+    expect(errors(files(QUIZ.replace('- [ ] La chaîne est copiée', '= copie')))).toEqual(
+      expect.arrayContaining([expect.stringContaining('ligne « = réponse » dans une question « single »')]),
+    );
   });
 });

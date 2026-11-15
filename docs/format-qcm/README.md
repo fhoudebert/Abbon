@@ -37,6 +37,31 @@ le contenu de l'appareil (le code PIN de l'appareil est conservé).
 - **Versions du format** : `formatVersion` augmente à chaque changement incompatible ; Abbon refuse un fichier
   d'une version plus récente que la sienne.
 
+## Types de questions
+
+| `type` | Réponse | Champs |
+|---|---|---|
+| `single` | une case à cocher parmi `choices` | exactement un choix `correct` |
+| `multiple` | plusieurs cases à cocher | au moins un choix `correct` |
+| `short` | texte à saisir | `choices` vide ; `expected.accepted` (formes acceptées), `expected.caseSensitive` |
+| `numeric` | nombre à saisir | `choices` vide ; `expected.value`, `expected.tolerance` (écart absolu), `expected.unit` (affichée, pas saisie) |
+
+```json
+{ "id": "q1", "type": "short", "prompt": { "fr": "Prétérit de to go ?" }, "points": 1, "position": 0,
+  "choices": [], "expected": { "accepted": ["went"] } }
+{ "id": "q2", "type": "numeric", "prompt": { "fr": "Valeur de g ?" }, "points": 1, "position": 1,
+  "choices": [], "expected": { "value": 9.81, "tolerance": 0.01, "unit": "m/s²" } }
+```
+
+- **Réponse courte** : la saisie est comparée à chaque forme acceptée après retrait des espaces superflus et
+  unification des apostrophes ; les majuscules sont ignorées sauf `caseSensitive`. Les accents comptent.
+- **Réponse numérique** : virgule ou point décimal, signe moins typographique, espaces de milliers et notation
+  scientifique (`1,5e3`) sont acceptés. La réponse est juste si |saisie − `value`| ≤ `tolerance`.
+- Les deux types sont notés en tout ou rien. Dans les réponses d'une sauvegarde, le texte saisi est dans `text`.
+- Sans corrigé (`includesSolutions: false`), `expected` est retiré, sauf l'unité.
+- **Compatibilité** : `short` et `numeric` datent d'Abbon 0.2.0. Un lecteur plus ancien refuse un QCM qui en
+  contient (le QCM est signalé invalide, les autres s'importent).
+
 ## Modules
 
 Un **module** est un fichier `.qcm` ordinaire (`"kind": "content"`) qui contient en plus `module.json`.
@@ -83,5 +108,6 @@ Les sources et l'outillage des modules d'Abbon sont décrits dans [modules.md](.
 ## GIFT (Moodle)
 
 Abbon importe et exporte aussi le format texte GIFT : choix unique, choix multiples (poids `~%50%`), vrai/faux,
-retours `#` et `####`. Les autres types (réponse courte, appariement, numérique, rédaction) sont signalés et
-ignorés. À l'export, chaque bonne réponse d'un choix multiple vaut `100/n %` et chaque mauvaise `-100 %`.
+réponse courte (`{=Paris =paris}`) et réponse numérique (`{#3.14:0.01}`, `{#1..5}`),
+retours `#` et `####`. Les autres types (appariement, rédaction, réponse numérique à plusieurs valeurs) sont
+signalés et ignorés. L'unité d'une réponse numérique, sans équivalent en GIFT, est ajoutée à l'énoncé. À l'export, chaque bonne réponse d'un choix multiple vaut `100/n %` et chaque mauvaise `-100 %`.

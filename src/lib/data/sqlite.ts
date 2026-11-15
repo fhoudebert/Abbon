@@ -97,6 +97,7 @@ export class SqliteRepository implements Repository {
       position: Number(r.position),
       explanation: parse(r.explanation, null),
       choices: choicesByQuestion.get(String(r.id)) ?? [],
+      ...(r.expected ? { expected: parse(r.expected, null) } : {}),
     }));
     return { ...quizFromRow(row), questions };
   }
@@ -183,6 +184,7 @@ export class SqliteRepository implements Repository {
     return rows.map((r) => ({
       questionId: String(r.question_id),
       selected: parse(r.selected, []),
+      ...(r.text != null ? { text: String(r.text) } : {}),
       correct: r.correct == null ? null : bool(r.correct),
       points: num(r.points),
       timeSec: Number(r.time_sec),
@@ -192,10 +194,10 @@ export class SqliteRepository implements Repository {
 
   async saveAnswer(attemptId: string, a: Answer): Promise<void> {
     await this.db.execute(
-      `INSERT INTO answer (attempt_id, question_id, selected, correct, points, time_sec, flagged)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO answer (attempt_id, question_id, selected, correct, points, time_sec, flagged, text)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        ON CONFLICT(attempt_id, question_id) DO UPDATE SET selected = $3, correct = $4, points = $5,
-         time_sec = $6, flagged = $7`,
+         time_sec = $6, flagged = $7, text = $8`,
       [
         attemptId,
         a.questionId,
@@ -204,6 +206,7 @@ export class SqliteRepository implements Repository {
         a.points ?? null,
         a.timeSec,
         a.flagged ? 1 : 0,
+        a.text ?? null,
       ],
     );
   }
@@ -304,6 +307,7 @@ export class SqliteRepository implements Repository {
       attemptId: String(r.attempt_id),
       questionId: String(r.question_id),
       selected: parse<string[]>(r.selected, []),
+      ...(r.text != null ? { text: String(r.text) } : {}),
       correct: r.correct == null ? null : bool(r.correct),
       points: num(r.points),
       timeSec: Number(r.time_sec),
@@ -371,9 +375,9 @@ export class SqliteRepository implements Repository {
     for (const r of data.answers) {
       if (!attemptIds.has(r.attemptId)) continue;
       st.push({
-        sql: `INSERT INTO answer (attempt_id, question_id, selected, correct, points, time_sec, flagged)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        params: [r.attemptId, r.questionId, json(r.selected), r.correct == null ? null : r.correct ? 1 : 0, r.points ?? null, r.timeSec, r.flagged ? 1 : 0],
+        sql: `INSERT INTO answer (attempt_id, question_id, selected, correct, points, time_sec, flagged, text)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        params: [r.attemptId, r.questionId, json(r.selected), r.correct == null ? null : r.correct ? 1 : 0, r.points ?? null, r.timeSec, r.flagged ? 1 : 0, r.text ?? null],
       });
     }
     for (const [k, v] of Object.entries(data.settings))
@@ -475,9 +479,9 @@ function quizStatements(quiz: Quiz): Statement[] {
   ];
   for (const q of quiz.questions) {
     statements.push({
-      sql: `INSERT INTO question (id, quiz_id, type, prompt, points, position, explanation)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      params: [q.id, quiz.id, q.type, json(q.prompt), q.points, q.position, json(q.explanation)],
+      sql: `INSERT INTO question (id, quiz_id, type, prompt, points, position, explanation, expected)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      params: [q.id, quiz.id, q.type, json(q.prompt), q.points, q.position, json(q.explanation), json(q.expected)],
     });
     for (const c of q.choices) {
       statements.push({
@@ -492,7 +496,7 @@ function quizStatements(quiz: Quiz): Statement[] {
 
 const ATTEMPT_COLUMNS = `id, quiz_id, quiz_version, mode, status, started_at, finished_at,
   elapsed_sec, current_index, question_order, score, max_score`;
-const ANSWER_COLUMNS = 'attempt_id, question_id, selected, correct, points, time_sec, flagged';
+const ANSWER_COLUMNS = 'attempt_id, question_id, selected, correct, points, time_sec, flagged, text';
 
 function attemptFromRow(r: Row): Attempt {
   return {

@@ -1,7 +1,8 @@
 <script lang="ts">
   import { tick } from 'svelte';
   import { move, newChoice, renumber, setQuestionType, toggleCorrect } from '$lib/domain/factory';
-  import type { Question, RichDoc } from '$lib/domain/types';
+  import { parseNumber } from '$lib/domain/typed';
+  import type { ExpectedAnswer, Question, QuestionType, RichDoc } from '$lib/domain/types';
   import { t } from '$lib/i18n/index.svelte';
   import RichEditor from '$lib/rich/RichEditor.svelte';
 
@@ -27,6 +28,24 @@
     await tick();
   }
 
+  const TYPES: QuestionType[] = ['single', 'multiple', 'short', 'numeric'];
+
+  // ---- Réponse attendue (réponse courte, réponse numérique) ----------------
+  const expected = $derived<ExpectedAnswer>(question.expected ?? {});
+  const accepted = $derived(expected.accepted?.length ? expected.accepted : ['']);
+  const patchExpected = (p: Partial<ExpectedAnswer>) => (question.expected = { ...expected, ...p });
+  const setAccepted = (i: number, v: string) => patchExpected({ accepted: accepted.map((a, k) => (k === i ? v : a)) });
+  /** Champ numérique libre (virgule acceptée) → nombre, ou champ vidé si illisible. */
+  function setNumber(key: 'value' | 'tolerance', input: HTMLInputElement) {
+    const n = parseNumber(input.value);
+    if (n === null) {
+      const { [key]: _removed, ...rest } = expected;
+      question.expected = key === 'tolerance' ? { ...rest, tolerance: 0 } : rest;
+      input.value = '';
+    } else patchExpected({ [key]: key === 'tolerance' ? Math.abs(n) : n });
+  }
+  const shown = (n: number | undefined) => (typeof n === 'number' ? String(n).replace('.', lang === 'fr' ? ',' : '.') : '');
+
   function removeChoice(i: number) {
     question.choices.splice(i, 1);
     renumber(question.choices);
@@ -38,14 +57,12 @@
     <h2>{t('qe.question', { n: number })}</h2>
     <fieldset class="type">
       <legend class="visually-hidden">{t('qe.type')}</legend>
-      <label>
-        <input type="radio" name="type-{question.id}" checked={question.type === 'single'} onchange={() => setQuestionType(question, 'single')} />
-        {t('qe.type.single')}
-      </label>
-      <label>
-        <input type="radio" name="type-{question.id}" checked={question.type === 'multiple'} onchange={() => setQuestionType(question, 'multiple')} />
-        {t('qe.type.multiple')}
-      </label>
+      {#each TYPES as type (type)}
+        <label>
+          <input type="radio" name="type-{question.id}" checked={question.type === type} onchange={() => setQuestionType(question, type)} />
+          {t(`qe.type.${type}`)}
+        </label>
+      {/each}
     </fieldset>
     <label class="points">
       {t('qe.points')}
@@ -60,6 +77,44 @@
     {/key}
   </div>
 
+  {#if question.type === 'short'}
+    <div class="field">
+      <span class="label">{t('qe.accepted')}</span>
+      <p class="hint muted">{t('qe.acceptedHint')}</p>
+      <ol class="accepted">
+        {#each accepted as a, i (i)}
+          <li>
+            <input type="text" value={a} aria-label={t('qe.acceptedN', { n: i + 1 })} autocomplete="off" spellcheck="false" oninput={(e) => setAccepted(i, e.currentTarget.value)} />
+            <button
+              type="button"
+              class="ghost danger"
+              aria-label={t('common.delete')}
+              title={t('common.delete')}
+              disabled={accepted.length === 1}
+              onclick={() => patchExpected({ accepted: accepted.filter((_, k) => k !== i) })}>✕</button
+            >
+          </li>
+        {/each}
+      </ol>
+      <div class="row">
+        <button type="button" class="secondary" onclick={() => patchExpected({ accepted: [...accepted, ''] })}>{t('qe.addAccepted')}</button>
+        <label class="check">
+          <input type="checkbox" checked={expected.caseSensitive ?? false} onchange={(e) => patchExpected({ caseSensitive: e.currentTarget.checked })} />
+          {t('qe.caseSensitive')}
+        </label>
+      </div>
+    </div>
+  {:else if question.type === 'numeric'}
+    <div class="field">
+      <span class="label">{t('qe.expected')}</span>
+      <p class="hint muted">{t('qe.numericHint')}</p>
+      <div class="row numeric">
+        <label>{t('qe.value')} <input type="text" inputmode="decimal" value={shown(expected.value)} onchange={(e) => setNumber('value', e.currentTarget)} /></label>
+        <label>{t('qe.tolerance')} <input type="text" inputmode="decimal" value={shown(expected.tolerance)} onchange={(e) => setNumber('tolerance', e.currentTarget)} /></label>
+        <label>{t('qe.unit')} <input type="text" value={expected.unit ?? ''} maxlength="30" oninput={(e) => patchExpected({ unit: e.currentTarget.value.trim() || null })} /></label>
+      </div>
+    </div>
+  {:else}
   <div class="field">
     <span class="label">{t('qe.choices')}</span>
     <p class="hint muted">{t('qe.choiceHint')}</p>
@@ -98,6 +153,7 @@
     </ol>
     <button type="button" class="secondary" onclick={() => addChoice()}>{t('qe.addChoice')}</button>
   </div>
+  {/if}
 
   <div class="field">
     <span class="label">{t('qe.explanation')}</span>
@@ -123,9 +179,47 @@
     font-size: 1.15rem;
     margin-inline-end: auto;
   }
+  .accepted {
+    display: grid;
+    gap: 0.4rem;
+    margin: 0;
+    padding-inline-start: 1.5rem;
+  }
+  .accepted li {
+    padding-inline-start: 0.25rem;
+  }
+  .accepted li::marker {
+    color: var(--muted);
+  }
+  .accepted li > input,
+  .numeric input {
+    min-block-size: 2.4rem;
+    padding-inline: 0.6rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+  }
+  .accepted li > input {
+    inline-size: min(100%, 24rem);
+  }
+  .numeric label {
+    display: grid;
+    gap: 0.2rem;
+  }
+  .numeric input {
+    inline-size: 9rem;
+  }
+  .check {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
   .type {
     display: flex;
-    gap: 1rem;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
     border: 0;
     padding: 0;
     margin: 0;

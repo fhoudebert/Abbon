@@ -3,7 +3,7 @@
  * correction immédiate (entraînement), fin de tentative, accès au corrigé, chrono.
  * Fonctions pures : aucune dépendance au stockage ni à l'interface.
  */
-import { scoreQuestion, scoreQuiz, type QuestionScore, type QuizResult } from './scoring';
+import { scoreQuestion, scoreQuiz, type Given, type QuestionScore, type QuizResult } from './scoring';
 import type { Answer, Attempt, AttemptMode, Choice, Question, Quiz } from './types';
 
 // ---- Hasard reproductible -------------------------------------------------
@@ -101,6 +101,13 @@ export function emptyAnswer(questionId: string): Answer {
   return { questionId, selected: [], correct: null, points: null, timeSec: 0, flagged: false };
 }
 
+/** Une réponse a-t-elle été donnée (case cochée ou texte saisi) ? */
+export function isAnswered(answer: Pick<Answer, 'selected' | 'text'> | undefined | null): boolean {
+  return !!answer && (answer.selected.length > 0 || !!answer.text?.trim());
+}
+
+const given = (a: Answer | undefined): Given => ({ selected: a?.selected ?? [], text: a?.text });
+
 /** Nouvelle sélection après un clic : remplace (choix unique) ou bascule (choix multiples). */
 export function toggleChoice(question: Question, selected: readonly string[], choiceId: string): string[] {
   if (question.type === 'single') return [choiceId];
@@ -114,14 +121,14 @@ export function isLocked(attempt: Attempt, answer: Answer | undefined): boolean 
 
 /** Corrige une seule réponse (bouton « Valider » en entraînement). */
 export function checkAnswer(quiz: Quiz, question: Question, answer: Answer): Answer {
-  const r = scoreQuestion(question, answer.selected, quiz.scoring);
+  const r = scoreQuestion(question, answer.selected, quiz.scoring, answer.text);
   return { ...answer, correct: r.correct, points: r.points };
 }
 
 export type QuestionOutcome = 'correct' | 'partial' | 'wrong' | 'unanswered';
 
 export function outcomeOf(answer: Answer | undefined, score: QuestionScore | undefined): QuestionOutcome {
-  if (!answer || answer.selected.length === 0) return 'unanswered';
+  if (!isAnswered(answer)) return 'unanswered';
   if (!score) return 'unanswered';
   if (score.correct) return 'correct';
   return score.points > 0 ? 'partial' : 'wrong';
@@ -139,7 +146,7 @@ export interface Finished {
 export function finishAttempt(quiz: Quiz, attempt: Attempt, answers: readonly Answer[], now = new Date()): Finished {
   const questions = questionsOf(quiz, attempt);
   const byQuestion = new Map(answers.map((a) => [a.questionId, a]));
-  const selected = Object.fromEntries(questions.map((q) => [q.id, byQuestion.get(q.id)?.selected ?? []]));
+  const selected = Object.fromEntries(questions.map((q) => [q.id, given(byQuestion.get(q.id))]));
   const result = scoreQuiz(questions, selected, quiz.scoring, quiz.passThreshold);
   const graded = questions.map((q) => {
     const a = byQuestion.get(q.id) ?? emptyAnswer(q.id);
@@ -162,8 +169,8 @@ export function finishAttempt(quiz: Quiz, attempt: Attempt, answers: readonly An
 /** Recalcule le résultat d'une tentative terminée (récapitulatif, corrigé). */
 export function resultOf(quiz: Quiz, attempt: Attempt, answers: readonly Answer[]): QuizResult {
   const questions = questionsOf(quiz, attempt);
-  const byQuestion = new Map(answers.map((a) => [a.questionId, a.selected]));
-  const selected = Object.fromEntries(questions.map((q) => [q.id, byQuestion.get(q.id) ?? []]));
+  const byQuestion = new Map(answers.map((a) => [a.questionId, a]));
+  const selected = Object.fromEntries(questions.map((q) => [q.id, given(byQuestion.get(q.id))]));
   return scoreQuiz(questions, selected, quiz.scoring, quiz.passThreshold);
 }
 

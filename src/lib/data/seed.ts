@@ -122,6 +122,39 @@ export const demoQuizzes: Quiz[] = [
   },
 ];
 
+/** Question à saisie (réponse courte ou numérique) des données de démonstration. */
+const typed = (id: string, type: 'short' | 'numeric', fr: string, en: string, expected: Question['expected'], expl: [string, string]): Question => ({
+  id,
+  type,
+  prompt: { fr, en },
+  points: 1,
+  position: Number(id.split('-').pop()),
+  explanation: { fr: expl[0], en: expl[1] },
+  choices: [],
+  expected,
+});
+
+demoQuizzes.push({
+  ...baseQuiz('demo-typed', 'cat-culture', ['Réponses à saisir', 'Typed answers'], [
+    'Réponse courte et réponse numérique.',
+    'Short answer and numerical answer.',
+  ]),
+  questions: [
+    typed('demo-typed-q-1', 'short', 'Quelle est la capitale de l’Italie ?', 'What is the capital of Italy?', { accepted: ['Rome', 'Roma'] }, [
+      'Rome est la capitale de l’Italie depuis 1871.',
+      'Rome has been the capital of Italy since 1871.',
+    ]),
+    typed(
+      'demo-typed-q-2',
+      'numeric',
+      'À quelle température l’eau bout-elle au niveau de la mer ?',
+      'At what temperature does water boil at sea level?',
+      { value: 100, tolerance: 0.5, unit: '°C' },
+      ['100 °C sous une pression d’une atmosphère.', '100 °C under a pressure of one atmosphere.'],
+    ),
+  ],
+});
+
 /**
  * Module de démonstration, pour l'aperçu dans un navigateur seulement (`npm run dev`, audit
  * d'accessibilité) : il rend visibles les écrans propres aux modules (contenu protégé, fiche de révision).
@@ -206,8 +239,24 @@ export async function seedDemo(repo: Repository): Promise<boolean> {
       currentIndex: 0,
       questionOrder: ['demo-english-q-1'],
     },
+    {
+      id: 'demo-attempt-typed',
+      quizId: 'demo-typed',
+      quizVersion: 1,
+      mode: 'training',
+      status: 'finished',
+      startedAt: iso(60),
+      finishedAt: iso(58),
+      elapsedSec: 95,
+      currentIndex: 1,
+      questionOrder: ['demo-typed-q-1', 'demo-typed-q-2'],
+      score: 1,
+      maxScore: 2,
+    },
   ];
   for (const a of attempts) await repo.saveAttempt(a);
+  for (const [questionId, text, correct] of [['demo-typed-q-1', 'rome', true], ['demo-typed-q-2', '90', false]] as const)
+    await repo.saveAnswer('demo-attempt-typed', { questionId, selected: [], text, correct, points: correct ? 1 : 0, timeSec: 40, flagged: false });
   if (repo.backend === 'memory') {
     await repo.installModule({
       manifest: demoModule,

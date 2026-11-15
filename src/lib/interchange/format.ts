@@ -66,14 +66,27 @@ export const ChoiceSchema = z.object({
   feedback: I18nRichSchema.nullable().optional(),
 });
 
+/** Réponse attendue d'une question à saisie (absente d'un export « sans corrigé », sauf l'unité). */
+export const ExpectedSchema = z.object({
+  /** Réponse courte : formes acceptées. */
+  accepted: z.array(z.string().max(500)).max(50).optional(),
+  caseSensitive: z.boolean().optional(),
+  /** Réponse numérique : valeur, écart toléré (absolu), unité affichée. */
+  value: z.number().optional(),
+  tolerance: z.number().min(0).optional(),
+  unit: z.string().max(30).nullable().optional(),
+});
+
 export const QuestionSchema = z.object({
   id,
-  type: z.enum(['single', 'multiple']),
+  /** single, multiple : réponses à cocher ; short, numeric : réponse à saisir (`expected`). */
+  type: z.enum(['single', 'multiple', 'short', 'numeric']),
   prompt: I18nRichSchema,
   points: z.number().positive().max(1000),
   position: z.number().int().min(0),
   explanation: I18nRichSchema.nullable().optional(),
   choices: z.array(ChoiceSchema).max(50),
+  expected: ExpectedSchema.nullable().optional(),
 });
 
 export const QuizSchema = z.object({
@@ -139,6 +152,7 @@ export const AnswerRowSchema = z.object({
   attemptId: id,
   questionId: id,
   selected: z.array(id),
+  text: z.string().max(2000).nullable().optional(),
   correct: z.boolean().nullable().optional(),
   points: z.number().nullable().optional(),
   timeSec: z.number().int().min(0),
