@@ -9,7 +9,7 @@ https://votre-domaine/chemin/
   .htaccess                    types de fichiers, HTTPS, cache (Apache)
   abbon.png
   releases/
-    Abbon_X.Y.Z_amd64.AppImage, .deb, .rpm, -setup.exe, .msi, abbon-X.Y.Z.apk
+    Abbon-X.Y.Z-x86_64.AppImage, .deb, .rpm, -setup.exe, .msi, abbon-X.Y.Z.apk
     version.json               description de la version (page, application Android)
     latest.json                mises à jour automatiques Linux / Windows (fichiers signés)
     SHA256SUMS.txt
@@ -48,7 +48,12 @@ Dans le dépôt GitHub, *Settings › Secrets and variables › Actions* :
 La clé publique et l'adresse sont intégrées à la compilation. Sans clé, l'application se construit normalement
 mais ne propose pas de mise à jour automatique (seulement le lien de téléchargement).
 
-Signature de l'APK Android : voir le README (secrets `ANDROID_KEYSTORE_*`).
+Signature de l'APK Android : voir le README (secrets `ANDROID_KEYSTORE_*`, variable facultative
+`ANDROID_CERT_SHA256` ; sur le poste, `keystore.properties` et `abbon.keystore`, ignorés par git).
+
+Noms des binaires : l'exécutable s'appelle `Abbon` (`/usr/bin/Abbon`, `Abbon.exe`) et l'AppImage suit la convention
+d'[AppImageHub](https://github.com/AppImage/appimage.github.io) : `Abbon-X.Y.Z-x86_64.AppImage` (nom et casse du
+dépôt, version, architecture).
 
 ### Hébergement
 

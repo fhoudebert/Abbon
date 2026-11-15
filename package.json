@@ -14,7 +14,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "schema": "UPDATE_SCHEMA=1 vitest run src/lib/interchange/schema-doc.test.ts",
-    "a11y": "python3 scripts/a11y/audit.py"
+    "a11y": "python3 scripts/a11y/audit.py",
+    "android:apk": "tauri android build --apk && bash scripts/android/sign-apk.sh"
   },
   "license": "MIT",
   "dependencies": {

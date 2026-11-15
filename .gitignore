@@ -9,3 +9,10 @@ node_modules
 !.env.example
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Signature de l'APK : jamais dans le dépôt (voir docs/distribution.md).
+# keystore.properties porte les mots de passe en clair.
+keystore.properties
+*.keystore
+*.jks
+/abbon-*.apk

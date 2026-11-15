@@ -79,7 +79,7 @@ npm run a11y                       # options : --themes dark --width 390 --shots
 ```
 
 Tests d'installation (lancent l'application 30 s et vérifient la création de la base) :
-`scripts/smoke/linux.sh abbon`, `scripts/smoke/windows.ps1 -Dist dossier`, `scripts/smoke/android.sh app.apk`.
+`scripts/smoke/linux.sh Abbon`, `scripts/smoke/windows.ps1 -Dist dossier`, `scripts/smoke/android.sh app.apk`.
 
 ## Paquets
 
@@ -114,12 +114,41 @@ L'APK est distribué directement (hors Play Store). Toutes les versions doivent 
 sinon Android refuse la mise à jour. Créer la clé une fois et la sauvegarder hors du poste :
 
 ```sh
-keytool -genkeypair -v -keystore abbon.jks -keyalg RSA -keysize 4096 -validity 10000 -alias abbon
-base64 -w0 abbon.jks   # valeur du secret ANDROID_KEYSTORE_BASE64
+keytool -genkeypair -v -keystore abbon.keystore -storetype PKCS12 -keyalg RSA -keysize 4096 \
+  -validity 10000 -alias abbon
+keytool -list -v -keystore abbon.keystore -alias abbon | grep SHA256   # empreinte du certificat
 ```
 
-Puis déclarer dans les secrets du dépôt : `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`,
-`ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`. Sans ces secrets, la CI produit un APK de debug.
+Le script [`scripts/android/sign-apk.sh`](scripts/android/sign-apk.sh) aligne, signe et vérifie l'APK. Il prend la
+signature dans **une** des deux sources suivantes ; si les deux existent, l'environnement l'emporte.
+
+**Sur GitHub** (variables d'environnement alimentées par les réglages du dépôt) :
+
+| Réglage du dépôt | Variable lue par le script | |
+|---|---|---|
+| secret `ANDROID_KEYSTORE_BASE64` | `ABBON_KEYSTORE_FILE` (fichier décodé) | `base64 -w0 abbon.keystore` |
+| secret `ANDROID_KEYSTORE_PASSWORD` | `ABBON_KEYSTORE_PASSWORD` | mot de passe du magasin |
+| secret `ANDROID_KEY_ALIAS` | `ABBON_KEY_ALIAS` | défaut `abbon` |
+| secret `ANDROID_KEY_PASSWORD` | `ABBON_KEY_PASSWORD` | défaut : celui du magasin (règle du PKCS12) |
+| variable `ANDROID_CERT_SHA256` | `ABBON_CERT_SHA256` | facultatif : le build échoue si la clé n'est pas la bonne |
+
+Sans ces secrets, la CI produit un APK de debug.
+
+**Sur le poste** : déposer `abbon.keystore` et `keystore.properties` à la racine du dépôt. Ces deux fichiers
+sont **ignorés par git** (`git check-ignore -v keystore.properties abbon.keystore`), et le script refuse de signer
+s'ils sont suivis.
+
+```properties
+# keystore.properties — chemin relatif à ce fichier, ou absolu
+storeFile=abbon.keystore
+storePassword=…
+keyAlias=abbon
+keyPassword=…
+```
+
+```sh
+npm run android:apk     # tauri android build --apk, puis signature → abbon-X.Y.Z.apk
+```
 
 ## Organisation du code
 
