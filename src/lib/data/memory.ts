@@ -1,5 +1,5 @@
 import type { Answer, Attempt, Category, Quiz, QuizSummary } from '$lib/domain/types';
-import type { Media, Repository } from './repository';
+import type { AnswerRow, FullData, Media, Repository } from './repository';
 
 const clone = <T>(v: T): T => structuredClone(v);
 
@@ -79,6 +79,44 @@ export class MemoryRepository implements Repository {
   }
   async saveMedia(m: Media) {
     if (!this.media.has(m.hash)) this.media.set(m.hash, clone(m));
+  }
+
+  async exportHistory() {
+    const answers: AnswerRow[] = [];
+    for (const [attemptId, map] of this.answers) for (const a of map.values()) answers.push({ ...clone(a), attemptId });
+    return { attempts: [...this.attempts.values()].map(clone), answers };
+  }
+  async listSettings() {
+    return Object.fromEntries(this.settings);
+  }
+  async listMediaHashes() {
+    return [...this.media.keys()];
+  }
+  async deleteUnusedMedia(keep: string[]) {
+    const k = new Set(keep);
+    let n = 0;
+    for (const h of [...this.media.keys()])
+      if (!k.has(h)) {
+        this.media.delete(h);
+        n++;
+      }
+    return n;
+  }
+  async replaceAll(data: FullData) {
+    const pin = this.settings.get('admin_pin');
+    this.categories = new Map(data.categories.map((c) => [c.id, clone(c)]));
+    this.quizzes = new Map(data.quizzes.map((q) => [q.id, clone(q)]));
+    this.attempts = new Map(data.attempts.filter((a) => this.quizzes.has(a.quizId)).map((a) => [a.id, clone(a)]));
+    this.answers = new Map();
+    for (const { attemptId, ...a } of data.answers) {
+      if (!this.attempts.has(attemptId)) continue;
+      const m = this.answers.get(attemptId) ?? new Map<string, Answer>();
+      m.set(a.questionId, clone(a));
+      this.answers.set(attemptId, m);
+    }
+    this.media = new Map(data.media.map((m) => [m.hash, clone(m)]));
+    this.settings = new Map(Object.entries(data.settings).filter(([k]) => k !== 'admin_pin'));
+    if (pin) this.settings.set('admin_pin', pin);
   }
 
   async getSetting(key: string) {

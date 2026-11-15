@@ -3,12 +3,14 @@
   import { app } from '$lib/app.svelte';
   import AdminGate from '$lib/components/AdminGate.svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+  import ExportDialog from '$lib/components/ExportDialog.svelte';
   import { localize } from '$lib/domain/text';
   import type { QuizSummary } from '$lib/domain/types';
   import { fmtDate, i18n, t } from '$lib/i18n/index.svelte';
 
   let toDelete = $state<QuizSummary | null>(null);
   let confirm: ConfirmDialog;
+  let exporter: ExportDialog;
 
   const lang = $derived(i18n.lang);
   const title = (q: QuizSummary) => localize(q.title, lang, q.languages[0]) || t('admin.untitled');
@@ -34,6 +36,8 @@
     <h1>{t('admin.title')}</h1>
     <div class="actions">
       <a class="button secondary" href="/admin/categories">{t('admin.categories')}</a>
+      <a class="button secondary" href="/admin/import">{t('io.import')}</a>
+      <button class="secondary" disabled={!app.quizzes.length} onclick={() => exporter.open(null)}>{t('io.exportAll')}</button>
       <a class="button" href="/admin/quiz/new">{t('admin.newQuiz')}</a>
     </div>
   </div>
@@ -55,6 +59,7 @@
           <span class="status {q.status}">{t(`admin.status.${q.status}`)}</span>
           <div class="actions">
             <a class="button secondary" href="/admin/quiz/{q.id}">{t('common.edit')}</a>
+            <button class="ghost" onclick={() => exporter.open(q)}>{t('io.export')}</button>
             <button class="ghost" onclick={() => duplicate(q)}>{t('common.duplicate')}</button>
             <button class="ghost danger" onclick={() => askDelete(q)}>{t('common.delete')}</button>
           </div>
@@ -63,6 +68,8 @@
     </ul>
   {/if}
 </AdminGate>
+
+<ExportDialog bind:this={exporter} />
 
 <ConfirmDialog
   bind:this={confirm}

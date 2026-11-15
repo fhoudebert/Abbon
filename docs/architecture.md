@@ -75,8 +75,28 @@ Quatre couches, de la plus stable à la plus dépendante de la plateforme.
 - **Code PIN** : facultatif, PBKDF2-SHA-256 salé (150 000 itérations, WebCrypto). Il évite une modification par
   mégarde ; il ne chiffre pas la base.
 
+## Échange (lot 3)
+
+- **Format `.qcm`** : archive ZIP décrite dans [format-qcm/README.md](format-qcm/README.md). Les schémas Zod de
+  `src/lib/interchange/format.ts` valident tout fichier importé ; les JSON Schema publiés en sont générés.
+- **Lecture défensive** : limites de taille et de nombre de fichiers (archives piégées), chemins `..` refusés,
+  profondeur JSON limitée, images vérifiées (empreinte, signature, taille). Un élément invalide est écarté et
+  signalé, le reste est importé.
+- **Import** : `planImport` propose une action par QCM (ajouter, remplacer si la version du fichier est plus
+  récente, sinon ignorer) ; l'utilisateur peut aussi « ajouter une copie » (nouveaux identifiants). Chaque QCM est
+  enregistré en tout ou rien ; une sauvegarde automatique est écrite avant (5 dernières conservées dans le dossier de
+  données de l'application, `backups/`).
+- **Sauvegarde complète** : contenus, images, historique (avec les copies de QCM des tentatives) et réglages, sauf
+  le code PIN. La restauration remplace tout en une seule transaction (`replaceAll`).
+- **GIFT** : `interchange/gift.ts`, analyseur tolérant (types non pris en charge signalés), export en `[html]`
+  généré par Abbon.
+- **Fichiers** : export par « Enregistrer sous » (plugins Tauri dialog + fs ; le chemin choisi est seul autorisé en
+  écriture), import par `<input type="file">` (sans permission). Les droits fs sont limités au dossier `backups/`.
+
 ## Limites connues
 
 - Les liens ne sont pas proposés dans l'éditeur (pas d'ouverture du navigateur externe pour l'instant).
-- Les images qui ne sont plus utilisées restent dans la table `media` (nettoyage à prévoir avec l'export, lot 3).
+- Les images qui ne servent plus restent en base jusqu'au « Nettoyer les images inutilisées » (Paramètres).
+- Import GIFT : un QCM par fichier ; `$CATEGORY` est ignoré ; le texte `[html]` est réduit à du texte simple.
+- Android : l'export passe par la fenêtre d'enregistrement du système ; non testé sur appareil à ce stade.
 - Réordonner questions et réponses se fait par boutons ↑ ↓ (pas encore de glisser-déposer).

@@ -32,6 +32,16 @@ export interface Repository {
   /** Enregistre une image (sans effet si la même empreinte existe déjà). */
   saveMedia(media: Media): Promise<void>;
 
+  // ---- Sauvegarde complète ----
+  /** Toutes les tentatives (avec l'instantané du QCM) et toutes les réponses. */
+  exportHistory(): Promise<{ attempts: Attempt[]; answers: AnswerRow[] }>;
+  listSettings(): Promise<Record<string, string>>;
+  listMediaHashes(): Promise<string[]>;
+  /** Supprime les images qui ne figurent pas dans `keep` ; renvoie le nombre supprimé. */
+  deleteUnusedMedia(keep: string[]): Promise<number>;
+  /** Remplace tout le contenu, dans une seule transaction (le code PIN est conservé). */
+  replaceAll(data: FullData): Promise<void>;
+
   getSetting(key: string): Promise<string | null>;
   setSetting(key: string, value: string): Promise<void>;
   deleteSetting(key: string): Promise<void>;
@@ -47,4 +57,19 @@ export interface Media {
   sizeBytes: number;
   /** Contenu encodé en base64. */
   data: string;
+}
+
+/** Réponse avec sa tentative (sauvegarde complète). */
+export interface AnswerRow extends Answer {
+  attemptId: string;
+}
+
+/** Tout le contenu d'un appareil (sauvegarde / restauration). */
+export interface FullData {
+  categories: Category[];
+  quizzes: Quiz[];
+  attempts: Attempt[];
+  answers: AnswerRow[];
+  settings: Record<string, string>;
+  media: Media[];
 }

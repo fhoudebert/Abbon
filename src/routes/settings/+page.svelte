@@ -4,6 +4,11 @@
   import { i18n, t, SUPPORTED } from '$lib/i18n/index.svelte';
   import { languageName } from '$lib/i18n/languages';
   import AdminGate from '$lib/components/AdminGate.svelte';
+  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+  import { readPicked, saveFile } from '$lib/files';
+  import type { MessageKey } from '$lib/i18n/fr';
+  import { PackageError, parsePackage, type ParsedPackage } from '$lib/interchange/qcmPackage';
+  import { fmtDate } from '$lib/i18n/index.svelte';
 
   let pin = $state('');
   let pin2 = $state('');
@@ -21,6 +26,56 @@
     busy = false;
     pin = pin2 = '';
     message = t('common.saved');
+  }
+
+  // ---- Sauvegarde ----
+  let backupMsg = $state<string | null>(null);
+  let backupErr = $state<string | null>(null);
+  let pending = $state<ParsedPackage | null>(null);
+  let restoreDialog: ConfirmDialog;
+
+  async function createBackup() {
+    backupMsg = backupErr = null;
+    try {
+      const date = new Date().toISOString().slice(0, 10);
+      const path = await saveFile(`abbon-sauvegarde-${date}.qcm`, await app.exportBackup(), [{ name: 'Abbon', extensions: ['qcm'] }]);
+      if (path) backupMsg = t('io.saved', { path });
+    } catch (e) {
+      backupErr = t('common.error', { error: e instanceof Error ? e.message : String(e) });
+    }
+  }
+
+  async function pickBackup(e: Event) {
+    const input = e.currentTarget as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    backupMsg = backupErr = null;
+    try {
+      const p = await parsePackage(await readPicked(file));
+      if (p.manifest.kind !== 'backup') throw new PackageError('not_backup');
+      pending = p;
+      queueMicrotask(() => restoreDialog.open());
+    } catch (err) {
+      backupErr = err instanceof PackageError ? t(`import.err.${err.code}` as MessageKey) : String(err);
+    }
+  }
+
+  async function doRestore() {
+    if (!pending) return;
+    try {
+      const name = await app.autoBackup();
+      await app.restore(pending);
+      backupMsg = t('backup.restored') + (name ? ` ${t('backup.autoBefore', { name })}` : '');
+    } catch (e) {
+      backupErr = t('common.error', { error: e instanceof Error ? e.message : String(e) });
+    } finally {
+      pending = null;
+    }
+  }
+
+  async function clean() {
+    backupMsg = t('backup.cleaned', { n: await app.cleanMedia() });
   }
 
   async function removePin() {
@@ -68,7 +123,50 @@
   </AdminGate>
 </section>
 
+<section class="panel">
+  <h2>{t('backup.title')}</h2>
+  <AdminGate>
+    <p>{t('backup.hint')}</p>
+    <div class="actions">
+      <button onclick={createBackup}>{t('backup.create')}</button>
+      <label class="button secondary picker">
+        {t('backup.restore')}
+        <input type="file" accept=".qcm,application/zip" onchange={pickBackup} />
+      </label>
+      <button class="ghost" onclick={clean}>{t('backup.clean')}</button>
+    </div>
+    {#if backupMsg}<p class="ok" role="status">{backupMsg}</p>{/if}
+    {#if backupErr}<p class="error" role="alert">{backupErr}</p>{/if}
+    <p class="muted small">{t('backup.auto')}</p>
+  </AdminGate>
+</section>
+
+<ConfirmDialog
+  bind:this={restoreDialog}
+  title={t('backup.confirm.title')}
+  body={pending
+    ? t('backup.confirm.body', {
+        date: fmtDate(pending.manifest.exportedAt),
+        quizzes: pending.quizzes.length,
+        attempts: pending.attempts?.length ?? 0,
+      })
+    : ''}
+  confirmLabel={t('backup.confirm.ok')}
+  danger
+  onconfirm={doRestore}
+/>
+
 <style>
+  .picker {
+    position: relative;
+    cursor: pointer;
+  }
+  .picker input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
   section {
     margin-block-end: 1rem;
   }

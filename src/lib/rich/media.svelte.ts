@@ -1,15 +1,11 @@
 import { app } from '$lib/app.svelte';
+import { b64ToBytes, bytesToB64 } from '$lib/data/bytes';
 
 /** Adresses `blob:` des images déjà chargées, par empreinte (réactif). */
 const urls = $state<Record<string, string>>({});
 const loading = new Map<string, Promise<void>>();
 
-function b64ToBlob(data: string, mime: string): Blob {
-  const bin = atob(data);
-  const bytes = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-  return new Blob([bytes], { type: mime });
-}
+const b64ToBlob = (data: string, mime: string) => new Blob([b64ToBytes(data) as BlobPart], { type: mime });
 
 function load(hash: string): Promise<void> {
   let p = loading.get(hash);
@@ -46,13 +42,6 @@ export const ACCEPTED_IMAGES = 'image/png,image/jpeg,image/webp,image/gif';
 async function sha256Hex(bytes: Uint8Array): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', bytes as BufferSource);
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
-}
-
-function bytesToB64(bytes: Uint8Array): string {
-  let s = '';
-  const CHUNK = 0x8000;
-  for (let i = 0; i < bytes.length; i += CHUNK) s += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
-  return btoa(s);
 }
 
 /** Réduit l'image (1600 px au plus) ; JPEG reste JPEG, les autres formats deviennent PNG. */

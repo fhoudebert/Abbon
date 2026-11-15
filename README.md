@@ -7,10 +7,11 @@ Une seule base de code HTML5 / TypeScript, empaquetée avec [Tauri 2](https://v2
 
 Logiciel libre sous licence [MIT](LICENSE).
 
-> **État : lot 2 (édition).** Administration (code PIN facultatif), création et modification des QCM avec éditeur
-> riche (gras, listes, code coloré, tableaux, images), catégories, contrôles avant publication, aperçu.
-> Passage des QCM (lot 1) : entraînement ou examen, reprise, récapitulatif, corrigé, « refaire les erreurs ».
-> À venir : import / export `.qcm` (lot 3), distribution (lot 4).
+> **État : lot 3 (échange).** Import / export au format ouvert `.qcm` (voir [docs/format-qcm](docs/format-qcm/README.md))
+> et au format GIFT de Moodle, export « sans corrigé », gestion des doublons à l'import, sauvegarde complète et
+> restauration (sauvegarde automatique avant chaque import ou restauration).
+> Lots précédents : édition des QCM (éditeur riche, catégories, PIN), passage (entraînement, examen, corrigé).
+> À venir : distribution et mises à jour (lot 4), finition (lot 5).
 
 ### Raccourcis clavier (passage d'un QCM)
 
@@ -57,7 +58,8 @@ npm run tauri android dev
 
 ```sh
 npm run check              # types TypeScript + Svelte
-npm test                   # tests du domaine, de l'i18n et du SQL (SQLite de Node)
+npm test                   # tests du domaine, de l'i18n, du SQL (SQLite de Node) et des formats d'échange
+npm run schema             # régénère les JSON Schema publiés dans docs/format-qcm
 cd src-tauri && cargo test # tests Rust (migrations)
 ```
 
@@ -103,6 +105,7 @@ src/
   lib/data/      interface Repository ; SQLite (Tauri) et mémoire (navigateur) ; données de démo
   lib/i18n/      messages fr / en, pluriels, formats Intl
   lib/rich/      contenu riche : éditeur TipTap, affichage sûr, coloration du code, images
+  lib/interchange/  format .qcm (schémas, archive), plan d'import, GIFT
   lib/session.svelte.ts  tentative ouverte à l'écran : réponses, chrono, enregistrement
   lib/components/
   routes/        écrans (SvelteKit en mode SPA)

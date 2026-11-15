@@ -170,4 +170,54 @@ describe('SqliteRepository', () => {
     expect((await repo.getQuiz('demo-network'))!.categoryId).toBeNull();
     expect((await repo.listCategories()).map((c) => c.id)).not.toContain('cat-it');
   });
+
+  it('sauvegarde complète puis restauration à l’identique (le PIN de l’appareil est conservé)', async () => {
+    await seedDemo(repo);
+    const quiz = (await repo.getQuiz('demo-culture'))!;
+    const attempt = startAttempt(quiz, 'exam');
+    await repo.saveAttempt(attempt);
+    await repo.saveAnswer(attempt.id, { questionId: quiz.questions[0].id, selected: ['x'], correct: true, points: 1, timeSec: 4, flagged: true });
+    await repo.saveMedia({ hash: 'h1', mime: 'image/png', width: 1, height: 1, sizeBytes: 3, data: 'AAEC' });
+    await repo.setSetting('admin_pin', 'pin-a');
+    const data = {
+      categories: await repo.listCategories(),
+      quizzes: await Promise.all((await repo.listQuizzes()).map(async (q) => (await repo.getQuiz(q.id))!)),
+      ...(await repo.exportHistory()),
+      settings: await repo.listSettings(),
+      media: [(await repo.getMedia('h1'))!],
+    };
+    expect(data.attempts.find((a) => a.id === attempt.id)?.quizSnapshot).toEqual(quiz);
+
+    // Un autre appareil : contenu différent, autre PIN
+    const other = new SqliteRepository(nodeDriver());
+    await other.saveCategory({ id: 'x', parentId: null, name: { fr: 'X' }, position: 0 });
+    await other.setSetting('admin_pin', 'pin-b');
+    await other.replaceAll(data);
+
+    expect(await other.listCategories()).toEqual(data.categories);
+    expect(await other.getQuiz('demo-culture')).toEqual(quiz);
+    const h = await other.exportHistory();
+    expect(h.attempts).toEqual(data.attempts);
+    expect(h.answers).toEqual(data.answers);
+    expect(await other.getMedia('h1')).toEqual(data.media[0]);
+    expect(await other.getSetting('admin_pin')).toBe('pin-b');
+    expect(await other.getSetting('lang')).toBe(data.settings.lang ?? null);
+  });
+
+  it('restaure les sous-catégories quel que soit leur ordre', async () => {
+    await repo.replaceAll({
+      categories: [
+        { id: 'enfant', parentId: 'parent', name: { fr: 'E' }, position: 1 },
+        { id: 'parent', parentId: null, name: { fr: 'P' }, position: 0 },
+      ],
+      quizzes: [], attempts: [], answers: [], settings: {}, media: [],
+    });
+    expect((await repo.listCategories()).map((c) => `${c.id}<${c.parentId}`)).toEqual(['parent<null', 'enfant<parent']);
+  });
+
+  it('supprime les images inutilisées', async () => {
+    for (const hash of ['a', 'b', 'c']) await repo.saveMedia({ hash, mime: 'image/png', sizeBytes: 1, data: 'AA==' });
+    expect(await repo.deleteUnusedMedia(['b'])).toBe(2);
+    expect(await repo.listMediaHashes()).toEqual(['b']);
+  });
 });

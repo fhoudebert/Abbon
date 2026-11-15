@@ -1,5 +1,5 @@
 import type { Answer, Attempt, Category, Choice, Question, Quiz, QuizSummary } from '$lib/domain/types';
-import type { Media, Repository } from './repository';
+import type { AnswerRow, FullData, Media, Repository } from './repository';
 
 /**
  * Pilote SQL minimal. Les requêtes utilisent des paramètres numérotés `$1, $2…`.
@@ -104,54 +104,8 @@ export class SqliteRepository implements Repository {
   }
 
   async saveQuiz(quiz: Quiz): Promise<void> {
-    const statements: Statement[] = [
-      {
-        sql: `INSERT INTO quiz (id, category_id, title, description, languages, level, tags, time_limit_sec,
-           pass_threshold, scoring, solution_visibility, shuffle, status, version, author, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
-         ON CONFLICT(id) DO UPDATE SET category_id = $2, title = $3, description = $4, languages = $5,
-           level = $6, tags = $7, time_limit_sec = $8, pass_threshold = $9, scoring = $10,
-           solution_visibility = $11, shuffle = $12, status = $13, version = $14, author = $15,
-           updated_at = $17`,
-        params: [
-          quiz.id,
-          quiz.categoryId,
-          json(quiz.title),
-          json(quiz.description),
-          json(quiz.languages),
-          quiz.level ?? null,
-          json(quiz.tags),
-          quiz.timeLimitSec ?? null,
-          quiz.passThreshold,
-          quiz.scoring,
-          quiz.solutionVisibility,
-          quiz.shuffle ? 1 : 0,
-          quiz.status,
-          quiz.version,
-          quiz.author ?? null,
-          quiz.createdAt,
-          quiz.updatedAt,
-        ],
-      },
-      // Les questions sont réécrites en entier (les choix suivent par ON DELETE CASCADE).
-      { sql: 'DELETE FROM question WHERE quiz_id = $1', params: [quiz.id] },
-    ];
-    for (const q of quiz.questions) {
-      statements.push({
-        sql: `INSERT INTO question (id, quiz_id, type, prompt, points, position, explanation)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        params: [q.id, quiz.id, q.type, json(q.prompt), q.points, q.position, json(q.explanation)],
-      });
-      for (const c of q.choices) {
-        statements.push({
-          sql: `INSERT INTO choice (id, question_id, content, correct, position, feedback)
-           VALUES ($1, $2, $3, $4, $5, $6)`,
-          params: [c.id, q.id, json(c.content), c.correct ? 1 : 0, c.position, json(c.feedback)],
-        });
-      }
-    }
     // Une seule transaction : en cas d'erreur, le QCM reste dans son état précédent.
-    await this.db.batch(statements);
+    await this.db.batch(quizStatements(quiz));
   }
 
   async deleteQuiz(id: string): Promise<void> {
@@ -256,6 +210,93 @@ export class SqliteRepository implements Repository {
     );
   }
 
+  // ---- Sauvegarde complète --------------------------------------------------
+
+  async exportHistory(): Promise<{ attempts: Attempt[]; answers: AnswerRow[] }> {
+    const rows = await this.db.select<Row>(`SELECT ${ATTEMPT_COLUMNS}, quiz_snapshot FROM attempt ORDER BY started_at`);
+    const attempts = rows.map((r) => ({ ...attemptFromRow(r), quizSnapshot: parse<Quiz | null>(r.quiz_snapshot, null) }));
+    const answers = (await this.db.select<Row>('SELECT * FROM answer')).map((r) => ({
+      attemptId: String(r.attempt_id),
+      questionId: String(r.question_id),
+      selected: parse<string[]>(r.selected, []),
+      correct: r.correct == null ? null : bool(r.correct),
+      points: num(r.points),
+      timeSec: Number(r.time_sec),
+      flagged: bool(r.flagged),
+    }));
+    return { attempts, answers };
+  }
+
+  async listSettings(): Promise<Record<string, string>> {
+    const rows = await this.db.select<Row>('SELECT key, value FROM setting');
+    return Object.fromEntries(rows.map((r) => [String(r.key), String(r.value)]));
+  }
+
+  async listMediaHashes(): Promise<string[]> {
+    return (await this.db.select<Row>('SELECT hash FROM media')).map((r) => String(r.hash));
+  }
+
+  async deleteUnusedMedia(keep: string[]): Promise<number> {
+    const before = (await this.listMediaHashes()).length;
+    await this.db.execute('DELETE FROM media WHERE hash NOT IN (SELECT value FROM json_each($1))', [JSON.stringify(keep)]);
+    return before - (await this.listMediaHashes()).length;
+  }
+
+  async replaceAll(data: FullData): Promise<void> {
+    const st: Statement[] = [
+      { sql: 'DELETE FROM answer', params: [] },
+      { sql: 'DELETE FROM attempt', params: [] },
+      { sql: 'DELETE FROM question', params: [] },
+      { sql: 'DELETE FROM quiz', params: [] },
+      { sql: 'DELETE FROM category', params: [] },
+      { sql: 'DELETE FROM media', params: [] },
+      // Le code PIN de l'appareil est conservé.
+      { sql: "DELETE FROM setting WHERE key <> 'admin_pin'", params: [] },
+    ];
+    // Parents avant enfants (clé étrangère parent_id).
+    const cats = [...data.categories];
+    const placed = new Set<string>();
+    while (cats.length) {
+      const i = cats.findIndex((c) => !c.parentId || placed.has(c.parentId) || !cats.some((o) => o.id === c.parentId));
+      const [c] = cats.splice(i === -1 ? 0 : i, 1);
+      placed.add(c.id);
+      st.push({
+        sql: 'INSERT INTO category (id, parent_id, name, position, color) VALUES ($1, $2, $3, $4, $5)',
+        params: [c.id, c.parentId && data.categories.some((o) => o.id === c.parentId) ? c.parentId : null, json(c.name), c.position, c.color ?? null],
+      });
+    }
+    for (const q of data.quizzes) st.push(...quizStatements(q));
+    for (const m of data.media)
+      st.push({
+        sql: `INSERT INTO media (hash, mime, width, height, size_bytes, data, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        params: [m.hash, m.mime, m.width ?? null, m.height ?? null, m.sizeBytes, m.data, new Date().toISOString()],
+      });
+    const quizIds = new Set(data.quizzes.map((q) => q.id));
+    const attemptIds = new Set<string>();
+    for (const a of data.attempts) {
+      if (!quizIds.has(a.quizId)) continue; // QCM absent : tentative ignorée
+      attemptIds.add(a.id);
+      st.push({
+        sql: `INSERT INTO attempt (id, quiz_id, quiz_version, mode, status, started_at, finished_at,
+           elapsed_sec, current_index, question_order, score, max_score, quiz_snapshot)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+        params: [a.id, a.quizId, a.quizVersion, a.mode, a.status, a.startedAt, a.finishedAt ?? null, a.elapsedSec,
+          a.currentIndex, json(a.questionOrder), a.score ?? null, a.maxScore ?? null, json(a.quizSnapshot ?? null)],
+      });
+    }
+    for (const r of data.answers) {
+      if (!attemptIds.has(r.attemptId)) continue;
+      st.push({
+        sql: `INSERT INTO answer (attempt_id, question_id, selected, correct, points, time_sec, flagged)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        params: [r.attemptId, r.questionId, json(r.selected), r.correct == null ? null : r.correct ? 1 : 0, r.points ?? null, r.timeSec, r.flagged ? 1 : 0],
+      });
+    }
+    for (const [k, v] of Object.entries(data.settings))
+      if (k !== 'admin_pin') st.push({ sql: 'INSERT INTO setting (key, value) VALUES ($1, $2)', params: [k, v] });
+    await this.db.batch(st);
+  }
+
   // ---- Paramètres ---------------------------------------------------------
 
   async getSetting(key: string): Promise<string | null> {
@@ -273,6 +314,56 @@ export class SqliteRepository implements Repository {
       [key, value],
     );
   }
+}
+
+function quizStatements(quiz: Quiz): Statement[] {
+  const statements: Statement[] = [
+    {
+      sql: `INSERT INTO quiz (id, category_id, title, description, languages, level, tags, time_limit_sec,
+         pass_threshold, scoring, solution_visibility, shuffle, status, version, author, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+       ON CONFLICT(id) DO UPDATE SET category_id = $2, title = $3, description = $4, languages = $5,
+         level = $6, tags = $7, time_limit_sec = $8, pass_threshold = $9, scoring = $10,
+         solution_visibility = $11, shuffle = $12, status = $13, version = $14, author = $15,
+         updated_at = $17`,
+      params: [
+        quiz.id,
+        quiz.categoryId,
+        json(quiz.title),
+        json(quiz.description),
+        json(quiz.languages),
+        quiz.level ?? null,
+        json(quiz.tags),
+        quiz.timeLimitSec ?? null,
+        quiz.passThreshold,
+        quiz.scoring,
+        quiz.solutionVisibility,
+        quiz.shuffle ? 1 : 0,
+        quiz.status,
+        quiz.version,
+        quiz.author ?? null,
+        quiz.createdAt,
+        quiz.updatedAt,
+      ],
+    },
+    // Les questions sont réécrites en entier (les choix suivent par ON DELETE CASCADE).
+    { sql: 'DELETE FROM question WHERE quiz_id = $1', params: [quiz.id] },
+  ];
+  for (const q of quiz.questions) {
+    statements.push({
+      sql: `INSERT INTO question (id, quiz_id, type, prompt, points, position, explanation)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      params: [q.id, quiz.id, q.type, json(q.prompt), q.points, q.position, json(q.explanation)],
+    });
+    for (const c of q.choices) {
+      statements.push({
+        sql: `INSERT INTO choice (id, question_id, content, correct, position, feedback)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        params: [c.id, q.id, json(c.content), c.correct ? 1 : 0, c.position, json(c.feedback)],
+      });
+    }
+  }
+  return statements;
 }
 
 const ATTEMPT_COLUMNS = `id, quiz_id, quiz_version, mode, status, started_at, finished_at,

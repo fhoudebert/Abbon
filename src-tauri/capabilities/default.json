@@ -1,13 +1,32 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Permissions minimales de la fenêtre principale d'Abbon",
-  "windows": ["main"],
+  "description": "Permissions minimales de la fenêtre principale d'Abbon : SQL, « Enregistrer sous », sauvegardes automatiques",
+  "windows": [
+    "main"
+  ],
   "permissions": [
     "core:default",
     "sql:allow-load",
     "sql:allow-execute",
     "sql:allow-select",
-    "sql:allow-close"
+    "sql:allow-close",
+    "dialog:allow-save",
+    "fs:allow-write-file",
+    "fs:allow-mkdir",
+    "fs:allow-read-dir",
+    "fs:allow-remove",
+    "fs:allow-exists",
+    {
+      "identifier": "fs:scope",
+      "allow": [
+        {
+          "path": "$APPLOCALDATA/backups"
+        },
+        {
+          "path": "$APPLOCALDATA/backups/**"
+        }
+      ]
+    }
   ]
 }

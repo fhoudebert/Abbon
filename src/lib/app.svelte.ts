@@ -2,7 +2,13 @@ import { getRepository, type Repository } from '$lib/data';
 import { seedDemo } from '$lib/data/seed';
 import { progressOf, type ProgressInfo } from '$lib/domain/progress';
 import { createPin, verifyPin, type PinRecord } from '$lib/domain/pin';
+import { b64ToBytes, bytesToB64 } from '$lib/data/bytes';
 import { cloneQuiz, newQuiz } from '$lib/domain/factory';
+import { localize } from '$lib/domain/text';
+import { writeAutoBackup } from '$lib/files';
+import { quizToGift } from '$lib/interchange/gift';
+import type { ResolvedImport } from '$lib/interchange/plan';
+import { buildPackage, quizMedia, type ContentBundle, type MediaFile, type ParsedPackage } from '$lib/interchange/qcmPackage';
 import { startAttempt } from '$lib/domain/session';
 import type { Attempt, AttemptMode, Category, Quiz, QuizSummary } from '$lib/domain/types';
 import { i18n, setLang } from '$lib/i18n/index.svelte';
@@ -138,6 +144,106 @@ class AppState {
   async deleteCategory(id: string) {
     await (await this.repo()).deleteCategory(id);
     await this.reload();
+  }
+
+  // ---- Échange de fichiers ------------------------------------------------
+
+  /** QCM complets et images utilisées, prêts à exporter. */
+  async #contentBundle(quizIds?: string[]): Promise<ContentBundle> {
+    const repo = await this.repo();
+    const ids = quizIds ?? (await repo.listQuizzes()).map((q) => q.id);
+    const quizzes = (await Promise.all(ids.map((id) => repo.getQuiz(id)))).filter((q): q is Quiz => !!q);
+    return { quizzes, categories: await repo.listCategories(), media: await this.#media(quizMedia(quizzes)) };
+  }
+
+  async #media(hashes: string[]): Promise<Map<string, MediaFile>> {
+    const repo = await this.repo();
+    const out = new Map<string, MediaFile>();
+    for (const h of hashes) {
+      const m = await repo.getMedia(h);
+      if (m) out.set(h, { mime: m.mime, bytes: b64ToBytes(m.data) });
+    }
+    return out;
+  }
+
+  /** Archive .qcm de quelques QCM (ou de tous). */
+  async exportQcm(quizIds: string[] | undefined, solutions: boolean): Promise<Uint8Array> {
+    return buildPackage(await this.#contentBundle(quizIds), { kind: 'content', solutions, appVersion: __APP_VERSION__ });
+  }
+
+  /** Texte GIFT d'un QCM (images incluses en data:). */
+  async exportGift(quizId: string, lang: string): Promise<string> {
+    const { quizzes, categories, media } = await this.#contentBundle([quizId]);
+    const quiz = quizzes[0];
+    const cat = categories.find((c) => c.id === quiz.categoryId);
+    const dataUrl = (h: string) => {
+      const m = media.get(h);
+      return m ? `data:${m.mime};base64,${bytesToB64(m.bytes)}` : undefined;
+    };
+    return quizToGift(quiz, lang, dataUrl, cat ? localize(cat.name, lang) : undefined);
+  }
+
+  /** Sauvegarde complète : contenus, historique, réglages (sauf le code PIN). */
+  async exportBackup(): Promise<Uint8Array> {
+    const repo = await this.repo();
+    const content = await this.#contentBundle();
+    const history = await repo.exportHistory();
+    const snapshots = history.attempts.map((a) => a.quizSnapshot).filter((q): q is Quiz => !!q);
+    const media = await this.#media(quizMedia([...content.quizzes, ...snapshots]));
+    const { admin_pin: _pin, ...settings } = await repo.listSettings();
+    return buildPackage(
+      { ...content, media, ...history, settings },
+      { kind: 'backup', solutions: true, appVersion: __APP_VERSION__ },
+    );
+  }
+
+  /** Sauvegarde automatique avant une opération risquée. */
+  async autoBackup(): Promise<string | null> {
+    return writeAutoBackup(await this.exportBackup());
+  }
+
+  /** Enregistre le résultat d'un import (après sauvegarde automatique). */
+  async applyImport(resolved: ResolvedImport, media: Map<string, MediaFile>): Promise<{ failed: { id: string; error: string }[] }> {
+    const repo = await this.repo();
+    for (const c of resolved.categories) await repo.saveCategory(c);
+    for (const h of quizMedia(resolved.quizzes)) {
+      const m = media.get(h);
+      if (m) await repo.saveMedia({ hash: h, mime: m.mime, sizeBytes: m.bytes.length, data: bytesToB64(m.bytes) });
+    }
+    const failed: { id: string; error: string }[] = [];
+    for (const q of resolved.quizzes) {
+      try {
+        await repo.saveQuiz(q); // chaque QCM en tout ou rien
+      } catch (e) {
+        failed.push({ id: q.id, error: e instanceof Error ? e.message : String(e) });
+      }
+    }
+    await this.reload();
+    return { failed };
+  }
+
+  /** Remplace tout le contenu par celui d'une sauvegarde (le code PIN de l'appareil est conservé). */
+  async restore(p: ParsedPackage) {
+    const repo = await this.repo();
+    await repo.replaceAll({
+      categories: p.categories,
+      quizzes: p.quizzes,
+      attempts: p.attempts ?? [],
+      answers: p.answers ?? [],
+      settings: p.settings ?? {},
+      media: [...p.media].map(([hash, m]) => ({ hash, mime: m.mime, sizeBytes: m.bytes.length, data: bytesToB64(m.bytes) })),
+    });
+    const lang = await repo.getSetting('lang');
+    if (lang) setLang(lang);
+    await this.reload();
+  }
+
+  /** Supprime les images qui ne servent plus (ni aux QCM, ni aux tentatives passées). */
+  async cleanMedia(): Promise<number> {
+    const repo = await this.repo();
+    const quizzes = (await Promise.all((await repo.listQuizzes()).map((q) => repo.getQuiz(q.id)))).filter((q): q is Quiz => !!q);
+    const snapshots = (await repo.exportHistory()).attempts.map((a) => a.quizSnapshot).filter((q): q is Quiz => !!q);
+    return repo.deleteUnusedMedia(quizMedia([...quizzes, ...snapshots]));
   }
 
   /** Vrai si l'administration est accessible (pas de PIN, ou PIN déjà saisi). */
