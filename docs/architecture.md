@@ -54,8 +54,29 @@ Quatre couches, de la plus stable à la plus dépendante de la plateforme.
 - Politique de sécurité du contenu (CSP) stricte dans `tauri.conf.json` : pas de script ni de ressource distante.
 - Permissions Tauri limitées au plugin SQL (`src-tauri/capabilities/default.json`).
 
-## Choix reportés
+## Édition (lot 2)
 
-- **Transactions** : le plugin SQL utilise un pool de connexions ; `BEGIN` / `COMMIT` envoyés par des appels séparés
-  ne sont pas garantis sur la même connexion. La sauvegarde d'un QCM n'est donc pas atomique en lot 0. À traiter au
-  lot 2 (éditeur), par exemple avec une commande Rust dédiée qui écrit un QCM dans une transaction.
+- **Contenu riche** : énoncés, réponses et explications sont des documents JSON TipTap/ProseMirror
+  (`RichValue` = texte simple ou document). Aucun HTML n'est stocké ni injecté : `RichContent.svelte` rend une liste
+  blanche de nœuds (paragraphes, listes, code, tableaux, images…) ; tout nœud inconnu est réduit à son texte. Les textes
+  simples des QCM plus anciens restent valides.
+- **Code** : coloration par lowlight (highlight.js), identique dans l'éditeur et à l'affichage ; langage au choix ou
+  détecté automatiquement.
+- **Images** : réduites à 1600 px à l'insertion, stockées dans la table `media` (base64, clé = SHA-256, migration 3),
+  référencées dans le document par leur empreinte. Pas de fichier sur disque, pas de permission d'accès aux fichiers,
+  sauvegarde atomique avec le QCM, export simple. Texte alternatif signalé s'il manque.
+- **Sauvegarde atomique** : `saveQuiz` envoie toutes ses requêtes à la commande Rust `run_batch`
+  (`src-tauri/src/batch.rs`), exécutées dans une transaction sur une seule connexion : tout ou rien.
+- **Saisie** : les éditeurs transmettent leurs changements après une pause de frappe de 250 ms (revalider le QCM à chaque
+  touche ralentissait la saisie). Sous WebKit, un clic sur un bouton ne retire pas le focus : enregistrer, publier,
+  Ctrl+S et quitter la page appellent donc `flushEdits()` avant tout (`src/lib/rich/pending.ts`).
+- **Publication** : `domain/validate.ts` liste erreurs (bloquantes) et avertissements. Un QCM publié modifié change de
+  version ; s'il devient invalide, il repasse en brouillon à l'enregistrement.
+- **Code PIN** : facultatif, PBKDF2-SHA-256 salé (150 000 itérations, WebCrypto). Il évite une modification par
+  mégarde ; il ne chiffre pas la base.
+
+## Limites connues
+
+- Les liens ne sont pas proposés dans l'éditeur (pas d'ouverture du navigateur externe pour l'instant).
+- Les images qui ne sont plus utilisées restent dans la table `media` (nettoyage à prévoir avec l'export, lot 3).
+- Réordonner questions et réponses se fait par boutons ↑ ↓ (pas encore de glisser-déposer).

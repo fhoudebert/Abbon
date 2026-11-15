@@ -1,12 +1,16 @@
-import type { I18nText, Lang } from './types';
+import { pick, richToPlain } from './rich';
+import type { Lang, RichValue } from './types';
 
 /**
- * Choisit la traduction d'un texte multilingue :
- * langue demandée, puis langue principale du QCM, puis première disponible.
+ * Texte (brut) d'un champ multilingue : langue demandée, puis langue principale du QCM,
+ * puis première disponible. Les contenus riches sont réduits à leur texte.
  */
-export function localize(text: I18nText | null | undefined, lang: Lang, fallback?: Lang): string {
-  if (!text) return '';
-  return text[lang] ?? (fallback ? text[fallback] : undefined) ?? Object.values(text)[0] ?? '';
+export function localize(
+  text: Record<Lang, RichValue> | null | undefined,
+  lang: Lang,
+  fallback?: Lang,
+): string {
+  return richToPlain(pick(text, lang, fallback) ?? '');
 }
 
 /** Identifiant unique (UUID v4) — disponible dans les webviews modernes. */

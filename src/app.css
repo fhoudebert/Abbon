@@ -19,6 +19,15 @@
   --bad: #b3261e;
   --bad-soft: #fbe9e7;
 
+  --code-bg: #f4f6f1;
+  --code-fg: #1d2418;
+  --hl-keyword: #a626a4;
+  --hl-string: #2b7a0b;
+  --hl-number: #b35900;
+  --hl-comment: #6b7566;
+  --hl-title: #0b61a4;
+  --hl-attr: #986801;
+
   --radius: 12px;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 2px 8px rgb(0 0 0 / 0.04);
   --tap: 44px;
@@ -46,6 +55,14 @@
     --bad: #ff8a80;
     --bad-soft: #3a1d1b;
     --shadow: none;
+    --code-bg: #0d110b;
+    --code-fg: #e8eee3;
+    --hl-keyword: #d7a2f0;
+    --hl-string: #a6d98a;
+    --hl-number: #f2b880;
+    --hl-comment: #8a9583;
+    --hl-title: #8cc4f2;
+    --hl-attr: #e9cf7f;
   }
 }
 
@@ -156,4 +173,44 @@ input[type='search'] {
   display: inline-block;
   margin-block-end: 0.75rem;
   text-decoration: none;
+}
+
+/* Coloration syntaxique (classes produites par lowlight / highlight.js). */
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-built_in,
+.hljs-literal,
+.hljs-meta {
+  color: var(--hl-keyword);
+}
+.hljs-string,
+.hljs-regexp,
+.hljs-addition {
+  color: var(--hl-string);
+}
+.hljs-number,
+.hljs-symbol,
+.hljs-bullet {
+  color: var(--hl-number);
+}
+.hljs-comment,
+.hljs-quote,
+.hljs-deletion {
+  color: var(--hl-comment);
+  font-style: italic;
+}
+.hljs-title,
+.hljs-section,
+.hljs-function,
+.hljs-name,
+.hljs-tag {
+  color: var(--hl-title);
+}
+.hljs-attr,
+.hljs-attribute,
+.hljs-variable,
+.hljs-type,
+.hljs-params,
+.hljs-property {
+  color: var(--hl-attr);
 }

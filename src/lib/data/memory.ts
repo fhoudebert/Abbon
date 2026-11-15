@@ -1,5 +1,5 @@
 import type { Answer, Attempt, Category, Quiz, QuizSummary } from '$lib/domain/types';
-import type { Repository } from './repository';
+import type { Media, Repository } from './repository';
 
 const clone = <T>(v: T): T => structuredClone(v);
 
@@ -14,12 +14,18 @@ export class MemoryRepository implements Repository {
   private attempts = new Map<string, Attempt>();
   private answers = new Map<string, Map<string, Answer>>();
   private settings = new Map<string, string>();
+  private media = new Map<string, Media>();
 
   async listCategories() {
     return [...this.categories.values()].map(clone).sort((a, b) => a.position - b.position);
   }
   async saveCategory(c: Category) {
     this.categories.set(c.id, clone(c));
+  }
+  async deleteCategory(id: string) {
+    this.categories.delete(id);
+    for (const c of this.categories.values()) if (c.parentId === id) c.parentId = null;
+    for (const q of this.quizzes.values()) if (q.categoryId === id) q.categoryId = null;
   }
 
   async listQuizzes(): Promise<QuizSummary[]> {
@@ -67,8 +73,19 @@ export class MemoryRepository implements Repository {
     this.answers.set(attemptId, map);
   }
 
+  async getMedia(hash: string) {
+    const m = this.media.get(hash);
+    return m ? clone(m) : null;
+  }
+  async saveMedia(m: Media) {
+    if (!this.media.has(m.hash)) this.media.set(m.hash, clone(m));
+  }
+
   async getSetting(key: string) {
     return this.settings.get(key) ?? null;
+  }
+  async deleteSetting(key: string) {
+    this.settings.delete(key);
   }
   async setSetting(key: string, value: string) {
     this.settings.set(key, value);

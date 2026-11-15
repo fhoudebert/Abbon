@@ -10,7 +10,7 @@ import { demoQuizzes, seedDemo } from './seed';
 import { SqliteRepository, type SqlDriver } from './sqlite';
 
 const migrationsDir = new URL('../../../src-tauri/migrations/', import.meta.url);
-const MIGRATIONS = ['0001_init.sql', '0002_attempt_snapshot.sql'];
+const MIGRATIONS = ['0001_init.sql', '0002_attempt_snapshot.sql', '0003_media.sql'];
 
 /** Convertit `$1` (syntaxe du plugin Tauri / sqlx) en `?1` (SQLite natif). */
 const toNative = (sql: string) => sql.replace(/\$(\d+)/g, '?$1');
@@ -25,6 +25,16 @@ function nodeDriver(): SqlDriver {
     },
     async select(sql, params = []) {
       return db.prepare(toNative(sql)).all(...(params as never[])) as never[];
+    },
+    async batch(statements) {
+      db.exec('BEGIN');
+      try {
+        for (const st of statements) db.prepare(toNative(st.sql)).run(...(st.params as never[]));
+        db.exec('COMMIT');
+      } catch (e) {
+        db.exec('ROLLBACK');
+        throw e;
+      }
     },
   };
 }
@@ -87,6 +97,8 @@ describe('SqliteRepository', () => {
     await repo.setSetting('lang', 'en');
     await repo.setSetting('lang', 'fr');
     expect(await repo.getSetting('lang')).toBe('fr');
+    await repo.deleteSetting('lang');
+    expect(await repo.getSetting('lang')).toBeNull();
   });
 
   it('garde l’instantané du QCM et ne l’écrase pas lors des mises à jour', async () => {
@@ -116,5 +128,46 @@ describe('SqliteRepository', () => {
     ]);
     await repo.deleteQuiz('demo-culture');
     expect(await repo.listAnswers(attempt.id)).toEqual([]);
+  });
+
+  it('sauvegarde un QCM en tout ou rien', async () => {
+    await seedDemo(repo);
+    const quiz = (await repo.getQuiz('demo-culture'))!;
+    const broken = structuredClone(quiz);
+    broken.title = { fr: 'Modifié' };
+    // Deux questions avec le même identifiant : la seconde insertion échoue.
+    broken.questions[1].id = broken.questions[0].id;
+    await expect(repo.saveQuiz(broken)).rejects.toThrow();
+    expect(await repo.getQuiz('demo-culture')).toEqual(quiz);
+  });
+
+  it('enregistre un contenu riche et le relit à l’identique', async () => {
+    await seedDemo(repo);
+    const quiz = (await repo.getQuiz('demo-network'))!;
+    quiz.questions[0].prompt.fr = {
+      type: 'doc',
+      content: [
+        { type: 'paragraph', content: [{ type: 'text', text: 'Code ', marks: [{ type: 'bold' }] }] },
+        { type: 'codeBlock', attrs: { language: 'bash' }, content: [{ type: 'text', text: 'curl -I' }] },
+        { type: 'image', attrs: { hash: 'abc', alt: 'schéma' } },
+      ],
+    };
+    await repo.saveQuiz(quiz);
+    expect((await repo.getQuiz('demo-network'))!.questions[0].prompt.fr).toEqual(quiz.questions[0].prompt.fr);
+  });
+
+  it('enregistre les images une seule fois par empreinte', async () => {
+    const m = { hash: 'h1', mime: 'image/png', width: 2, height: 1, sizeBytes: 3, data: 'AAEC' };
+    await repo.saveMedia(m);
+    await repo.saveMedia({ ...m, data: 'autre' });
+    expect(await repo.getMedia('h1')).toEqual(m);
+    expect(await repo.getMedia('absent')).toBeNull();
+  });
+
+  it('supprimer une catégorie laisse ses QCM sans catégorie', async () => {
+    await seedDemo(repo);
+    await repo.deleteCategory('cat-it');
+    expect((await repo.getQuiz('demo-network'))!.categoryId).toBeNull();
+    expect((await repo.listCategories()).map((c) => c.id)).not.toContain('cat-it');
   });
 });

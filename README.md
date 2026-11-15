@@ -7,9 +7,10 @@ Une seule base de code HTML5 / TypeScript, empaquetée avec [Tauri 2](https://v2
 
 Logiciel libre sous licence [MIT](LICENSE).
 
-> **État : lot 1 (passage des QCM).** Fiche de chaque QCM, passage en mode entraînement (correction après chaque
-> question) ou examen (correction à la fin, chrono facultatif), reprise après fermeture, récapitulatif, corrigé,
-> « refaire les erreurs ». Les QCM sont pour l'instant des données de démonstration : l'éditeur arrive au lot 2.
+> **État : lot 2 (édition).** Administration (code PIN facultatif), création et modification des QCM avec éditeur
+> riche (gras, listes, code coloré, tableaux, images), catégories, contrôles avant publication, aperçu.
+> Passage des QCM (lot 1) : entraînement ou examen, reprise, récapitulatif, corrigé, « refaire les erreurs ».
+> À venir : import / export `.qcm` (lot 3), distribution (lot 4).
 
 ### Raccourcis clavier (passage d'un QCM)
 
@@ -17,6 +18,8 @@ Logiciel libre sous licence [MIT](LICENSE).
 |---|---|
 | `1` … `9` | Cocher / décocher la réponse correspondante |
 | `Entrée` | Valider (entraînement), question suivante, ou terminer |
+
+Dans l'éditeur : `Ctrl+S` enregistre ; dans une réponse, `Entrée` crée la réponse suivante (`Maj+Entrée` : retour à la ligne).
 
 ## Prérequis
 
@@ -99,12 +102,14 @@ src/
   lib/domain/    modèle, score, progression, moteur de passage (session.ts) — TypeScript pur, testé
   lib/data/      interface Repository ; SQLite (Tauri) et mémoire (navigateur) ; données de démo
   lib/i18n/      messages fr / en, pluriels, formats Intl
+  lib/rich/      contenu riche : éditeur TipTap, affichage sûr, coloration du code, images
   lib/session.svelte.ts  tentative ouverte à l'écran : réponses, chrono, enregistrement
   lib/components/
   routes/        écrans (SvelteKit en mode SPA)
 src-tauri/
   migrations/    schéma SQLite versionné (ne jamais modifier une migration publiée)
   src/lib.rs     enveloppe Tauri minimale : plugin SQL + migrations
+  src/batch.rs   commande run_batch : écritures groupées dans une transaction
 ```
 
 Voir [docs/architecture.md](docs/architecture.md).

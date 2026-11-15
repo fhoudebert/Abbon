@@ -25,6 +25,8 @@
 
   <nav>
     <a href="/" aria-current={page.url.pathname === '/' ? 'page' : undefined}>{t('nav.home')}</a>
+    <a href="/admin" aria-current={page.url.pathname.startsWith('/admin') ? 'page' : undefined}>{t('nav.admin')}</a>
+    <a href="/settings" aria-current={page.url.pathname === '/settings' ? 'page' : undefined}>{t('nav.settings')}</a>
     <a href="/about" aria-current={page.url.pathname === '/about' ? 'page' : undefined}>{t('nav.about')}</a>
   </nav>
 

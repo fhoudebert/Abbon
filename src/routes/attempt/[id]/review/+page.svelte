@@ -3,7 +3,9 @@
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
   import { canSeeSolution, choicesOf, outcomeOf, resultOf } from '$lib/domain/session';
+  import { pick } from '$lib/domain/rich';
   import { localize } from '$lib/domain/text';
+  import RichContent from '$lib/rich/RichContent.svelte';
   import { i18n, t } from '$lib/i18n/index.svelte';
   import { AttemptSession } from '$lib/session.svelte';
 
@@ -62,13 +64,13 @@
         <span class="muted">{t('play.questionOf', { n: i + 1, total: session.questions.length })}</span>
         <span class="badge {outcome}">{t(`outcome.${outcome}`)}</span>
       </header>
-      <h2 lang={q.prompt[lang] ? lang : fallback}>{localize(q.prompt, lang, fallback)}</h2>
+      <div class="prompt" lang={q.prompt[lang] ? lang : fallback}><RichContent value={pick(q.prompt, lang, fallback)} /></div>
       <ul class="choices">
         {#each choicesOf(quiz, attempt, q) as c (c.id)}
           {@const picked = selected.includes(c.id)}
           <li class:correct={c.correct} class:wrong={picked && !c.correct}>
             <span class="mark" aria-hidden="true">{c.correct ? '✓' : picked ? '✗' : ''}</span>
-            <span>{localize(c.content, lang, fallback)}</span>
+            <span class="text"><RichContent value={pick(c.content, lang, fallback)} inline /></span>
             {#if picked}<span class="tag">{t('review.yourAnswer')}</span>{/if}
             {#if c.correct}<span class="tag ok">{t('review.expected')}</span>{/if}
           </li>
@@ -76,7 +78,7 @@
       </ul>
       {#if selected.length === 0}<p class="muted">{t('review.noAnswer')}</p>{/if}
       {#if q.explanation}
-        <p class="explanation"><strong>{t('play.explanation')} :</strong> {localize(q.explanation, lang, fallback)}</p>
+        <div class="explanation"><strong>{t('play.explanation')} :</strong> <RichContent value={pick(q.explanation, lang, fallback)} /></div>
       {/if}
     </article>
   {/each}
@@ -120,10 +122,14 @@
     justify-content: space-between;
     align-items: center;
   }
-  .item h2 {
+  .item .prompt {
     font-size: 1.1rem;
+    font-weight: 600;
     margin-block: 0.5rem;
-    white-space: pre-wrap;
+  }
+  .text {
+    flex: 1;
+    min-inline-size: 0;
   }
   .choices {
     list-style: none;

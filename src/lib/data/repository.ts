@@ -10,6 +10,7 @@ export interface Repository {
 
   listCategories(): Promise<Category[]>;
   saveCategory(category: Category): Promise<void>;
+  deleteCategory(id: string): Promise<void>;
 
   listQuizzes(): Promise<QuizSummary[]>;
   getQuiz(id: string): Promise<Quiz | null>;
@@ -27,6 +28,23 @@ export interface Repository {
   listAnswers(attemptId: string): Promise<Answer[]>;
   saveAnswer(attemptId: string, answer: Answer): Promise<void>;
 
+  getMedia(hash: string): Promise<Media | null>;
+  /** Enregistre une image (sans effet si la même empreinte existe déjà). */
+  saveMedia(media: Media): Promise<void>;
+
   getSetting(key: string): Promise<string | null>;
   setSetting(key: string, value: string): Promise<void>;
+  deleteSetting(key: string): Promise<void>;
+}
+
+/** Image stockée dans la base. */
+export interface Media {
+  /** SHA-256 du contenu, en hexadécimal. */
+  hash: string;
+  mime: string;
+  width?: number | null;
+  height?: number | null;
+  sizeBytes: number;
+  /** Contenu encodé en base64. */
+  data: string;
 }

@@ -3,7 +3,9 @@
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
   import { formatDuration, showsInstantFeedback } from '$lib/domain/session';
+  import { pick } from '$lib/domain/rich';
   import { localize } from '$lib/domain/text';
+  import RichContent from '$lib/rich/RichContent.svelte';
   import { i18n, t } from '$lib/i18n/index.svelte';
   import { AttemptSession } from '$lib/session.svelte';
 
@@ -134,9 +136,9 @@
 
     <!-- Pas de fieldset/legend : WebKitGTK y ajoute un espace parasite au premier rendu. -->
     <div class="prompt-block">
-      <p class="prompt" id="prompt-{question.id}" lang={question.prompt[lang] ? lang : fallback}>
-        {localize(question.prompt, lang, fallback)}
-      </p>
+      <div class="prompt" id="prompt-{question.id}" lang={question.prompt[lang] ? lang : fallback}>
+        <RichContent value={pick(question.prompt, lang, fallback)} />
+      </div>
       <p class="hint muted">{question.type === 'single' ? t('play.single') : t('play.multiple')}</p>
 
       <div
@@ -154,7 +156,7 @@
               onchange={() => session.choose(choice.id)}
             />
             <span class="key" aria-hidden="true">{i + 1}</span>
-            <span class="text" lang={choice.content[lang] ? lang : fallback}>{localize(choice.content, lang, fallback)}</span>
+            <span class="text" lang={choice.content[lang] ? lang : fallback}><RichContent value={pick(choice.content, lang, fallback)} inline /></span>
           </label>
         {/each}
       </div>
@@ -166,7 +168,7 @@
           {answer.correct ? t('play.correct') : (answer.points ?? 0) > 0 ? t('play.partial') : t('play.wrong')}
         </strong>
         {#if question.explanation}
-          <p><span class="muted">{t('play.explanation')} :</span> {localize(question.explanation, lang, fallback)}</p>
+          <div class="expl"><span class="muted">{t('play.explanation')} :</span> <RichContent value={pick(question.explanation, lang, fallback)} /></div>
         {/if}
       </div>
     {/if}
@@ -276,8 +278,10 @@
   .prompt {
     font-size: 1.2rem;
     font-weight: 600;
-    white-space: pre-wrap;
-    margin: 0;
+  }
+  .prompt :global(pre),
+  .prompt :global(table) {
+    font-weight: 400;
   }
   .hint {
     margin-block: 0.25rem 0.75rem;
@@ -328,14 +332,15 @@
     padding: 0 0.35em;
   }
   .text {
-    white-space: pre-wrap;
+    flex: 1;
+    min-inline-size: 0;
   }
   .feedback {
     padding: 0.75rem 1rem;
     border-radius: 10px;
     border-inline-start: 4px solid;
   }
-  .feedback p {
+  .feedback .expl {
     margin-block: 0.4rem 0;
   }
   .feedback.ok {

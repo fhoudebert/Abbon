@@ -3,6 +3,8 @@
 //! Le Rust reste volontairement minimal : la logique métier vit en TypeScript
 //! (`src/lib/domain`). Ici on enregistre les plugins et les migrations SQLite.
 
+mod batch;
+
 use tauri_plugin_sql::{Migration, MigrationKind};
 
 /// Nom du fichier de base, relatif au répertoire de données de l'application.
@@ -24,6 +26,12 @@ pub fn migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/0002_attempt_snapshot.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 3,
+            description: "media_in_db",
+            sql: include_str!("../migrations/0003_media.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 
@@ -35,6 +43,7 @@ pub fn run() {
                 .add_migrations(DB_URL, migrations())
                 .build(),
         )
+        .invoke_handler(tauri::generate_handler![batch::run_batch])
         .run(tauri::generate_context!())
         .expect("erreur au lancement d'Abbon");
 }

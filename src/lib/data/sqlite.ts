@@ -1,5 +1,5 @@
 import type { Answer, Attempt, Category, Choice, Question, Quiz, QuizSummary } from '$lib/domain/types';
-import type { Repository } from './repository';
+import type { Media, Repository } from './repository';
 
 /**
  * Pilote SQL minimal. Les requêtes utilisent des paramètres numérotés `$1, $2…`.
@@ -9,6 +9,13 @@ import type { Repository } from './repository';
 export interface SqlDriver {
   execute(sql: string, params?: unknown[]): Promise<void>;
   select<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T[]>;
+  /** Exécute toutes les requêtes dans une seule transaction : tout ou rien. */
+  batch(statements: Statement[]): Promise<void>;
+}
+
+export interface Statement {
+  sql: string;
+  params: unknown[];
 }
 
 type Row = Record<string, unknown>;
@@ -35,6 +42,11 @@ export class SqliteRepository implements Repository {
       position: Number(r.position),
       color: (r.color as string) ?? null,
     }));
+  }
+
+  async deleteCategory(id: string): Promise<void> {
+    // Les QCM et sous-catégories concernés passent « sans catégorie » (ON DELETE SET NULL).
+    await this.db.execute('DELETE FROM category WHERE id = $1', [id]);
   }
 
   async saveCategory(c: Category): Promise<void> {
@@ -92,54 +104,82 @@ export class SqliteRepository implements Repository {
   }
 
   async saveQuiz(quiz: Quiz): Promise<void> {
-    await this.db.execute(
-      `INSERT INTO quiz (id, category_id, title, description, languages, level, tags, time_limit_sec,
-         pass_threshold, scoring, solution_visibility, shuffle, status, version, author, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
-       ON CONFLICT(id) DO UPDATE SET category_id = $2, title = $3, description = $4, languages = $5,
-         level = $6, tags = $7, time_limit_sec = $8, pass_threshold = $9, scoring = $10,
-         solution_visibility = $11, shuffle = $12, status = $13, version = $14, author = $15,
-         updated_at = $17`,
-      [
-        quiz.id,
-        quiz.categoryId,
-        json(quiz.title),
-        json(quiz.description),
-        json(quiz.languages),
-        quiz.level ?? null,
-        json(quiz.tags),
-        quiz.timeLimitSec ?? null,
-        quiz.passThreshold,
-        quiz.scoring,
-        quiz.solutionVisibility,
-        quiz.shuffle ? 1 : 0,
-        quiz.status,
-        quiz.version,
-        quiz.author ?? null,
-        quiz.createdAt,
-        quiz.updatedAt,
-      ],
-    );
-    // Les questions sont réécrites en entier (les choix suivent par ON DELETE CASCADE).
-    await this.db.execute('DELETE FROM question WHERE quiz_id = $1', [quiz.id]);
+    const statements: Statement[] = [
+      {
+        sql: `INSERT INTO quiz (id, category_id, title, description, languages, level, tags, time_limit_sec,
+           pass_threshold, scoring, solution_visibility, shuffle, status, version, author, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+         ON CONFLICT(id) DO UPDATE SET category_id = $2, title = $3, description = $4, languages = $5,
+           level = $6, tags = $7, time_limit_sec = $8, pass_threshold = $9, scoring = $10,
+           solution_visibility = $11, shuffle = $12, status = $13, version = $14, author = $15,
+           updated_at = $17`,
+        params: [
+          quiz.id,
+          quiz.categoryId,
+          json(quiz.title),
+          json(quiz.description),
+          json(quiz.languages),
+          quiz.level ?? null,
+          json(quiz.tags),
+          quiz.timeLimitSec ?? null,
+          quiz.passThreshold,
+          quiz.scoring,
+          quiz.solutionVisibility,
+          quiz.shuffle ? 1 : 0,
+          quiz.status,
+          quiz.version,
+          quiz.author ?? null,
+          quiz.createdAt,
+          quiz.updatedAt,
+        ],
+      },
+      // Les questions sont réécrites en entier (les choix suivent par ON DELETE CASCADE).
+      { sql: 'DELETE FROM question WHERE quiz_id = $1', params: [quiz.id] },
+    ];
     for (const q of quiz.questions) {
-      await this.db.execute(
-        `INSERT INTO question (id, quiz_id, type, prompt, points, position, explanation)
+      statements.push({
+        sql: `INSERT INTO question (id, quiz_id, type, prompt, points, position, explanation)
          VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        [q.id, quiz.id, q.type, json(q.prompt), q.points, q.position, json(q.explanation)],
-      );
+        params: [q.id, quiz.id, q.type, json(q.prompt), q.points, q.position, json(q.explanation)],
+      });
       for (const c of q.choices) {
-        await this.db.execute(
-          `INSERT INTO choice (id, question_id, content, correct, position, feedback)
+        statements.push({
+          sql: `INSERT INTO choice (id, question_id, content, correct, position, feedback)
            VALUES ($1, $2, $3, $4, $5, $6)`,
-          [c.id, q.id, json(c.content), c.correct ? 1 : 0, c.position, json(c.feedback)],
-        );
+          params: [c.id, q.id, json(c.content), c.correct ? 1 : 0, c.position, json(c.feedback)],
+        });
       }
     }
+    // Une seule transaction : en cas d'erreur, le QCM reste dans son état précédent.
+    await this.db.batch(statements);
   }
 
   async deleteQuiz(id: string): Promise<void> {
     await this.db.execute('DELETE FROM quiz WHERE id = $1', [id]);
+  }
+
+  // ---- Médias -------------------------------------------------------------
+
+  async getMedia(hash: string): Promise<Media | null> {
+    const [r] = await this.db.select<Row>('SELECT * FROM media WHERE hash = $1', [hash]);
+    return r
+      ? {
+          hash: String(r.hash),
+          mime: String(r.mime),
+          width: num(r.width),
+          height: num(r.height),
+          sizeBytes: Number(r.size_bytes),
+          data: String(r.data),
+        }
+      : null;
+  }
+
+  async saveMedia(m: Media): Promise<void> {
+    await this.db.execute(
+      `INSERT INTO media (hash, mime, width, height, size_bytes, data, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT(hash) DO NOTHING`,
+      [m.hash, m.mime, m.width ?? null, m.height ?? null, m.sizeBytes, m.data, new Date().toISOString()],
+    );
   }
 
   // ---- Tentatives ---------------------------------------------------------
@@ -221,6 +261,10 @@ export class SqliteRepository implements Repository {
   async getSetting(key: string): Promise<string | null> {
     const [row] = await this.db.select<Row>('SELECT value FROM setting WHERE key = $1', [key]);
     return row ? String(row.value) : null;
+  }
+
+  async deleteSetting(key: string): Promise<void> {
+    await this.db.execute('DELETE FROM setting WHERE key = $1', [key]);
   }
 
   async setSetting(key: string, value: string): Promise<void> {

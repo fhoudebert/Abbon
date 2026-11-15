@@ -1,4 +1,4 @@
-import { isTauri } from '@tauri-apps/api/core';
+import { invoke, isTauri } from '@tauri-apps/api/core';
 import { MemoryRepository } from './memory';
 import type { Repository } from './repository';
 import { SqliteRepository, type SqlDriver } from './sqlite';
@@ -25,6 +25,8 @@ async function open(): Promise<Repository> {
       await db.execute(sql, params);
     },
     select: (sql, params) => db.select(sql, params),
+    // Commande Rust `run_batch` : transaction sur une seule connexion (src-tauri/src/batch.rs).
+    batch: (statements) => invoke('run_batch', { db: DB_URL, statements }),
   };
   return new SqliteRepository(driver);
 }
