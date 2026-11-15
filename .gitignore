@@ -14,5 +14,8 @@ vite.config.ts.timestamp-*
 # keystore.properties porte les mots de passe en clair.
 keystore.properties
 *.keystore
+keystore.base64
 *.jks
 /abbon-*.apk
+commandes.txt
+local.properties
