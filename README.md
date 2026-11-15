@@ -7,10 +7,18 @@ Une seule base de code HTML5 / TypeScript, empaquetée avec [Tauri 2](https://v2
 
 Logiciel libre sous licence [MIT](LICENSE).
 
-> **État : lot 4 (distribution).** Site de téléchargement PHP, mises à jour automatiques signées sous Linux et
-> Windows, nouvelle version proposée sous Android ; publication par tag (voir [docs/distribution.md](docs/distribution.md)).
-> Lots précédents : échange (`.qcm`, GIFT, sauvegarde), édition (éditeur riche, catégories, PIN), passage des QCM.
-> À venir : finition (lot 5).
+> **État : lot 5 (finition).** Accessibilité vérifiée (WCAG 2.1 AA, clair et sombre), thème et taille du texte
+> réglables, interface utilisable sur téléphone, installation testée en CI sur Debian, Ubuntu, Fedora, Windows et
+> un émulateur Android, installateur Windows en français et en anglais.
+> Lots précédents : distribution et mises à jour ([docs/distribution.md](docs/distribution.md)), échange (`.qcm`,
+> GIFT, sauvegarde), édition (éditeur riche, catégories, PIN), passage des QCM.
+
+### Accessibilité
+
+- Navigation complète au clavier, lien « Aller au contenu », focus placé sur le contenu à chaque changement de page,
+  titre de fenêtre propre à chaque écran.
+- Paramètres → Affichage : thème (système, clair, sombre) et taille du texte (normale, grande, très grande).
+- Animations désactivées si le système le demande (`prefers-reduced-motion`).
 
 ### Raccourcis clavier (passage d'un QCM)
 
@@ -62,6 +70,17 @@ npm run schema             # régénère les JSON Schema publiés dans docs/form
 cd src-tauri && cargo test # tests Rust (migrations)
 ```
 
+Audit d'accessibilité (axe-core, WCAG 2.1 A/AA) de tous les écrans dans WebKitGTK, le moteur de l'application
+sous Linux (paquets `python3-gi`, `gir1.2-webkit2-4.1`) :
+
+```sh
+npm run build && npx vite preview --port 4173 &
+npm run a11y                       # options : --themes dark --width 390 --shots captures/
+```
+
+Tests d'installation (lancent l'application 30 s et vérifient la création de la base) :
+`scripts/smoke/linux.sh abbon`, `scripts/smoke/windows.ps1 -Dist dossier`, `scripts/smoke/android.sh app.apk`.
+
 ## Paquets
 
 ```sh
@@ -72,8 +91,8 @@ npm run tauri build -- --bundles msi,nsis            # Windows (sur Windows)
 
 ### Intégration continue
 
-- [`ci.yml`](.github/workflows/ci.yml) : types, tests TS et Rust, lint, à chaque push sur n'importe quelle branche et
-  à chaque pull request.
+- [`ci.yml`](.github/workflows/ci.yml) : types, tests TS et Rust, lint, audit d'accessibilité, à chaque push sur
+  n'importe quelle branche et à chaque pull request.
 - [`build.yml`](.github/workflows/build.yml) : paquets Linux, Android et Windows.
   - **À la demande** : onglet *Actions* → *Build* → *Run workflow*, puis saisir la branche (ou un tag, un commit) et
     cocher les plateformes. Les paquets se téléchargent depuis les *artifacts* de l'exécution.
@@ -83,6 +102,9 @@ npm run tauri build -- --bundles msi,nsis            # Windows (sur Windows)
     workflow lui-même, choisir la même branche aux deux endroits.
   - **Sur un tag `vX.Y.Z`** : les trois plateformes, puis un brouillon de release avec les empreintes SHA-256.
     Le tag doit correspondre à la version de `package.json`, sinon le build s'arrête.
+  - **Tests d'installation** (case *smoke*, toujours sur un tag) : `.deb` sur Debian 12, Debian 13 et Ubuntu 24.04,
+    `.rpm` sur Fedora, AppImage, installateur NSIS sous Windows, APK sur un émulateur Android 14 (capture d'écran
+    en *artifact*). Ils sont informatifs : la release ne les attend pas.
 
 GitHub n'affiche le bouton *Run workflow* que si le workflow est présent sur la branche par défaut du dépôt.
 

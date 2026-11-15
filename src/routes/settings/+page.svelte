@@ -6,6 +6,7 @@
   import AdminGate from '$lib/components/AdminGate.svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import UpdatePanel from '$lib/components/UpdatePanel.svelte';
+  import { prefs, TEXT_SIZES, THEMES, type TextSize, type Theme } from '$lib/prefs.svelte';
   import { readPicked, saveFile } from '$lib/files';
   import type { MessageKey } from '$lib/i18n/fr';
   import { PackageError, parsePackage, type ParsedPackage } from '$lib/interchange/qcmPackage';
@@ -67,6 +68,7 @@
     try {
       const name = await app.autoBackup();
       await app.restore(pending);
+      await prefs.load();
       backupMsg = t('backup.restored') + (name ? ` ${t('backup.autoBefore', { name })}` : '');
     } catch (e) {
       backupErr = t('common.error', { error: e instanceof Error ? e.message : String(e) });
@@ -85,13 +87,28 @@
   }
 </script>
 
+<svelte:head><title>{t('settings.title')} — Abbon</title></svelte:head>
+
 <h1>{t('settings.title')}</h1>
 
 <section class="panel">
+  <h2>{t('settings.display')}</h2>
   <label class="row">
     {t('settings.language')}
     <select value={i18n.lang} onchange={(e) => app.changeLang(e.currentTarget.value)}>
       {#each SUPPORTED as code (code)}<option value={code}>{languageName(code)}</option>{/each}
+    </select>
+  </label>
+  <label class="row">
+    {t('settings.theme')}
+    <select value={prefs.theme} onchange={(e) => prefs.setTheme(e.currentTarget.value as Theme)}>
+      {#each THEMES as th (th)}<option value={th}>{t(`settings.theme.${th}`)}</option>{/each}
+    </select>
+  </label>
+  <label class="row">
+    {t('settings.textSize')}
+    <select value={prefs.textSize} onchange={(e) => prefs.setTextSize(e.currentTarget.value as TextSize)}>
+      {#each TEXT_SIZES as sz (sz)}<option value={sz}>{t(`settings.textSize.${sz}`)}</option>{/each}
     </select>
   </label>
 </section>
@@ -178,6 +195,9 @@
   }
   h2 {
     font-size: 1.1rem;
+  }
+  .row + .row {
+    margin-block-start: 0.75rem;
   }
   .row {
     display: flex;

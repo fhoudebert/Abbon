@@ -149,6 +149,17 @@ export const en: Messages = {
 
   'settings.title': 'Settings',
   'settings.language': 'Interface language',
+  'a11y.skip': 'Skip to content',
+  'play.progress': 'Progress',
+  'settings.display': 'Display',
+  'settings.theme': 'Theme',
+  'settings.theme.system': 'Same as system',
+  'settings.theme.light': 'Light',
+  'settings.theme.dark': 'Dark',
+  'settings.textSize': 'Text size',
+  'settings.textSize.normal': 'Normal',
+  'settings.textSize.large': 'Large',
+  'settings.textSize.xlarge': 'Extra large',
 
   'admin.title': 'Admin',
   'admin.newQuiz': 'New quiz',

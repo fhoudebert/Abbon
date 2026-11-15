@@ -32,6 +32,8 @@
   const main = $derived(quiz?.languages[0] ?? 'fr');
 </script>
 
+<svelte:head><title>{t('preview.title')} — Abbon</title></svelte:head>
+
 <AdminGate>
   {#if quiz === undefined}
     <p aria-busy="true">{t('home.loading')}</p>

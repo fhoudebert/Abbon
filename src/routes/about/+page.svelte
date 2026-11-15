@@ -7,6 +7,8 @@
   const platform = isTauri() ? 'Tauri' : 'Web';
 </script>
 
+<svelte:head><title>{t('about.title')} — Abbon</title></svelte:head>
+
 <h1>{t('about.title')}</h1>
 
 <img src="/abbon.png" alt="" width="96" height="96" />

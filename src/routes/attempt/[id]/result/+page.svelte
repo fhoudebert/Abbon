@@ -43,6 +43,8 @@
   }
 </script>
 
+<svelte:head><title>{t('result.title')} — Abbon</title></svelte:head>
+
 {#if session.error}
   <p role="alert">{t('common.error', { error: session.error })}</p>
 {:else if !quiz || !attempt || !result}

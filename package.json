@@ -13,7 +13,8 @@
     "tauri": "tauri",
     "test": "vitest run",
     "test:watch": "vitest",
-    "schema": "UPDATE_SCHEMA=1 vitest run src/lib/interchange/schema-doc.test.ts"
+    "schema": "UPDATE_SCHEMA=1 vitest run src/lib/interchange/schema-doc.test.ts",
+    "a11y": "python3 scripts/a11y/audit.py"
   },
   "license": "MIT",
   "dependencies": {
@@ -38,6 +39,7 @@
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
     "@tauri-apps/cli": "^2",
     "@types/node": "^26.6.6",
+    "axe-core": "^4.14.0",
     "svelte": "^5.56.3",
     "svelte-check": "^4.6.0",
     "typescript": "~6.0.3",

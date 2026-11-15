@@ -152,6 +152,17 @@ export const fr = {
 
   'settings.title': 'Paramètres',
   'settings.language': 'Langue de l’interface',
+  'a11y.skip': 'Aller au contenu',
+  'play.progress': 'Progression',
+  'settings.display': 'Affichage',
+  'settings.theme': 'Thème',
+  'settings.theme.system': 'Comme le système',
+  'settings.theme.light': 'Clair',
+  'settings.theme.dark': 'Sombre',
+  'settings.textSize': 'Taille du texte',
+  'settings.textSize.normal': 'Normale',
+  'settings.textSize.large': 'Grande',
+  'settings.textSize.xlarge': 'Très grande',
 
   'admin.title': 'Administration',
   'admin.newQuiz': 'Nouveau QCM',
