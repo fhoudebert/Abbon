@@ -24,7 +24,7 @@ on:
       ref:
         description: 'Branche, tag ou commit à compiler'
         required: true
-        default: init
+        default: main
         type: string
       linux:
         description: 'Linux : deb, rpm, AppImage'
