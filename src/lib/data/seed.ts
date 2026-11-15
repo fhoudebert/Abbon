@@ -80,11 +80,12 @@ export const demoQuizzes: Quiz[] = [
         ['Argon', 'Argon', true],
         ['Hydrogène', 'Hydrogen', false],
       ]),
-      q('demo-culture-q-3', 'single', 'Combien de côtés a un hexagone ?', 'How many sides does a hexagon have?', [
-        ['5', '5', false],
-        ['6', '6', true],
+      q('demo-culture-q-3', 'single', 'Combien de faces a un dodécaèdre ?', 'How many faces does a dodecahedron have?', [
         ['8', '8', false],
-      ]),
+        ['12', '12', true],
+        ['16', '16', false],
+        ['20', '20', false],
+      ], ['Le dodécaèdre régulier a 12 faces pentagonales ; c’est l’icosaèdre qui en a 20.', 'The regular dodecahedron has 12 pentagonal faces; the icosahedron is the one with 20.']),
     ],
   },
   {
