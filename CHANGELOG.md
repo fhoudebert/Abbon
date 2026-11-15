@@ -3,6 +3,20 @@
 Chaque version a une section `## X.Y.Z`, avec des sous-sections `### fr` et `### en`.
 Leur contenu est repris tel quel dans les notes de version (page de téléchargement, application).
 
+## 0.2.0
+
+### fr
+- Modules de contenu : un fichier `.qcm` s'installe, se met à jour et se retire d'un bloc ; ses QCM sont protégés (« Dupliquer pour modifier » en fait une copie personnelle).
+- Fiches de révision par catégorie, depuis la page d'un QCM et depuis le corrigé.
+- Premier module, en version pilote : « Anglais : verbes irréguliers » (30 questions, français et anglais).
+- Désinstallation avec ou sans l'historique des tentatives ; gardé, il revient à la réinstallation.
+
+### en
+- Content modules: a `.qcm` file is installed, updated and removed as a whole; its quizzes are protected (“Duplicate to edit” makes a personal copy).
+- Revision sheets per category, from the quiz page and from the answers.
+- First module, pilot version: “English: irregular verbs” (30 questions, French and English).
+- Uninstall with or without the attempt history; when kept, it comes back on reinstall.
+
 ## 0.1.0
 
 ### fr

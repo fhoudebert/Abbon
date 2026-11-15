@@ -2,8 +2,9 @@
  * Construction et lecture des archives `.qcm` (ZIP), en fonctions pures.
  */
 import { strFromU8, strToU8, unzipSync, zipSync, type Zippable } from 'fflate';
+import { z } from 'zod';
 import { mediaHashes } from '$lib/domain/rich';
-import type { Attempt, Category, Quiz, RichValue } from '$lib/domain/types';
+import type { Attempt, Category, InstalledModule, ModuleManifest, Quiz, RichValue } from '$lib/domain/types';
 import {
   AnswerRowSchema,
   AttemptSchema,
@@ -18,6 +19,13 @@ import {
   type AnswerRow,
   type Manifest,
 } from './format';
+import { MODULE_FILE, MODULE_FORMAT, MODULE_FORMAT_VERSION, ModuleSchema } from './module';
+
+const InstalledModuleSchema = z.object({
+  manifest: ModuleSchema,
+  installedAt: z.string().max(40),
+  updatedAt: z.string().max(40),
+});
 
 export interface MediaFile {
   mime: string;
@@ -28,17 +36,29 @@ export interface ContentBundle {
   quizzes: Quiz[];
   categories: Category[];
   media: Map<string, MediaFile>;
+  /** Présent : le paquet est un module (`module.json` ajouté à l'archive). */
+  module?: ModuleManifest;
 }
 
 export interface BackupBundle extends ContentBundle {
   attempts: Attempt[];
   answers: AnswerRow[];
   settings: Record<string, string>;
+  /** Modules installés (sauvegarde complète : `modules.json`). */
+  modules?: InstalledModule[];
 }
 
 /** Problème non bloquant relevé à la lecture (l'élément concerné est ignoré ou corrigé). */
 export interface Problem {
-  code: 'quiz_invalid' | 'media_invalid' | 'media_missing' | 'no_solutions' | 'history_invalid' | 'category_invalid';
+  code:
+    | 'quiz_invalid'
+    | 'media_invalid'
+    | 'media_missing'
+    | 'no_solutions'
+    | 'history_invalid'
+    | 'category_invalid'
+    | 'module_invalid'
+    | 'module_unsupported';
   ref?: string;
   detail?: string;
 }
@@ -91,6 +111,10 @@ function richValues(q: Quiz): (RichValue | null | undefined)[] {
 /** Empreintes des images utilisées par des QCM. */
 export const quizMedia = (quizzes: readonly Quiz[]) => mediaHashes(quizzes.flatMap(richValues));
 
+/** Empreintes des images utilisées par les fiches de révision de modules. */
+export const sheetMedia = (modules: readonly Pick<ModuleManifest, 'sheets'>[]) =>
+  mediaHashes(modules.flatMap((m) => Object.values(m.sheets ?? {}).flatMap((s) => Object.values(s))));
+
 /** Retire bonnes réponses, explications et retours (export « sans corrigé »). */
 export function stripSolutions(quiz: Quiz): Quiz {
   const q = structuredClone(quiz);
@@ -130,7 +154,10 @@ export function buildPackage(bundle: ContentBundle | BackupBundle, opts: BuildOp
   const quizzes = opts.solutions ? bundle.quizzes : bundle.quizzes.map(stripSolutions);
   const isBackup = opts.kind === 'backup' && 'attempts' in bundle;
   const snapshots = isBackup ? bundle.attempts.map((a) => a.quizSnapshot).filter((q): q is Quiz => !!q) : [];
-  const used = quizMedia([...quizzes, ...snapshots]).filter((h) => bundle.media.has(h));
+  const module = opts.kind === 'content' ? bundle.module : undefined;
+  const modules = isBackup ? (bundle.modules ?? []) : [];
+  const sheets = sheetMedia([...(module ? [module] : []), ...modules.map((m) => m.manifest)]);
+  const used = [...new Set([...quizMedia([...quizzes, ...snapshots]), ...sheets])].filter((h) => bundle.media.has(h));
 
   const manifest: Manifest = {
     format: FORMAT_NAME,
@@ -145,9 +172,13 @@ export function buildPackage(bundle: ContentBundle | BackupBundle, opts: BuildOp
 
   const files: Zippable = {
     'manifest.json': json(manifest),
-    'categories.json': json(isBackup ? bundle.categories : categoriesFor(quizzes, bundle.categories)),
+    'categories.json': json(
+      (isBackup ? bundle.categories : categoriesFor(quizzes, bundle.categories)).map(({ moduleId: _m, ...c }) => c),
+    ),
   };
-  for (const q of quizzes) files[`quizzes/${q.id}.json`] = json(q);
+  if (module) files[MODULE_FILE] = json(module);
+  // `moduleId` est propre à l'appareil : il ne sort pas dans le fichier (une sauvegarde le retrouve par modules.json).
+  for (const { moduleId: _m, ...q } of quizzes) files[`quizzes/${q.id}.json`] = json(q);
   for (const h of used) {
     const m = bundle.media.get(h)!;
     // Images déjà compressées : stockées sans recompression.
@@ -157,8 +188,10 @@ export function buildPackage(bundle: ContentBundle | BackupBundle, opts: BuildOp
     files['attempts.json'] = json(bundle.attempts);
     files['answers.json'] = json(bundle.answers);
     files['settings.json'] = json(bundle.settings);
+    if (modules.length) files['modules.json'] = json(modules);
   }
-  return zipSync(files, { level: 6 });
+  // Date fixe si `now` est fourni : deux constructions du même contenu donnent le même fichier.
+  return zipSync(files, { level: 6, ...(opts.now ? { mtime: opts.now } : {}) });
 }
 
 // ---- Lecture ---------------------------------------------------------------
@@ -168,6 +201,10 @@ export interface ParsedPackage {
   quizzes: Quiz[];
   categories: Category[];
   media: Map<string, MediaFile>;
+  /** Manifeste du module, si le fichier en est un (et qu'il est lisible par cette version). */
+  module?: ModuleManifest;
+  /** Modules installés (sauvegarde complète). */
+  modules?: InstalledModule[];
   attempts?: Attempt[];
   answers?: AnswerRow[];
   settings?: Record<string, string>;
@@ -282,6 +319,7 @@ export async function parsePackage(bytes: Uint8Array): Promise<ParsedPackage> {
   let attempts: Attempt[] | undefined;
   let answers: AnswerRow[] | undefined;
   let settings: Record<string, string> | undefined;
+  let modules: InstalledModule[] | undefined;
   if (manifest.kind === 'backup') {
     attempts = [];
     answers = [];
@@ -298,13 +336,45 @@ export async function parsePackage(bytes: Uint8Array): Promise<ParsedPackage> {
       }
       const s = SettingsSchema.safeParse(readJson(files, 'settings.json') ?? {});
       settings = s.success ? s.data : {};
+      modules = [];
+      for (const m of (readJson(files, 'modules.json') as unknown[]) ?? []) {
+        const r = InstalledModuleSchema.safeParse(m);
+        if (r.success) modules.push(r.data as InstalledModule);
+        else problems.push({ code: 'module_invalid', detail: issueText(r.error) });
+      }
     } catch (e) {
       problems.push({ code: 'history_invalid', detail: issueText(e) });
     }
   }
 
-  // Images référencées mais absentes : affichées comme emplacement vide
-  for (const h of quizMedia(quizzes)) if (!media.has(h)) problems.push({ code: 'media_missing', ref: h });
+  // Module : `module.json` invalide ou trop récent → le fichier reste importable comme un export ordinaire.
+  let module: ModuleManifest | undefined;
+  if (manifest.kind === 'content' && files[MODULE_FILE]) {
+    try {
+      const raw = readJson(files, MODULE_FILE) as { format?: unknown; formatVersion?: unknown };
+      if (raw?.format === MODULE_FORMAT && typeof raw.formatVersion === 'number' && raw.formatVersion > MODULE_FORMAT_VERSION) {
+        problems.push({ code: 'module_unsupported', detail: String(raw.formatVersion) });
+      } else {
+        const r = ModuleSchema.safeParse(raw);
+        if (r.success) module = r.data as ModuleManifest;
+        else problems.push({ code: 'module_invalid', detail: issueText(r.error) });
+      }
+    } catch (e) {
+      problems.push({ code: 'module_invalid', detail: issueText(e) });
+    }
+  }
 
-  return { manifest, quizzes, categories, media, attempts, answers, settings, problems };
+  // Sauvegarde : l'appartenance aux modules est reposée d'après leurs manifestes.
+  for (const m of modules ?? []) {
+    const qIds = new Set(m.manifest.quizzes);
+    const cIds = new Set(m.manifest.categories);
+    for (const q of quizzes) if (qIds.has(q.id)) q.moduleId = m.manifest.id;
+    for (const c of categories) if (cIds.has(c.id)) c.moduleId = m.manifest.id;
+  }
+
+  // Images référencées mais absentes : affichées comme emplacement vide
+  const sheets = sheetMedia([...(module ? [module] : []), ...(modules ?? []).map((m) => m.manifest)]);
+  for (const h of new Set([...quizMedia(quizzes), ...sheets])) if (!media.has(h)) problems.push({ code: 'media_missing', ref: h });
+
+  return { manifest, quizzes, categories, media, module, modules, attempts, answers, settings, problems };
 }

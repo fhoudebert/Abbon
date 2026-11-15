@@ -44,3 +44,12 @@ describe('plan d’import', () => {
     expect(r.categories).toEqual([{ ...demoCategories[1], parentId: null }]);
   });
 });
+
+describe('import ordinaire et modules', () => {
+  it('ne propose jamais de remplacer un QCM de module', () => {
+    const incoming = { ...demoQuizzes[0], version: 99 };
+    const [item] = planImport([incoming], [{ ...demoQuizzes[0], questionCount: 3, moduleId: 'org.abbon.demo' }]);
+    expect(item.action).toBe('skip');
+    expect(actionsFor(item)).toEqual(['duplicate', 'skip']);
+  });
+});

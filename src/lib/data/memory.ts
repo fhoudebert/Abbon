@@ -1,5 +1,5 @@
-import type { Answer, Attempt, Category, Quiz, QuizSummary } from '$lib/domain/types';
-import type { AnswerRow, FullData, Media, Repository } from './repository';
+import type { Answer, Attempt, Category, InstalledModule, Quiz, QuizSummary } from '$lib/domain/types';
+import type { AnswerRow, FullData, Media, ModuleInstall, Repository } from './repository';
 
 const clone = <T>(v: T): T => structuredClone(v);
 
@@ -15,6 +15,9 @@ export class MemoryRepository implements Repository {
   private answers = new Map<string, Map<string, Answer>>();
   private settings = new Map<string, string>();
   private media = new Map<string, Media>();
+  private modules = new Map<string, InstalledModule>();
+  /** Historique mis de côté : identifiant de module → tentatives et réponses. */
+  private archive = new Map<string, { attempt: Attempt; answers: Answer[] }[]>();
 
   async listCategories() {
     return [...this.categories.values()].map(clone).sort((a, b) => a.position - b.position);
@@ -81,6 +84,60 @@ export class MemoryRepository implements Repository {
     if (!this.media.has(m.hash)) this.media.set(m.hash, clone(m));
   }
 
+  async listModules() {
+    return [...this.modules.values()].map(clone);
+  }
+
+  #archive(moduleId: string, quizIds: Set<string>) {
+    const kept = this.archive.get(moduleId) ?? [];
+    for (const [k, a] of this.attempts)
+      if (quizIds.has(a.quizId)) kept.push({ attempt: a, answers: [...(this.answers.get(k)?.values() ?? [])] });
+    this.archive.set(moduleId, kept);
+  }
+
+  async installModule({ manifest, quizzes, categories, removedQuizIds, now = new Date() }: ModuleInstall) {
+    const id = manifest.id;
+    const removed = new Set(removedQuizIds.filter((q) => this.quizzes.get(q)?.moduleId === id));
+    this.#archive(id, removed);
+    for (const q of removed) await this.deleteQuiz(q);
+    for (const c of categories) this.categories.set(c.id, clone({ ...c, moduleId: id }));
+    for (const q of quizzes) this.quizzes.set(q.id, clone({ ...q, moduleId: id }));
+    const declared = new Set(manifest.categories);
+    for (const c of [...this.categories.values()]) {
+      if (c.moduleId !== id || declared.has(c.id)) continue;
+      const used =
+        [...this.quizzes.values()].some((q) => q.categoryId === c.id) ||
+        [...this.categories.values()].some((o) => o.parentId === c.id);
+      if (used) c.moduleId = null;
+      else this.categories.delete(c.id);
+    }
+    const back = this.archive.get(id) ?? [];
+    this.archive.set(id, back.filter((e) => !this.quizzes.has(e.attempt.quizId)));
+    for (const { attempt, answers } of back) {
+      if (!this.quizzes.has(attempt.quizId) || this.attempts.has(attempt.id)) continue;
+      this.attempts.set(attempt.id, attempt);
+      this.answers.set(attempt.id, new Map(answers.map((a) => [a.questionId, a])));
+    }
+    const ts = now.toISOString();
+    this.modules.set(id, { manifest: clone(manifest), installedAt: this.modules.get(id)?.installedAt ?? ts, updatedAt: ts });
+  }
+
+  async uninstallModule(id: string, keepHistory: boolean) {
+    const ids = new Set([...this.quizzes.values()].filter((q) => q.moduleId === id).map((q) => q.id));
+    if (keepHistory) this.#archive(id, ids);
+    else this.archive.delete(id);
+    for (const q of ids) await this.deleteQuiz(q);
+    for (const c of [...this.categories.values()]) {
+      if (c.moduleId !== id) continue;
+      const used =
+        [...this.quizzes.values()].some((q) => q.categoryId === c.id) ||
+        [...this.categories.values()].some((o) => o.parentId === c.id && o.moduleId !== id);
+      if (used) c.moduleId = null;
+      else await this.deleteCategory(c.id);
+    }
+    this.modules.delete(id);
+  }
+
   async exportHistory() {
     const answers: AnswerRow[] = [];
     for (const [attemptId, map] of this.answers) for (const a of map.values()) answers.push({ ...clone(a), attemptId });
@@ -115,6 +172,8 @@ export class MemoryRepository implements Repository {
       this.answers.set(attemptId, m);
     }
     this.media = new Map(data.media.map((m) => [m.hash, clone(m)]));
+    this.modules = new Map((data.modules ?? []).map((m) => [m.manifest.id, clone(m)]));
+    this.archive = new Map();
     this.settings = new Map(Object.entries(data.settings).filter(([k]) => k !== 'admin_pin'));
     if (pin) this.settings.set('admin_pin', pin);
   }

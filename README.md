@@ -5,9 +5,13 @@
 Application de QCM hors ligne pour s'entraîner aux certifications (informatique, langues) et à la culture générale.
 Une seule base de code HTML5 / TypeScript, empaquetée avec [Tauri 2](https://v2.tauri.app) pour **Linux**, **Android** et **Windows**.
 
-Logiciel libre sous licence [MIT](LICENSE).
+Logiciel libre sous licence [MIT](LICENSE). Le contenu des modules (dossier `modules/`) est sous licence
+[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.fr).
 
-> **État : lot 5 (finition).** Accessibilité vérifiée (WCAG 2.1 AA, clair et sombre), thème et taille du texte
+> **État : lot 6 (modules de contenu).** Un module est un fichier `.qcm` versionné, installé, mis à jour et retiré
+> d'un bloc, avec fiches de révision ; premier module pilote : « Anglais : verbes irréguliers »
+> ([docs/modules.md](docs/modules.md)).
+> Lot 5 : accessibilité vérifiée (WCAG 2.1 AA, clair et sombre), thème et taille du texte
 > réglables, interface utilisable sur téléphone, installation testée en CI sur Debian, Ubuntu, Fedora, Windows et
 > un émulateur Android, installateur Windows en français et en anglais.
 > Lots précédents : distribution et mises à jour ([docs/distribution.md](docs/distribution.md)), échange (`.qcm`,
@@ -67,6 +71,8 @@ npm run tauri android dev
 npm run check              # types TypeScript + Svelte
 npm test                   # tests du domaine, de l'i18n, du SQL (SQLite de Node) et des formats d'échange
 npm run schema             # régénère les JSON Schema publiés dans docs/format-qcm
+npm run module:check       # vérifie les sources des modules (dossier modules/)
+npm run module:build       # construit dist/modules/Abbon-<nom>-<version>.qcm
 cd src-tauri && cargo test # tests Rust (migrations)
 ```
 

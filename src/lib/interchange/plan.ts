@@ -9,7 +9,7 @@ export type ImportAction = 'add' | 'replace' | 'duplicate' | 'skip';
 
 export interface PlanItem {
   quiz: Quiz;
-  existing?: Pick<QuizSummary, 'id' | 'version' | 'title' | 'updatedAt' | 'status' | 'questionCount'>;
+  existing?: Pick<QuizSummary, 'id' | 'version' | 'title' | 'updatedAt' | 'status' | 'questionCount' | 'moduleId'>;
   action: ImportAction;
 }
 
@@ -17,25 +17,26 @@ export interface PlanItem {
  * Action proposée par défaut :
  * - QCM inconnu : ajouter ;
  * - même identifiant, version plus récente dans le fichier : remplacer ;
- * - même identifiant, version identique ou plus ancienne : ignorer.
+ * - même identifiant, version identique ou plus ancienne : ignorer ;
+ * - même identifiant qu'un QCM de module installé (contenu protégé) : ignorer, ou ajouter une copie.
  */
 export function planImport(incoming: readonly Quiz[], existing: readonly QuizSummary[]): PlanItem[] {
   const byId = new Map(existing.map((q) => [q.id, q]));
   return incoming.map((quiz) => {
     const ex = byId.get(quiz.id);
     if (!ex) return { quiz, action: 'add' as const };
-    const { id, version, title, updatedAt, status, questionCount } = ex;
+    const { id, version, title, updatedAt, status, questionCount, moduleId } = ex;
     return {
       quiz,
-      existing: { id, version, title, updatedAt, status, questionCount },
-      action: quiz.version > ex.version ? ('replace' as const) : ('skip' as const),
+      existing: { id, version, title, updatedAt, status, questionCount, moduleId },
+      action: !moduleId && quiz.version > ex.version ? ('replace' as const) : ('skip' as const),
     };
   });
 }
 
 /** Actions possibles pour un élément du plan. */
 export const actionsFor = (item: PlanItem): ImportAction[] =>
-  item.existing ? ['replace', 'duplicate', 'skip'] : ['add', 'skip'];
+  !item.existing ? ['add', 'skip'] : item.existing.moduleId ? ['duplicate', 'skip'] : ['replace', 'duplicate', 'skip'];
 
 export interface ResolvedImport {
   quizzes: Quiz[];

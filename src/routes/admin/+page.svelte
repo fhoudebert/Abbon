@@ -5,12 +5,14 @@
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import ExportDialog from '$lib/components/ExportDialog.svelte';
   import { localize } from '$lib/domain/text';
-  import type { QuizSummary } from '$lib/domain/types';
+  import type { InstalledModule, QuizSummary } from '$lib/domain/types';
   import { fmtDate, i18n, t } from '$lib/i18n/index.svelte';
 
   let toDelete = $state<QuizSummary | null>(null);
   let confirm: ConfirmDialog;
   let exporter: ExportDialog;
+  let toUninstall = $state<InstalledModule | null>(null);
+  let uninstaller: ConfirmDialog;
 
   const lang = $derived(i18n.lang);
   const title = (q: QuizSummary) => localize(q.title, lang, q.languages[0]) || t('admin.untitled');
@@ -22,6 +24,19 @@
   async function duplicate(q: QuizSummary) {
     const id = await app.duplicateQuiz(q.id, t('admin.copySuffix'));
     await goto(`/admin/quiz/${id}`);
+  }
+
+  const moduleTitle = (m: InstalledModule | undefined | null) => (m ? localize(m.manifest.title, lang) || m.manifest.id : '');
+  const countOf = (m: InstalledModule) => app.quizzes.filter((q) => q.moduleId === m.manifest.id);
+
+  function askUninstall(m: InstalledModule) {
+    toUninstall = m;
+    queueMicrotask(() => uninstaller.open());
+  }
+
+  async function uninstall(keepHistory: boolean) {
+    if (toUninstall) await app.uninstallModule(toUninstall.manifest.id, keepHistory);
+    toUninstall = null;
   }
 
   function askDelete(q: QuizSummary) {
@@ -44,6 +59,35 @@
     </div>
   </div>
 
+  {#if app.modules.length}
+    <section aria-labelledby="h-modules" class="modules">
+      <h2 id="h-modules">{t('module.title')}</h2>
+      <ul class="list">
+        {#each app.modules as m (m.manifest.id)}
+          {@const quizzes = countOf(m)}
+          <li class="panel">
+            <div class="info">
+              <span class="title">{moduleTitle(m)}</span>
+              <span class="muted small">
+                {[
+                  t('module.version', { version: m.manifest.version }),
+                  t('module.quizzes', { n: quizzes.length }),
+                  t('quiz.questions', { n: quizzes.reduce((n, q) => n + q.questionCount, 0) }),
+                  t('module.license', { license: m.manifest.license }),
+                  t('module.installedOn', { date: fmtDate(m.updatedAt) }),
+                ].join(' · ')}
+              </span>
+            </div>
+            <span class="status module">{t('module.badge')}</span>
+            <div class="actions">
+              <button class="ghost danger" onclick={() => askUninstall(m)}>{t('module.uninstall')}</button>
+            </div>
+          </li>
+        {/each}
+      </ul>
+    </section>
+  {/if}
+
   {#if app.quizzes.length === 0}
     <p class="muted">{t('admin.empty')}</p>
   {:else}
@@ -58,13 +102,22 @@
                 .join(' · ')}
             </span>
           </div>
-          <span class="status {q.status}">{t(`admin.status.${q.status}`)}</span>
-          <div class="actions">
-            <a class="button secondary" href="/admin/quiz/{q.id}">{t('common.edit')}</a>
-            <button class="ghost" onclick={() => exporter.open(q)}>{t('io.export')}</button>
-            <button class="ghost" onclick={() => duplicate(q)}>{t('common.duplicate')}</button>
-            <button class="ghost danger" onclick={() => askDelete(q)}>{t('common.delete')}</button>
-          </div>
+          {#if q.moduleId}
+            <span class="status module" title={t('module.quizOf', { title: moduleTitle(app.moduleOf(q.moduleId)) })}>{t('module.badge')}</span>
+            <div class="actions">
+              <a class="button secondary" href="/admin/quiz/{q.id}/preview">{t('preview.title')}</a>
+              <button class="ghost" onclick={() => exporter.open(q)}>{t('io.export')}</button>
+              <button class="ghost" onclick={() => duplicate(q)}>{t('module.duplicateToEdit')}</button>
+            </div>
+          {:else}
+            <span class="status {q.status}">{t(`admin.status.${q.status}`)}</span>
+            <div class="actions">
+              <a class="button secondary" href="/admin/quiz/{q.id}">{t('common.edit')}</a>
+              <button class="ghost" onclick={() => exporter.open(q)}>{t('io.export')}</button>
+              <button class="ghost" onclick={() => duplicate(q)}>{t('common.duplicate')}</button>
+              <button class="ghost danger" onclick={() => askDelete(q)}>{t('common.delete')}</button>
+            </div>
+          {/if}
         </li>
       {/each}
     </ul>
@@ -85,7 +138,40 @@
   }}
 />
 
+<ConfirmDialog
+  bind:this={uninstaller}
+  title={t('module.uninstall.title', { title: moduleTitle(toUninstall) })}
+  body={t('module.uninstall.body')}
+  confirmLabel={t('module.uninstall.keep')}
+  onconfirm={() => uninstall(true)}
+>
+  {#snippet extra(close)}
+    <button
+      class="danger-button"
+      onclick={async () => {
+        close();
+        await uninstall(false);
+      }}>{t('module.uninstall.drop')}</button
+    >
+  {/snippet}
+</ConfirmDialog>
+
 <style>
+  .modules {
+    margin-block-end: 1.5rem;
+  }
+  .modules h2 {
+    font-size: 1.1rem;
+  }
+  .status.module {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .danger-button {
+    background: var(--bad);
+    border-color: var(--bad);
+  }
   .head {
     display: flex;
     flex-wrap: wrap;

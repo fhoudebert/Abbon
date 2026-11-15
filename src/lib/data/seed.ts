@@ -1,4 +1,4 @@
-import type { Attempt, Category, Question, Quiz } from '$lib/domain/types';
+import type { Attempt, Category, ModuleManifest, Question, Quiz } from '$lib/domain/types';
 import type { Repository } from './repository';
 
 /**
@@ -122,6 +122,56 @@ export const demoQuizzes: Quiz[] = [
   },
 ];
 
+/**
+ * Module de démonstration, pour l'aperçu dans un navigateur seulement (`npm run dev`, audit
+ * d'accessibilité) : il rend visibles les écrans propres aux modules (contenu protégé, fiche de révision).
+ * L'application installée ne le reçoit pas : ses QCM de démonstration restent modifiables.
+ */
+export const demoModule: ModuleManifest = {
+  format: 'abbon-module',
+  formatVersion: 1,
+  id: 'org.abbon.demo',
+  version: '1.0.0',
+  title: { fr: 'Démonstration : anglais', en: 'Demo: English' },
+  description: { fr: 'Exemple de module installé.', en: 'Sample installed module.' },
+  level: null,
+  license: 'CC-BY-NC-SA-4.0',
+  authors: ['Abbon'],
+  homepage: 'https://github.com/fhoudebert/Abbon',
+  requires: null,
+  categories: ['cat-lang'],
+  quizzes: ['demo-english'],
+  sheets: {
+    'cat-lang': Object.fromEntries(
+      (
+        [
+          ['fr', 'À retenir', 'Le prétérit s’emploie seul, le participe passé avec un auxiliaire.', ['Base', 'Prétérit', 'Participe passé']],
+          ['en', 'Key points', 'The past simple stands alone; the past participle needs an auxiliary.', ['Base form', 'Past simple', 'Past participle']],
+        ] as const
+      ).map(([lang, heading, text, head]) => [
+        lang,
+        {
+          type: 'doc' as const,
+          content: [
+            { type: 'heading', attrs: { level: 1 }, content: [{ type: 'text', text: heading }] },
+            { type: 'paragraph', content: [{ type: 'text', text }] },
+            {
+              type: 'table',
+              content: [head, ['go', 'went', 'gone'], ['see', 'saw', 'seen']].map((row, i) => ({
+                type: 'tableRow',
+                content: row.map((cell) => ({
+                  type: i === 0 ? 'tableHeader' : 'tableCell',
+                  content: [{ type: 'paragraph', content: [{ type: 'text', text: cell }] }],
+                })),
+              })),
+            },
+          ],
+        },
+      ]),
+    ),
+  },
+};
+
 /** Installe les données de démonstration une seule fois. */
 export async function seedDemo(repo: Repository): Promise<boolean> {
   if (await repo.getSetting(SEEDED_KEY)) return false;
@@ -158,6 +208,14 @@ export async function seedDemo(repo: Repository): Promise<boolean> {
     },
   ];
   for (const a of attempts) await repo.saveAttempt(a);
+  if (repo.backend === 'memory') {
+    await repo.installModule({
+      manifest: demoModule,
+      quizzes: demoQuizzes.filter((quiz) => demoModule.quizzes.includes(quiz.id)),
+      categories: demoCategories.filter((c) => demoModule.categories.includes(c.id)),
+      removedQuizIds: [],
+    });
+  }
   await repo.setSetting(SEEDED_KEY, now());
   return true;
 }

@@ -5,7 +5,9 @@
   import { localize } from '$lib/domain/text';
   import { readPicked } from '$lib/files';
   import { parseGift, type GiftResult } from '$lib/interchange/gift';
+  import { checkRequirements, planModule, type ModulePlan, type Requirements } from '$lib/interchange/module';
   import { actionsFor, planImport, resolveImport, type PlanItem } from '$lib/interchange/plan';
+  import { MODULES_URL, openExternal } from '$lib/links';
   import { PackageError, parsePackage, type MediaFile, type Problem } from '$lib/interchange/qcmPackage';
   import { i18n, t } from '$lib/i18n/index.svelte';
   import type { MessageKey } from '$lib/i18n/fr';
@@ -23,6 +25,10 @@
   let backupName = $state<string | null>(null);
   let report = $state<{ added: number; replaced: number; duplicated: number; skipped: number } | null>(null);
   let failures = $state<{ title: string; error: string }[]>([]);
+  /** Le fichier est un module : installation d'un bloc, sans choix QCM par QCM. */
+  let modulePlan = $state.raw<ModulePlan | null>(null);
+  let requirements = $state.raw<Requirements | null>(null);
+  let installed = $state<{ title: string; version: string; quizzes: number } | null>(null);
 
   const lang = $derived(i18n.lang);
   const titleOf = (q: { title: Record<string, string>; languages: string[] }) =>
@@ -38,6 +44,9 @@
     report = null;
     failures = [];
     backupName = null;
+    modulePlan = null;
+    requirements = null;
+    installed = null;
   }
 
   async function onFile(e: Event) {
@@ -54,10 +63,16 @@
       if (isZip) {
         const p = await parsePackage(bytes);
         if (p.manifest.kind === 'backup') throw new Error(t('import.err.backup'));
-        plan = planImport(p.quizzes, app.quizzes);
         problems = p.problems;
         categories = p.categories;
         media = p.media;
+        if (p.module) {
+          modulePlan = planModule(p.module, p, { modules: app.modules, quizzes: app.quizzes, categories: app.categories });
+          requirements = checkRequirements(p.module, __APP_VERSION__);
+          stage = 'review';
+          return;
+        }
+        plan = planImport(p.quizzes, app.quizzes);
       } else {
         const title = file.name.replace(/\.(gift|txt)$/i, '');
         gift = parseGift(strFromU8(bytes), title, lang);
@@ -97,6 +112,25 @@
     }
   }
 
+  async function install() {
+    if (!modulePlan) return;
+    stage = 'running';
+    try {
+      backupName = await app.autoBackup();
+      await app.installModule(modulePlan, media);
+      installed = { title: moduleTitle, version: modulePlan.manifest.version, quizzes: modulePlan.quizzes.length };
+      stage = 'done';
+    } catch (err) {
+      error = t('common.error', { error: err instanceof Error ? err.message : String(err) });
+      stage = 'review';
+    }
+  }
+
+  const moduleTitle = $derived(modulePlan ? localize(modulePlan.manifest.title, lang) : '');
+  const installLabel = $derived(
+    t(({ new: 'module.install', update: 'module.update', same: 'module.reinstall', older: 'module.downgrade' } as const)[modulePlan?.status ?? 'new']),
+  );
+
   const problemText = (p: Problem) =>
     t(`problem.${p.code}` as MessageKey, { ref: p.ref ? (p.ref.length > 20 ? p.ref.slice(0, 12) + '…' : p.ref) : '', detail: p.detail ?? '' });
 </script>
@@ -115,6 +149,52 @@
     </label>
     {#if stage === 'reading'}<p aria-busy="true">{t('import.reading')}</p>{/if}
     {#if error}<p class="error" role="alert">{error}</p>{/if}
+    <p class="get">
+      <a href={MODULES_URL} target="_blank" rel="noopener noreferrer" onclick={(e) => openExternal(e, MODULES_URL)}>{t('module.get')}</a>
+    </p>
+  {:else if (stage === 'review' || stage === 'running') && modulePlan}
+    {@const m = modulePlan.manifest}
+    <p class="muted">{t('import.from', { name: fileName })}</p>
+
+    <section class="panel module">
+      <h2>{moduleTitle} <span class="badge">{t('module.badge')}</span></h2>
+      {#if m.description}<p>{localize(m.description, lang)}</p>{/if}
+      <ul class="facts muted">
+        <li>{t('module.version', { version: m.version })}</li>
+        <li>{t('module.quizzes', { n: modulePlan.quizzes.length })}</li>
+        <li>{t('quiz.questions', { n: modulePlan.quizzes.reduce((n, q) => n + q.questions.length, 0) })}</li>
+        <li>{t('module.license', { license: m.license })}</li>
+        {#if m.authors.length}<li>{t('module.authors', { authors: m.authors.join(', ') })}</li>{/if}
+      </ul>
+      <p class:warn={modulePlan.status === 'older'}>
+        {t(`module.status.${modulePlan.status}`, { from: modulePlan.installedVersion ?? '', to: m.version })}
+      </p>
+      {#if requirements?.appTooOld}<p class="error" role="alert">{t('module.req.app', { version: requirements.appTooOld })}</p>{/if}
+      {#if requirements?.missingFeatures.length}
+        <p class="error" role="alert">{t('module.req.features', { features: requirements.missingFeatures.join(', ') })}</p>
+      {/if}
+      {#if !modulePlan.quizzes.length}<p class="error" role="alert">{t('module.none')}</p>{/if}
+    </section>
+
+    {#if problems.length || modulePlan.conflicts.length || modulePlan.missing.length || modulePlan.removedQuizIds.length}
+      <section class="panel problems">
+        <h2>{t('import.problems')}</h2>
+        <ul>
+          {#if modulePlan.conflicts.length}<li>{t('module.conflicts', { n: modulePlan.conflicts.length })}</li>{/if}
+          {#if modulePlan.missing.length}<li>{t('module.missing', { n: modulePlan.missing.length })}</li>{/if}
+          {#if modulePlan.removedQuizIds.length}<li>{t('module.removed', { n: modulePlan.removedQuizIds.length })}</li>{/if}
+          {#each problems as p, k (k)}<li>{problemText(p)}</li>{/each}
+        </ul>
+      </section>
+    {/if}
+
+    {#if error}<p class="error" role="alert">{error}</p>{/if}
+    <div class="actions">
+      <button class="secondary" onclick={reset} disabled={stage === 'running'}>{t('common.cancel')}</button>
+      <button onclick={install} disabled={stage === 'running' || !requirements?.ok || !modulePlan.quizzes.length}>
+        {stage === 'running' ? t('module.installing') : installLabel}
+      </button>
+    </div>
   {:else if stage === 'review' || stage === 'running'}
     <p class="muted">{t('import.from', { name: fileName })}</p>
 
@@ -130,9 +210,11 @@
               <small class="muted">{t('quiz.questions', { n: item.quiz.questions.length })}</small>
             </td>
             <td class="muted">
-              {item.existing
-                ? t('import.exists', { mine: item.existing.version, theirs: item.quiz.version })
-                : t('import.new')}
+              {item.existing?.moduleId
+                ? t('import.moduleQuiz')
+                : item.existing
+                  ? t('import.exists', { mine: item.existing.version, theirs: item.quiz.version })
+                  : t('import.new')}
             </td>
             <td>
               <select bind:value={plan[i].action} disabled={stage === 'running'} aria-label={t('import.col.action')}>
@@ -164,6 +246,17 @@
         {stage === 'running' ? t('import.running') : `${t('import.run')} (${toImport})`}
       </button>
     </div>
+  {:else if stage === 'done' && installed}
+    <section class="panel done" role="status">
+      <h2>{t('import.done')}</h2>
+      <p>{t('module.installed', installed)}</p>
+      {#if backupName}<p class="muted small">{t('import.backupDone', { name: backupName })}</p>{/if}
+      <div class="actions">
+        <a class="button" href="/">{t('nav.home')}</a>
+        <a class="button secondary" href="/admin">{t('import.toAdmin')}</a>
+        <button class="secondary" onclick={reset}>{t('import.again')}</button>
+      </div>
+    </section>
   {:else if stage === 'done' && report}
     <section class="panel done" role="status">
       <h2>{t('import.done')}</h2>
@@ -206,6 +299,39 @@
   }
   .plan select {
     min-block-size: var(--tap);
+  }
+  .get {
+    margin-block-start: 1.5rem;
+  }
+  .module {
+    margin-block: 1rem;
+  }
+  .module h2 {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.2rem;
+    margin-block-start: 0;
+  }
+  .badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.1em 0.7em;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  .facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.25rem;
+    list-style: none;
+    padding: 0;
+    margin-block: 0 0.75rem;
+  }
+  .warn {
+    color: var(--warn);
   }
   .problems {
     margin-block: 1rem;

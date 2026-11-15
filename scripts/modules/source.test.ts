@@ -1,0 +1,153 @@
+import { describe, expect, it } from 'vitest';
+import { checkRequirements } from '$lib/interchange/module';
+import { buildPackage, parsePackage } from '$lib/interchange/qcmPackage';
+import { compileModule, splitQuestions, type SourceFile } from './source';
+
+const MODULE = `id: org.abbon.test
+version: 1.2.3
+date: 2026-11-15
+title: { fr: Essai, en: Test }
+license: CC-BY-NC-SA-4.0
+authors: [Abbon]
+languages: [fr, en]
+requires: { app: ">=0.2.0" }
+categories:
+  - id: rust
+    name: { fr: Rust, en: Rust }
+`;
+
+const QUIZ = `---
+id: rust-01
+title: { fr: "Rust : possession", en: "Rust: ownership" }
+level: bases
+tags: [rust]
+---
+
+## q-move-01 · single
+Que se passe-t-il après \`let b = a;\` si \`a\` est une \`String\` ?
+
+- [ ] \`a\` et \`b\` partagent la même chaîne
+- [x] \`a\` n'est plus utilisable
+- [ ] La chaîne est copiée
+
+> \`String\` n'implémente pas \`Copy\`.
+
+### en
+What happens after \`let b = a;\` if \`a\` is a \`String\`?
+
+- [ ] \`a\` and \`b\` share the same string
+- [x] \`a\` can no longer be used
+- [ ] The string is copied
+
+> \`String\` does not implement \`Copy\`.
+
+## q-multi-01
+Lesquels sont des entiers ?
+
+\`\`\`rust
+## ceci n'est pas une question
+\`\`\`
+
+- [x] u8
+- [x] i32
+- [ ] f64
+
+> Les deux premiers.
+
+### en
+Which ones are integers?
+
+- [x] u8
+- [x] i32
+- [ ] f64
+
+> The first two.
+`;
+
+const files = (quiz = QUIZ, extra: SourceFile[] = []): SourceFile[] => [
+  { path: 'module.yaml', text: MODULE },
+  { path: 'rust/01-possession.md', text: quiz },
+  ...extra,
+];
+const errors = (f: SourceFile[]) => compileModule(f).issues.filter((i) => i.level === 'error').map((i) => i.message);
+
+describe('compilation d’un module', () => {
+  it('découpe les questions, les langues et ignore les « ## » dans le code', () => {
+    const qs = splitQuestions(QUIZ.split('---\n').slice(2).join('---\n'), 'fr');
+    expect(qs.map((q) => [q.id, q.type])).toEqual([['q-move-01', 'single'], ['q-multi-01', undefined]]);
+    expect([...qs[0].langs.keys()]).toEqual(['fr', 'en']);
+    expect(qs[1].langs.get('fr')!.prompt).toContain("## ceci n'est pas une question");
+  });
+
+  it('produit des identifiants stables et préfixés, et une version entière', () => {
+    const c = compileModule(files());
+    expect(c.issues.filter((i) => i.level === 'error')).toEqual([]);
+    expect(c.manifest.id).toBe('org.abbon.test');
+    expect(c.categories.map((x) => x.id)).toEqual(['org-abbon-test_rust']);
+    const [quiz] = c.quizzes;
+    expect(quiz.id).toBe('org-abbon-test_rust-01');
+    expect(quiz.version).toBe(1_002_003);
+    expect(quiz.status).toBe('published');
+    expect(quiz.categoryId).toBe('org-abbon-test_rust');
+    expect(quiz.questions.map((q) => [q.id, q.type])).toEqual([
+      ['org-abbon-test_rust-01_q-move-01', 'single'],
+      ['org-abbon-test_rust-01_q-multi-01', 'multiple'],
+    ]);
+    expect(quiz.questions[0].choices.map((x) => [x.id.slice(-3), x.correct])).toEqual([['_c1', false], ['_c2', true], ['_c3', false]]);
+    expect(Object.keys(quiz.questions[0].prompt)).toEqual(['fr', 'en']);
+    expect(c.manifest.quizzes).toEqual([quiz.id]);
+    expect(c.stats).toEqual([{ category: 'rust', level: 'bases', quizzes: 1, questions: 2 }]);
+  });
+
+  it('est déterministe : deux constructions donnent le même fichier', () => {
+    const build = () => {
+      const c = compileModule(files());
+      return buildPackage(
+        { quizzes: c.quizzes, categories: c.categories, media: new Map(), module: c.manifest },
+        { kind: 'content', solutions: true, appVersion: '0.2.0', now: new Date('2026-11-15T00:00:00Z') },
+      );
+    };
+    expect(Buffer.from(build()).equals(Buffer.from(build()))).toBe(true);
+  });
+
+  it('donne un fichier .qcm relu comme un module, fiche comprise', async () => {
+    const c = compileModule(
+      files(QUIZ, [
+        { path: 'rust/fiche.fr.md', text: '## Possession\n\nUne valeur a un seul propriétaire.' },
+        { path: 'rust/fiche.en.md', text: '## Ownership\n\nA value has a single owner.' },
+      ]),
+    );
+    expect(c.issues).toEqual([{ level: 'warning', file: 'rust/01-possession.md', message: '2 questions (10 à 15 conseillées)' }]);
+    const bytes = buildPackage(
+      { quizzes: c.quizzes, categories: c.categories, media: new Map(), module: c.manifest },
+      { kind: 'content', solutions: true, appVersion: '0.2.0' },
+    );
+    const p = await parsePackage(bytes);
+    expect(p.problems).toEqual([]);
+    expect(p.module?.id).toBe('org.abbon.test');
+    expect(Object.keys(p.module?.sheets ?? {})).toEqual(['org-abbon-test_rust']);
+    expect(p.quizzes).toHaveLength(1);
+    expect(checkRequirements(p.module!, '0.1.0').appTooOld).toBe('>=0.2.0');
+    expect(checkRequirements(p.module!, '0.2.0').ok).toBe(true);
+  });
+
+  it('signale les erreurs de fond', () => {
+    expect(errors(files(QUIZ.replace('- [x] `a` n\'est plus utilisable', '- [ ] `a` n\'est plus utilisable')))).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('exactement une bonne réponse'),
+        expect.stringContaining('ne correspondent pas'),
+      ]),
+    );
+    expect(errors(files(QUIZ.replace('> `String` does not implement `Copy`.\n', '')))).toEqual([
+      expect.stringContaining('explication manquante (en)'),
+    ]);
+    expect(errors(files(QUIZ.replace('## q-multi-01', '## q-move-01')))).toEqual([expect.stringContaining('déjà utilisé')]);
+    expect(errors(files(QUIZ.replace(/### en[\s\S]*?(?=## q-multi)/, '')))).toEqual([expect.stringContaining('texte manquant en « en »')]);
+    expect(errors(files(QUIZ.replace('id: rust-01', 'id: Rust_01')))).toEqual([expect.stringContaining('minuscules')]);
+  });
+
+  it('refuse un module.yaml incomplet', () => {
+    const bad = [{ path: 'module.yaml', text: MODULE.replace('version: 1.2.3', 'version: 1.2').replace('license: CC-BY-NC-SA-4.0\n', '') }, files()[1]];
+    expect(errors(bad)).toEqual(expect.arrayContaining([expect.stringContaining('SemVer'), expect.stringContaining('license')]));
+  });
+});

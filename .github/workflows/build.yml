@@ -357,6 +357,12 @@ jobs:
         with: { node-version: 22 }
       - uses: actions/download-artifact@v4
         with: { path: dist, merge-multiple: true }
+      - name: Modules de contenu (.qcm joints à la release)
+        run: |
+          npm ci
+          npm run module:build
+          mv dist/modules/*.qcm dist/
+          rmdir dist/modules
       - name: Site de téléchargement (page, version.json, latest.json, SHA256SUMS)
         env:
           SITE_URL: ${{ vars.ABBON_SITE_URL }}

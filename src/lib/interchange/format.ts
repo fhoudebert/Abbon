@@ -163,7 +163,7 @@ export function jsonDepth(value: unknown, limit = LIMITS.maxDepth): number {
   return max;
 }
 
-/** Schémas publiés au format JSON Schema (documentation et outils tiers). */
+/** Schémas publiés au format JSON Schema (documentation et outils tiers) ; celui des modules est dans module.ts. */
 export function jsonSchemas() {
   return {
     manifest: z.toJSONSchema(ManifestSchema, { unrepresentable: 'any' }),

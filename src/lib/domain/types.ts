@@ -42,6 +42,8 @@ export interface Category {
   name: I18nText;
   position: number;
   color?: string | null;
+  /** Module qui a créé la catégorie (propre à l'appareil). */
+  moduleId?: string | null;
 }
 
 export interface Choice {
@@ -82,6 +84,8 @@ export interface Quiz {
   createdAt: string;
   updatedAt: string;
   questions: Question[];
+  /** Module auquel appartient le QCM (contenu protégé). Propre à l'appareil : absent du format d'échange. */
+  moduleId?: string | null;
 }
 
 /** Résumé d'un QCM, sans ses questions, pour les listes. */
@@ -111,4 +115,37 @@ export interface Attempt {
   maxScore?: number | null;
   /** Copie du QCM au démarrage (absente des listes, présente dans getAttempt). */
   quizSnapshot?: Quiz | null;
+}
+
+/**
+ * Manifeste d'un module (`module.json` dans le fichier `.qcm`) : métadonnées, contenu protégé
+ * et fiches de révision. Voir docs/format-qcm/README.md.
+ */
+export interface ModuleManifest {
+  format: 'abbon-module';
+  formatVersion: number;
+  /** Identifiant stable en notation inversée, ex. « org.abbon.anglais-verbes ». */
+  id: string;
+  /** Version SemVer du contenu. */
+  version: string;
+  title: I18nText;
+  description?: I18nText | null;
+  level?: string | null;
+  /** Identifiant SPDX de la licence du contenu. */
+  license: string;
+  authors: string[];
+  homepage?: string | null;
+  requires?: { app?: string; features?: string[] } | null;
+  /** Identifiants des catégories et des QCM du module. */
+  categories: string[];
+  quizzes: string[];
+  /** Fiches de révision, par identifiant de catégorie puis par langue. */
+  sheets?: Record<string, I18nRich> | null;
+}
+
+/** Module installé sur l'appareil. */
+export interface InstalledModule {
+  manifest: ModuleManifest;
+  installedAt: string;
+  updatedAt: string;
 }

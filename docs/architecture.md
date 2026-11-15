@@ -17,7 +17,7 @@ Quatre couches, de la plus stable à la plus dépendante de la plateforme.
 - Fichier `abbon.db` dans le répertoire de données de l'application (propre à chaque plateforme).
 - Migrations dans `src-tauri/migrations/NNNN_nom.sql`, déclarées dans `src-tauri/src/lib.rs` et appliquées au
   chargement. Une migration publiée n'est jamais modifiée : on en ajoute une nouvelle (et on l'ajoute aussi à la liste
-  `MIGRATIONS` de `src/lib/data/sqlite.test.ts`).
+  `MIGRATIONS` de `src/lib/data/sqlite.testing.ts`).
 - Les textes multilingues sont des colonnes JSON `{"fr": "...", "en": "..."}`.
 - Les statuts « à faire / en cours / fait » ne sont pas stockés : ils sont déduits des tentatives
   (`src/lib/domain/progress.ts`).
@@ -101,7 +101,30 @@ n'est pas chargé), lecture de `releases/version.json` par une commande Rust (`u
 notes de version, ouverture de l'APK ou de la page de téléchargement par le plugin opener (HTTPS seulement).
 `requireSignedVersion` empêche de faire installer une ancienne version signée.
 
+## Modules (lot 6)
+
+Voir [modules.md](modules.md) pour l'usage et le format des sources.
+
+- **Format** : `module.json` dans un `.qcm` ordinaire (`interchange/module.ts` : schéma Zod, prérequis,
+  `planModule`). Le manifeste du paquet ne change pas, pour rester lisible par Abbon 0.1.
+- **Stockage** (migration 4) : table `module` (manifeste JSON complet, fiches comprises), colonnes
+  `quiz.module_id` et `category.module_id`. `installModule` et `uninstallModule` s'exécutent chacune dans une
+  transaction.
+- **Historique** : les tentatives disparaissent avec leur QCM (`ON DELETE CASCADE`). Quand un QCM de module est
+  retiré en gardant l'historique, tentatives et réponses sont d'abord copiées dans `attempt_archive` et
+  `answer_archive`, puis remises en place quand le QCM revient (réinstallation, version suivante).
+- **Contenu protégé** : l'éditeur ne s'ouvre pas sur un QCM de module ; l'import ordinaire ne propose pas de le
+  remplacer (`interchange/plan.ts`) ; `planModule` écarte tout identifiant déjà pris par un autre contenu.
+- **Sauvegarde complète** : `modules.json` ; l'appartenance des QCM est reposée à la restauration d'après les
+  manifestes.
+- **Outillage** (`scripts/modules`) : `source.ts` compile les sources Markdown + YAML avec les schémas et le code
+  d'écriture de l'application ; `cli.mjs` les charge par Vite (alias `$lib`, TypeScript). La construction est
+  reproductible : mêmes sources, même fichier.
+
 ## Limites connues
+
+- Modules : l'historique mis de côté à la désinstallation n'est pas inclus dans la sauvegarde complète ; une
+  catégorie de module renommée à la main reprend son nom à la mise à jour suivante.
 
 - Les liens ne sont pas proposés dans l'éditeur (pas d'ouverture du navigateur externe pour l'instant).
 - Les images qui ne servent plus restent en base jusqu'au « Nettoyer les images inutilisées » (Paramètres).

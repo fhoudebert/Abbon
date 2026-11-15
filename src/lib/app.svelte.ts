@@ -8,9 +8,10 @@ import { localize } from '$lib/domain/text';
 import { writeAutoBackup } from '$lib/files';
 import { quizToGift } from '$lib/interchange/gift';
 import type { ResolvedImport } from '$lib/interchange/plan';
-import { buildPackage, quizMedia, type ContentBundle, type MediaFile, type ParsedPackage } from '$lib/interchange/qcmPackage';
+import type { ModulePlan } from '$lib/interchange/module';
+import { buildPackage, quizMedia, sheetMedia, type ContentBundle, type MediaFile, type ParsedPackage } from '$lib/interchange/qcmPackage';
 import { startAttempt } from '$lib/domain/session';
-import type { Attempt, AttemptMode, Category, Quiz, QuizSummary } from '$lib/domain/types';
+import type { Attempt, AttemptMode, Category, I18nRich, InstalledModule, Quiz, QuizSummary } from '$lib/domain/types';
 import { i18n, setLang } from '$lib/i18n/index.svelte';
 
 export interface QuizEntry {
@@ -29,6 +30,8 @@ class AppState {
   categories = $state<Category[]>([]);
   quizzes = $state<QuizSummary[]>([]);
   attempts = $state<Attempt[]>([]);
+  /** Modules installés (contenu protégé, fiches de révision). */
+  modules = $state<InstalledModule[]>([]);
   /** Un code PIN protège-t-il l'administration ? */
   pinSet = $state(false);
   /** Administration déverrouillée pour cette session (toujours vrai sans PIN). */
@@ -69,11 +72,13 @@ class AppState {
 
   async reload() {
     if (!this.#repo) return;
-    const [categories, quizzes, attempts] = await Promise.all([
+    const [categories, quizzes, attempts, modules] = await Promise.all([
       this.#repo.listCategories(),
       this.#repo.listQuizzes(),
       this.#repo.listAttempts(),
+      this.#repo.listModules(),
     ]);
+    this.modules = modules;
     this.categories = categories;
     this.quizzes = quizzes;
     this.attempts = attempts;
@@ -146,6 +151,45 @@ class AppState {
     await this.reload();
   }
 
+  // ---- Modules -------------------------------------------------------------
+
+  moduleOf(id: string | null | undefined): InstalledModule | undefined {
+    return id ? this.modules.find((m) => m.manifest.id === id) : undefined;
+  }
+
+  /** Fiche de révision d'une catégorie, si un module installé en fournit une. */
+  sheetOf(categoryId: string | null | undefined): I18nRich | undefined {
+    if (!categoryId) return undefined;
+    for (const m of this.modules) {
+      const sheet = m.manifest.sheets?.[categoryId];
+      if (sheet && Object.keys(sheet).length) return sheet;
+    }
+    return undefined;
+  }
+
+  /** Installe ou met à jour un module (après sauvegarde automatique, faite par l'écran d'import). */
+  async installModule(plan: ModulePlan, media: Map<string, MediaFile>) {
+    const repo = await this.repo();
+    for (const h of new Set([...quizMedia(plan.quizzes), ...sheetMedia([plan.manifest])])) {
+      const m = media.get(h);
+      if (m) await repo.saveMedia({ hash: h, mime: m.mime, sizeBytes: m.bytes.length, data: bytesToB64(m.bytes) });
+    }
+    await repo.installModule({
+      manifest: plan.manifest,
+      quizzes: plan.quizzes,
+      categories: plan.categories,
+      removedQuizIds: plan.removedQuizIds,
+    });
+    await this.reload();
+  }
+
+  /** Retire un module d'un bloc : QCM, catégories vides, fiches, puis images devenues inutiles. */
+  async uninstallModule(id: string, keepHistory: boolean) {
+    await (await this.repo()).uninstallModule(id, keepHistory);
+    await this.cleanMedia();
+    await this.reload();
+  }
+
   // ---- Échange de fichiers ------------------------------------------------
 
   /** QCM complets et images utilisées, prêts à exporter. */
@@ -189,10 +233,13 @@ class AppState {
     const content = await this.#contentBundle();
     const history = await repo.exportHistory();
     const snapshots = history.attempts.map((a) => a.quizSnapshot).filter((q): q is Quiz => !!q);
-    const media = await this.#media(quizMedia([...content.quizzes, ...snapshots]));
+    const modules = await repo.listModules();
+    const media = await this.#media([
+      ...new Set([...quizMedia([...content.quizzes, ...snapshots]), ...sheetMedia(modules.map((m) => m.manifest))]),
+    ]);
     const { admin_pin: _pin, ...settings } = await repo.listSettings();
     return buildPackage(
-      { ...content, media, ...history, settings },
+      { ...content, media, ...history, settings, modules },
       { kind: 'backup', solutions: true, appVersion: __APP_VERSION__ },
     );
   }
@@ -231,6 +278,7 @@ class AppState {
       attempts: p.attempts ?? [],
       answers: p.answers ?? [],
       settings: p.settings ?? {},
+      modules: p.modules ?? [],
       media: [...p.media].map(([hash, m]) => ({ hash, mime: m.mime, sizeBytes: m.bytes.length, data: bytesToB64(m.bytes) })),
     });
     const lang = await repo.getSetting('lang');
@@ -243,7 +291,8 @@ class AppState {
     const repo = await this.repo();
     const quizzes = (await Promise.all((await repo.listQuizzes()).map((q) => repo.getQuiz(q.id)))).filter((q): q is Quiz => !!q);
     const snapshots = (await repo.exportHistory()).attempts.map((a) => a.quizSnapshot).filter((q): q is Quiz => !!q);
-    return repo.deleteUnusedMedia(quizMedia([...quizzes, ...snapshots]));
+    const sheets = sheetMedia((await repo.listModules()).map((m) => m.manifest));
+    return repo.deleteUnusedMedia([...new Set([...quizMedia([...quizzes, ...snapshots]), ...sheets])]);
   }
 
   /** Vrai si l'administration est accessible (pas de PIN, ou PIN déjà saisi). */
