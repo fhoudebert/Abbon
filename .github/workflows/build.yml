@@ -114,14 +114,16 @@ jobs:
         with: { node-version: 22, cache: npm }
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: 21 }
-      - uses: android-actions/setup-android@v3
+      # Comme le workflow Android de mogichex (opérationnel) : setup-android v4, paquets explicites.
+      # En v3, la valeur par défaut « tools platform-tools » réclamait le paquet « tools », retiré
+      # du dépôt de Google (« Failed to find package 'tools' »).
+      # build-tools sert à zipalign / apksigner ; le NDK compile la partie Rust.
+      - uses: android-actions/setup-android@v4
         with:
-          # Le paquet « tools » (demandé par défaut en v3) n'est plus distribué par Google.
-          packages: platform-tools
-      - name: NDK
-        run: |
-          sdkmanager --install "ndk;${NDK_VERSION}"
-          echo "NDK_HOME=$ANDROID_SDK_ROOT/ndk/${NDK_VERSION}" >> "$GITHUB_ENV"
+          packages: "platform-tools build-tools;36.0.0 ndk;${{ env.NDK_VERSION }}"
+          log-accepted-android-sdk-licenses: false
+      - name: NDK_HOME
+        run: echo "NDK_HOME=$ANDROID_HOME/ndk/${NDK_VERSION}" >> "$GITHUB_ENV"
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
@@ -140,7 +142,7 @@ jobs:
           KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           npx tauri android build --apk --ci
-          BT=$(ls -d "$ANDROID_SDK_ROOT"/build-tools/* | sort -V | tail -1)
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
           echo "$KEYSTORE" | base64 -d > "$RUNNER_TEMP/abbon.jks"
           IN=$(find src-tauri/gen/android/app/build/outputs/apk -name '*release-unsigned.apk' | head -1)
           "$BT/zipalign" -f -p 4 "$IN" "$RUNNER_TEMP/aligned.apk"
