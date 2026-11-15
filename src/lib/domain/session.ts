@@ -102,11 +102,11 @@ export function emptyAnswer(questionId: string): Answer {
 }
 
 /** Une réponse a-t-elle été donnée (case cochée ou texte saisi) ? */
-export function isAnswered(answer: Pick<Answer, 'selected' | 'text'> | undefined | null): boolean {
-  return !!answer && (answer.selected.length > 0 || !!answer.text?.trim());
+export function isAnswered(answer: Pick<Answer, 'selected' | 'text' | 'texts'> | undefined | null): boolean {
+  return !!answer && (answer.selected.length > 0 || !!answer.text?.trim() || !!answer.texts?.some((t) => t?.trim()));
 }
 
-const given = (a: Answer | undefined): Given => ({ selected: a?.selected ?? [], text: a?.text });
+const given = (a: Answer | undefined): Given => ({ selected: a?.selected ?? [], text: a?.text, texts: a?.texts });
 
 /** Nouvelle sélection après un clic : remplace (choix unique) ou bascule (choix multiples). */
 export function toggleChoice(question: Question, selected: readonly string[], choiceId: string): string[] {
@@ -121,7 +121,7 @@ export function isLocked(attempt: Attempt, answer: Answer | undefined): boolean 
 
 /** Corrige une seule réponse (bouton « Valider » en entraînement). */
 export function checkAnswer(quiz: Quiz, question: Question, answer: Answer): Answer {
-  const r = scoreQuestion(question, answer.selected, quiz.scoring, answer.text);
+  const r = scoreQuestion(question, answer.selected, quiz.scoring, answer.text, answer.texts);
   return { ...answer, correct: r.correct, points: r.points };
 }
 

@@ -7,20 +7,21 @@ Ordre de travail de la branche `qcm`, après le socle (lots 0 à 5). Le cadrage 
 |---|---|---|
 | Lot 6 | Format module, outillage (`module:check`, `module:build`), pilote « Anglais : verbes irréguliers » | fait |
 | Lot 6 bis | Questions à saisie : **réponse courte** et **réponse numérique** (passage, corrigé, éditeur, GIFT, sources de modules) | fait |
-| Lot 6 ter | **Textes à trous** : un énoncé à plusieurs trous, chacun rempli par une réponse courte saisie ou par un choix dans une liste déroulante | à faire |
+| Lot 6 ter | **Textes à trous** : un énoncé à plusieurs trous, chacun rempli par une réponse courte saisie ou par un choix dans une liste déroulante | fait |
 | Lot 6 quater | **Révision espacée (boîtes de Leitner)** : entraînement par répétitions sur des questions choisies dans les modules | à faire |
 | Lot 7 | Formules (LaTeX, rendu KaTeX), équations chimiques, unités, figures SVG incrustées après nettoyage | à faire |
 | Lots 8 à 11 | Modules de contenu : Informatique, Anglais (version complète), Physique-chimie, Maths spécialité, Maths expertes | à faire |
 
 ## Lot 6 ter — textes à trous
 
-- Un nouveau type de question, `cloze` : l'énoncé contient des trous numérotés ; chaque trou a sa réponse attendue.
+- Type de question `cloze` : un texte à trous numérotés ; chaque trou a sa réponse attendue.
 - Deux formes de trou : **saisie** (comparée comme une réponse courte : formes acceptées, majuscules ignorées par
   défaut) et **liste déroulante** (une bonne réponse parmi des propositions).
 - Notation : tout ou rien, ou partielle (part des trous justes), selon le réglage du QCM.
-- À prévoir : éditeur (insérer un trou dans l'énoncé), syntaxe dans les sources de modules, export GIFT (format
-  « Cloze » de Moodle), accessibilité (chaque champ nommé par son rang et son contexte).
-- Premier usage : verbes irréguliers en contexte (*Yesterday, she ___ (go) to London.*).
+- Éditeur (bouton « Insérer un trou »), syntaxe dans les sources de modules (`{went}`, `{has ~have ~had}`).
+- Premier usage : QCM « En contexte » du module des verbes irréguliers.
+- Restent possibles plus tard : mise en forme dans le texte à trous, propositions de liste traduites par langue,
+  export vers le format « Cloze » de Moodle (GIFT ne décrit qu'un trou par question).
 
 ## Lot 6 quater — révision espacée (Leitner)
 

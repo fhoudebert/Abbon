@@ -75,12 +75,25 @@ export const ExpectedSchema = z.object({
   value: z.number().optional(),
   tolerance: z.number().min(0).optional(),
   unit: z.string().max(30).nullable().optional(),
+  /** Texte à trous : texte par langue (« {{1}} » marque le premier trou) et trous. */
+  text: z.record(z.string(), z.string().max(5000)).optional(),
+  gaps: z
+    .array(
+      z.object({
+        kind: z.enum(['text', 'select']),
+        accepted: z.array(z.string().max(500)).max(50),
+        caseSensitive: z.boolean().optional(),
+        options: z.array(z.string().max(500)).max(50).optional(),
+      }),
+    )
+    .max(50)
+    .optional(),
 });
 
 export const QuestionSchema = z.object({
   id,
-  /** single, multiple : réponses à cocher ; short, numeric : réponse à saisir (`expected`). */
-  type: z.enum(['single', 'multiple', 'short', 'numeric']),
+  /** single, multiple : réponses à cocher ; short, numeric : réponse à saisir ; cloze : texte à trous (`expected`). */
+  type: z.enum(['single', 'multiple', 'short', 'numeric', 'cloze']),
   prompt: I18nRichSchema,
   points: z.number().positive().max(1000),
   position: z.number().int().min(0),
@@ -153,6 +166,7 @@ export const AnswerRowSchema = z.object({
   questionId: id,
   selected: z.array(id),
   text: z.string().max(2000).nullable().optional(),
+  texts: z.array(z.string().max(2000)).max(50).nullable().optional(),
   correct: z.boolean().nullable().optional(),
   points: z.number().nullable().optional(),
   timeSec: z.number().int().min(0),

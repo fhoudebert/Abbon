@@ -185,6 +185,7 @@ export class SqliteRepository implements Repository {
       questionId: String(r.question_id),
       selected: parse(r.selected, []),
       ...(r.text != null ? { text: String(r.text) } : {}),
+      ...(r.texts != null ? { texts: parse<string[]>(r.texts, []) } : {}),
       correct: r.correct == null ? null : bool(r.correct),
       points: num(r.points),
       timeSec: Number(r.time_sec),
@@ -194,10 +195,10 @@ export class SqliteRepository implements Repository {
 
   async saveAnswer(attemptId: string, a: Answer): Promise<void> {
     await this.db.execute(
-      `INSERT INTO answer (attempt_id, question_id, selected, correct, points, time_sec, flagged, text)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO answer (attempt_id, question_id, selected, correct, points, time_sec, flagged, text, texts)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        ON CONFLICT(attempt_id, question_id) DO UPDATE SET selected = $3, correct = $4, points = $5,
-         time_sec = $6, flagged = $7, text = $8`,
+         time_sec = $6, flagged = $7, text = $8, texts = $9`,
       [
         attemptId,
         a.questionId,
@@ -207,6 +208,7 @@ export class SqliteRepository implements Repository {
         a.timeSec,
         a.flagged ? 1 : 0,
         a.text ?? null,
+        a.texts ? json(a.texts) : null,
       ],
     );
   }
@@ -308,6 +310,7 @@ export class SqliteRepository implements Repository {
       questionId: String(r.question_id),
       selected: parse<string[]>(r.selected, []),
       ...(r.text != null ? { text: String(r.text) } : {}),
+      ...(r.texts != null ? { texts: parse<string[]>(r.texts, []) } : {}),
       correct: r.correct == null ? null : bool(r.correct),
       points: num(r.points),
       timeSec: Number(r.time_sec),
@@ -375,9 +378,9 @@ export class SqliteRepository implements Repository {
     for (const r of data.answers) {
       if (!attemptIds.has(r.attemptId)) continue;
       st.push({
-        sql: `INSERT INTO answer (attempt_id, question_id, selected, correct, points, time_sec, flagged, text)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-        params: [r.attemptId, r.questionId, json(r.selected), r.correct == null ? null : r.correct ? 1 : 0, r.points ?? null, r.timeSec, r.flagged ? 1 : 0, r.text ?? null],
+        sql: `INSERT INTO answer (attempt_id, question_id, selected, correct, points, time_sec, flagged, text, texts)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        params: [r.attemptId, r.questionId, json(r.selected), r.correct == null ? null : r.correct ? 1 : 0, r.points ?? null, r.timeSec, r.flagged ? 1 : 0, r.text ?? null, r.texts ? json(r.texts) : null],
       });
     }
     for (const [k, v] of Object.entries(data.settings))
@@ -496,7 +499,7 @@ function quizStatements(quiz: Quiz): Statement[] {
 
 const ATTEMPT_COLUMNS = `id, quiz_id, quiz_version, mode, status, started_at, finished_at,
   elapsed_sec, current_index, question_order, score, max_score`;
-const ANSWER_COLUMNS = 'attempt_id, question_id, selected, correct, points, time_sec, flagged, text';
+const ANSWER_COLUMNS = 'attempt_id, question_id, selected, correct, points, time_sec, flagged, text, texts';
 
 function attemptFromRow(r: Row): Attempt {
   return {

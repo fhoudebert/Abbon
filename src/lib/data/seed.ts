@@ -123,7 +123,7 @@ export const demoQuizzes: Quiz[] = [
 ];
 
 /** Question à saisie (réponse courte ou numérique) des données de démonstration. */
-const typed = (id: string, type: 'short' | 'numeric', fr: string, en: string, expected: Question['expected'], expl: [string, string]): Question => ({
+const typed = (id: string, type: 'short' | 'numeric' | 'cloze', fr: string, en: string, expected: Question['expected'], expl: [string, string]): Question => ({
   id,
   type,
   prompt: { fr, en },
@@ -151,6 +151,23 @@ demoQuizzes.push({
       'At what temperature does water boil at sea level?',
       { value: 100, tolerance: 0.5, unit: '°C' },
       ['100 °C sous une pression d’une atmosphère.', '100 °C under a pressure of one atmosphere.'],
+    ),
+    typed(
+      'demo-typed-q-3',
+      'cloze',
+      'Complétez la phrase.',
+      'Complete the sentence.',
+      {
+        text: {
+          fr: 'La Terre tourne autour du {{1}} en environ {{2}} jours.',
+          en: 'The Earth goes round the {{1}} in about {{2}} days.',
+        },
+        gaps: [
+          { kind: 'text', accepted: ['Soleil', 'Sun'] },
+          { kind: 'select', accepted: ['365'], options: ['28', '180'] },
+        ],
+      },
+      ['Une révolution dure 365,25 jours.', 'One revolution takes 365.25 days.'],
     ),
   ],
 });
@@ -249,12 +266,13 @@ export async function seedDemo(repo: Repository): Promise<boolean> {
       finishedAt: iso(58),
       elapsedSec: 95,
       currentIndex: 1,
-      questionOrder: ['demo-typed-q-1', 'demo-typed-q-2'],
+      questionOrder: ['demo-typed-q-1', 'demo-typed-q-2', 'demo-typed-q-3'],
       score: 1,
-      maxScore: 2,
+      maxScore: 3,
     },
   ];
   for (const a of attempts) await repo.saveAttempt(a);
+  await repo.saveAnswer('demo-attempt-typed', { questionId: 'demo-typed-q-3', selected: [], texts: ['soleil', '180'], correct: false, points: 0, timeSec: 15, flagged: false });
   for (const [questionId, text, correct] of [['demo-typed-q-1', 'rome', true], ['demo-typed-q-2', '90', false]] as const)
     await repo.saveAnswer('demo-attempt-typed', { questionId, selected: [], text, correct, points: correct ? 1 : 0, timeSec: 40, flagged: false });
   if (repo.backend === 'memory') {

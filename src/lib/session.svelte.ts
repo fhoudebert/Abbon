@@ -122,6 +122,16 @@ export class AttemptSession {
     this.answers[q.id] = { ...(this.answers[q.id] ?? emptyAnswer(q.id)), text };
   }
 
+  /** Réponse à un trou d'un texte à trous (même principe que `typeText`). */
+  typeGap(gap: number, value: string) {
+    const q = this.question;
+    if (!q || this.locked) return;
+    const current = this.answers[q.id] ?? emptyAnswer(q.id);
+    const texts = Array.from({ length: q.expected?.gaps?.length ?? 0 }, (_, i) => current.texts?.[i] ?? '');
+    texts[gap] = value;
+    this.answers[q.id] = { ...current, texts };
+  }
+
   async toggleFlag() {
     const q = this.question;
     if (!q || this.attempt?.status !== 'in_progress') return;

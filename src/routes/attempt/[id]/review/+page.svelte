@@ -3,6 +3,8 @@
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
   import { canSeeSolution, choicesOf, outcomeOf, resultOf } from '$lib/domain/session';
+  import ClozeText from '$lib/components/ClozeText.svelte';
+  import { gapResults } from '$lib/domain/cloze';
   import { pick } from '$lib/domain/rich';
   import { expectedText, isTyped } from '$lib/domain/typed';
   import { localize } from '$lib/domain/text';
@@ -71,7 +73,10 @@
         <span class="badge {outcome}">{t(`outcome.${outcome}`)}</span>
       </header>
       <div class="prompt" lang={q.prompt[lang] ? lang : fallback}><RichContent value={pick(q.prompt, lang, fallback)} /></div>
-      {#if isTyped(q)}
+      {#if q.type === 'cloze'}
+        {@const texts = session.answers[q.id]?.texts ?? []}
+        <ClozeText question={q} {lang} {fallback} values={texts} locked results={gapResults(q, texts)} />
+      {:else if isTyped(q)}
         {@const given = session.answers[q.id]?.text?.trim()}
         <dl class="typed">
           <dt>{t('review.yourAnswer')}</dt>

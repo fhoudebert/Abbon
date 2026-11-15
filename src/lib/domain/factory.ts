@@ -31,8 +31,9 @@ export function newChoice(position: number): Choice {
   return { id: newId(), content: {}, correct: false, position, feedback: null };
 }
 
-const typed = (type: QuestionType) => type === 'short' || type === 'numeric';
-const emptyExpected = (type: QuestionType) => (type === 'short' ? { accepted: [''] } : type === 'numeric' ? { tolerance: 0 } : null);
+const typed = (type: QuestionType) => type === 'short' || type === 'numeric' || type === 'cloze';
+const emptyExpected = (type: QuestionType) =>
+  type === 'short' ? { accepted: [''] } : type === 'numeric' ? { tolerance: 0 } : type === 'cloze' ? { text: {}, gaps: [] } : null;
 
 /**
  * Nouvelle question : deux réponses vides à cocher (la première marquée juste en choix unique),
@@ -98,7 +99,7 @@ export function setQuestionType(q: Question, type: QuestionType) {
     if (was !== type) {
       const first = q.choices.find((c) => c.correct);
       const seed = first ? Object.values(first.content).map((v) => richToPlain(v)).find(Boolean) : undefined;
-      q.expected = type === 'short' ? { accepted: [seed ?? ''] } : { tolerance: 0 };
+      q.expected = type === 'short' ? { accepted: [seed ?? ''] } : emptyExpected(type);
     }
     q.choices = [];
     return;

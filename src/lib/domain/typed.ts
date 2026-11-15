@@ -4,7 +4,8 @@
  */
 import type { ExpectedAnswer, Question } from './types';
 
-export const isTyped = (q: Pick<Question, 'type'>) => q.type === 'short' || q.type === 'numeric';
+/** Question à saisie : pas de réponses à cocher (`choices` vide). */
+export const isTyped = (q: Pick<Question, 'type'>) => q.type === 'short' || q.type === 'numeric' || q.type === 'cloze';
 
 /**
  * Texte ramené à une forme comparable : espaces superflus retirés, apostrophes et espaces
@@ -65,6 +66,7 @@ export function expectedText(question: Pick<Question, 'type' | 'expected'>, lang
   const e: ExpectedAnswer | null | undefined = question.expected;
   if (!e) return '';
   if (question.type === 'short') return (e.accepted ?? []).filter((a) => a.trim()).join(' / ');
+  if (question.type === 'cloze') return (e.gaps ?? []).map((g) => (g.kind === 'select' ? g.accepted.slice(0, 1) : g.accepted).join(' / ')).join(' · ');
   if (question.type === 'numeric' && typeof e.value === 'number') {
     const unit = e.unit ? ` ${e.unit}` : '';
     const tol = e.tolerance ? ` (± ${formatNumber(e.tolerance, lang)})` : '';

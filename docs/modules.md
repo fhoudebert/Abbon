@@ -126,6 +126,27 @@ What is the past simple of *to go*?
   en français, `= London` en anglais : les deux sont acceptées partout). `· short · case-sensitive` fait
   respecter les majuscules. Une réponse numérique s'écrit `= valeur`, `= valeur ± écart`, avec une unité facultative
   à la fin.
+- **Textes à trous** : `· cloze`, avec le texte sur une ou plusieurs lignes `=` et les trous entre accolades :
+
+  ```markdown
+  ## london · cloze
+  Complétez avec la forme correcte.
+
+  = Yesterday, she {went|did go} (go) to London.
+  = She {has ~have ~had} two cats.
+
+  > *go – went – gone*.
+
+  ### en
+  Complete with the correct form.
+
+  > *go – went – gone*.
+  ```
+
+  `{went|did go}` est un trou à saisir (formes acceptées séparées par `|`) ; `{has ~have ~had}` est une liste
+  déroulante : la bonne réponse d'abord, puis les autres propositions après `~`. Une langue sans ligne `=`
+  reprend le texte de la langue principale ; sinon elle donne son propre texte, avec les mêmes trous. `\{` écrit
+  une accolade. `scoring: partial` dans l'en-tête du QCM compte chaque trou juste.
 - Autres réglages possibles dans l'en-tête : `description`, `timeLimitSec`, `passThreshold`, `scoring`,
   `solutionVisibility`, `shuffle`.
 
@@ -151,7 +172,8 @@ ne connaît pas les modules remplace correctement un QCM plus ancien.
 
 Erreurs (rien n'est construit) : schémas JSON du format, identifiants uniques et bien formés, exactement une bonne
 réponse en choix unique et au moins une en choix multiple, au moins deux réponses, réponse attendue présente et
-lisible pour une question à saisie, explication présente partout,
+lisible pour une question à saisie, trous présents, non vides et identiques d'une langue à l'autre pour un texte à
+trous, explication présente partout,
 chaque texte présent dans chaque langue, réponses cohérentes d'une langue à l'autre, pas de réponses en double,
 Markdown bien formé. Avertissements : moins de 3 ou plus de 5 réponses, « toutes / aucune des réponses », QCM de
 moins de 10 ou plus de 15 questions, niveau absent ou inhabituel. La commande affiche aussi le nombre de QCM et de

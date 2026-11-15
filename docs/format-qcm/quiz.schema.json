@@ -162,7 +162,8 @@
               "single",
               "multiple",
               "short",
-              "numeric"
+              "numeric",
+              "cloze"
             ]
           },
           "prompt": {
@@ -323,6 +324,56 @@
                         "type": "null"
                       }
                     ]
+                  },
+                  "text": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {
+                      "type": "string",
+                      "maxLength": 5000
+                    }
+                  },
+                  "gaps": {
+                    "maxItems": 50,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "text",
+                            "select"
+                          ]
+                        },
+                        "accepted": {
+                          "maxItems": 50,
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "maxLength": 500
+                          }
+                        },
+                        "caseSensitive": {
+                          "type": "boolean"
+                        },
+                        "options": {
+                          "maxItems": 50,
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "maxLength": 500
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "accepted"
+                      ],
+                      "additionalProperties": false
+                    }
                   }
                 },
                 "additionalProperties": false

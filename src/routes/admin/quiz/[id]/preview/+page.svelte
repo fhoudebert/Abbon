@@ -4,6 +4,7 @@
   import AdminGate from '$lib/components/AdminGate.svelte';
   import { localize } from '$lib/domain/text';
   import type { Quiz } from '$lib/domain/types';
+  import ClozeText from '$lib/components/ClozeText.svelte';
   import { pick } from '$lib/domain/rich';
   import { expectedText, isTyped } from '$lib/domain/typed';
   import { i18n, t } from '$lib/i18n/index.svelte';
@@ -62,7 +63,9 @@
           {t(`play.${q.type}`)}
         </p>
         <div class="prompt" lang={q.prompt[lang] ? lang : main}><RichContent value={pick(q.prompt, lang, main)} /></div>
-        {#if isTyped(q)}
+        {#if q.type === 'cloze'}
+          <ClozeText question={q} {lang} fallback={main} locked values={showAnswers ? (q.expected?.gaps ?? []).map((g) => g.accepted[0] ?? '') : []} />
+        {:else if isTyped(q)}
           <p class="typed">
             <span class="box" aria-hidden="true">{showAnswers ? expectedText(q, lang) : '…'}</span>
             {#if showAnswers}<span class="visually-hidden">{t('play.expected', { answer: expectedText(q, lang) })}</span>

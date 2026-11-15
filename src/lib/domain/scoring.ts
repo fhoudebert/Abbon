@@ -1,3 +1,4 @@
+import { gapResults } from './cloze';
 import { isTyped, matchesExpected } from './typed';
 import type { Question, ScoringRule } from './types';
 
@@ -5,6 +6,7 @@ import type { Question, ScoringRule } from './types';
 export interface Given {
   selected: readonly string[];
   text?: string | null;
+  texts?: readonly string[] | null;
 }
 
 export interface QuestionScore {
@@ -24,13 +26,23 @@ export interface QuestionScore {
  *   attendues, plancher à 0, multiplié par les points de la question.
  * - Réponse courte ou numérique : tous les points si le texte saisi correspond à la réponse
  *   attendue (voir typed.ts), sinon 0.
+ * - Texte à trous : tous les points si chaque trou est juste ; en notation « partielle », la part
+ *   des trous justes.
  */
 export function scoreQuestion(
   question: Question,
   selected: readonly string[],
   rule: ScoringRule = 'all_or_nothing',
   text?: string | null,
+  texts?: readonly string[] | null,
 ): QuestionScore {
+  if (question.type === 'cloze') {
+    const results = gapResults(question, texts);
+    const good = results.filter(Boolean).length;
+    const all = results.length > 0 && good === results.length;
+    if (rule === 'all_or_nothing' || results.length === 0) return { points: all ? question.points : 0, correct: all };
+    return { points: round2((good / results.length) * question.points), correct: all };
+  }
   if (isTyped(question)) {
     const ok = matchesExpected(question, text);
     return { points: ok ? question.points : 0, correct: ok };
@@ -82,7 +94,7 @@ export function scoreQuiz(
   for (const q of questions) {
     const a = answers[q.id] ?? [];
     const given: Given = 'selected' in a ? a : { selected: a };
-    const r = scoreQuestion(q, given.selected, rule, given.text);
+    const r = scoreQuestion(q, given.selected, rule, given.text, given.texts);
     perQuestion[q.id] = r;
     score += r.points;
     maxScore += q.points;

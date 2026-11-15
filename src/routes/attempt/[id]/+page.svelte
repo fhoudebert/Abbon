@@ -4,6 +4,8 @@
   import { page } from '$app/state';
   import { formatDuration, isAnswered, showsInstantFeedback } from '$lib/domain/session';
   import { expectedText, isTyped } from '$lib/domain/typed';
+  import ClozeText from '$lib/components/ClozeText.svelte';
+  import { gapResults } from '$lib/domain/cloze';
   import { pick } from '$lib/domain/rich';
   import { localize } from '$lib/domain/text';
   import RichContent from '$lib/rich/RichContent.svelte';
@@ -149,7 +151,20 @@
       </div>
       <p class="hint muted">{t(`play.${question.type}`)}</p>
 
-      {#if isTyped(question)}
+      {#if question.type === 'cloze'}
+        <ClozeText
+          {question}
+          {lang}
+          {fallback}
+          values={answer?.texts ?? []}
+          locked={session.locked}
+          results={checked ? gapResults(question, answer?.texts) : null}
+          seed={quiz.shuffle ? `${attempt.id}:${question.id}` : null}
+          labelledby="prompt-{question.id}"
+          onchange={(i, v) => session.typeGap(i, v)}
+          oncommit={() => session.persist()}
+        />
+      {:else if isTyped(question)}
         <!-- {#key} : un champ neuf par question, qui reçoit le focus. -->
         {#key question.id}
           <label class="typed" class:is-correct={checked && answer?.correct} class:is-wrong={checked && !answer?.correct}>
@@ -199,7 +214,7 @@
         <strong>
           {answer.correct ? t('play.correct') : (answer.points ?? 0) > 0 ? t('play.partial') : t('play.wrong')}
         </strong>
-        {#if isTyped(question) && !answer.correct}<p class="expected">{t('play.expected', { answer: expectedText(question, lang) })}</p>{/if}
+        {#if isTyped(question) && question.type !== 'cloze' && !answer.correct}<p class="expected">{t('play.expected', { answer: expectedText(question, lang) })}</p>{/if}
         {#if question.explanation}
           <div class="expl"><span class="muted">{t('play.explanation')} :</span> <RichContent value={pick(question.explanation, lang, fallback)} /></div>
         {/if}

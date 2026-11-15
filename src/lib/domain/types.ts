@@ -32,8 +32,21 @@ export type I18nRich = Record<Lang, RichValue>;
 /**
  * single, multiple : réponses à cocher (`choices`).
  * short, numeric : réponse à saisir, comparée à `expected` (pas de `choices`).
+ * cloze : texte à trous (`expected.text` et `expected.gaps`).
  */
-export type QuestionType = 'single' | 'multiple' | 'short' | 'numeric';
+export type QuestionType = 'single' | 'multiple' | 'short' | 'numeric' | 'cloze';
+
+/** Un trou d'un texte à trous. */
+export interface ClozeGap {
+  /** text : réponse à saisir ; select : réponse à choisir dans une liste déroulante. */
+  kind: 'text' | 'select';
+  /** Formes acceptées (saisie), ou la bonne réponse seule (liste). */
+  accepted: string[];
+  /** Saisie : respecter les majuscules. */
+  caseSensitive?: boolean;
+  /** Liste déroulante : les autres propositions. */
+  options?: string[];
+}
 
 /** Réponse attendue d'une question à saisie. */
 export interface ExpectedAnswer {
@@ -47,6 +60,10 @@ export interface ExpectedAnswer {
   tolerance?: number;
   /** Réponse numérique : unité affichée à côté du champ (elle n'est pas à saisir). */
   unit?: string | null;
+  /** Texte à trous : le texte par langue, où « {{1}} », « {{2}} »… marquent les trous. */
+  text?: I18nText;
+  /** Texte à trous : les trous, dans l'ordre de leur numéro. */
+  gaps?: ClozeGap[];
 }
 export type ScoringRule = 'all_or_nothing' | 'partial';
 export type SolutionVisibility = 'never' | 'after_submit' | 'after_pass';
@@ -116,6 +133,8 @@ export interface Answer {
   selected: string[];
   /** Réponse saisie (types short et numeric). */
   text?: string | null;
+  /** Réponses aux trous d'un texte à trous, dans l'ordre des trous. */
+  texts?: string[] | null;
   correct?: boolean | null;
   points?: number | null;
   timeSec: number;

@@ -89,8 +89,11 @@ describe('GIFT — export', () => {
     for (const quiz of demoQuizzes) {
       const lang = quiz.languages[0];
       const back = parseGift(quizToGift(quiz, lang), 'x', lang).quiz;
-      expect(back.questions.length).toBe(quiz.questions.length);
-      quiz.questions.forEach((q, i) => {
+      // Les textes à trous n'ont pas d'équivalent en GIFT : ils sont laissés en commentaire.
+      const exported = quiz.questions.filter((q) => q.type !== 'cloze');
+      expect(quizToGift(quiz, lang).split('non exporté').length - 1).toBe(quiz.questions.length - exported.length);
+      expect(back.questions.length).toBe(exported.length);
+      exported.forEach((q, i) => {
         const b = back.questions[i];
         expect(b.type).toBe(q.type);
         // L'unité d'une réponse numérique n'existe pas en GIFT : elle rejoint l'énoncé.

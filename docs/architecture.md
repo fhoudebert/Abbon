@@ -132,6 +132,16 @@ Voir [modules.md](modules.md) pour l'usage et le format des sources.
 - Migration 5 (colonnes) ; la contrainte `CHECK` de `question.type` a été élargie dans la migration 1, aucune base
   n'étant à reprendre (voir [feuille-de-route.md](feuille-de-route.md)).
 
+## Textes à trous (lot 6 ter)
+
+- Type `cloze` : `expected.text` (texte brut par langue, repères `{{n}}`) et `expected.gaps` (saisie ou liste
+  déroulante) ; réponses de l'apprenant dans `answer.texts` (migration 6). Logique dans `domain/cloze.ts`.
+- `ClozeText.svelte` affiche le texte et ses champs ; il sert au passage, au corrigé et à l'aperçu. Les
+  propositions d'une liste sont mélangées par tentative (même graine que les réponses à cocher).
+- Le texte à trous est du texte brut (retours à la ligne conservés), sans mise en forme : la consigne, elle,
+  reste un contenu riche.
+- Les propositions d'une liste déroulante sont communes à toutes les langues.
+
 ## Limites connues
 
 - Modules : l'historique mis de côté à la désinstallation n'est pas inclus dans la sauvegarde complète ; une

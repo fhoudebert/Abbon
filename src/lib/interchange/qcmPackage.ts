@@ -122,7 +122,21 @@ export function stripSolutions(quiz: Quiz): Quiz {
     ...x,
     explanation: null,
     // La réponse attendue est retirée ; l'unité d'une réponse numérique fait partie de l'énoncé.
-    expected: x.type === 'numeric' && x.expected?.unit ? { unit: x.expected.unit } : null,
+    expected:
+      x.type === 'numeric' && x.expected?.unit
+        ? { unit: x.expected.unit }
+        : x.type === 'cloze' && x.expected
+          ? {
+              // Le texte et les listes font partie de l'énoncé ; les bonnes réponses sont retirées
+              // (les propositions d'une liste sont triées pour ne pas trahir la bonne).
+              text: x.expected.text,
+              gaps: (x.expected.gaps ?? []).map((g) =>
+                g.kind === 'select'
+                  ? { kind: g.kind, accepted: [], options: [...new Set([...g.accepted.slice(0, 1), ...(g.options ?? [])])].sort() }
+                  : { kind: g.kind, accepted: [] },
+              ),
+            }
+          : null,
     choices: x.choices.map(({ correct: _c, feedback: _f, ...c }) => c as Quiz['questions'][number]['choices'][number]),
   }));
   return q;

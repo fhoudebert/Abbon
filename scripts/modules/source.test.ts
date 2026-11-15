@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { checkRequirements } from '$lib/interchange/module';
 import { buildPackage, parsePackage } from '$lib/interchange/qcmPackage';
-import { compileModule, parseNumericAnswer, splitQuestions, type SourceFile } from './source';
+import { compileModule, parseClozeSource, parseNumericAnswer, splitQuestions, type SourceFile } from './source';
 
 const MODULE = `id: org.abbon.test
 version: 1.2.3
@@ -237,5 +237,55 @@ Value of *g*?
     expect(errors(files(QUIZ.replace('- [ ] La chaîne est copiée', '= copie')))).toEqual(
       expect.arrayContaining([expect.stringContaining('ligne « = réponse » dans une question « single »')]),
     );
+  });
+});
+
+describe('textes à trous dans les sources', () => {
+  const CLOZE = `---
+id: trous-01
+title: { fr: Trous, en: Gaps }
+level: bases
+---
+
+## london · cloze
+Complétez au prétérit.
+
+= Yesterday, she {went|did go} to London
+= and {saw} a friend. She {has ~have ~had} two cats.
+
+> *go – went*, *see – saw*.
+
+### en
+Complete with the past simple.
+
+> *go – went*, *see – saw*.
+`;
+
+  it('lit trous à saisir et listes déroulantes', () => {
+    expect(parseClozeSource('a {b|c} d {e ~f ~g} \\{h\\}')).toEqual({
+      text: 'a {{1}} d {{2}} {h}',
+      gaps: [
+        { kind: 'text', accepted: ['b', 'c'] },
+        { kind: 'select', accepted: ['e'], options: ['f', 'g'] },
+      ],
+    });
+  });
+
+  it('compile un texte à trous, repris tel quel dans une langue sans texte', () => {
+    const c = compileModule(files(CLOZE));
+    expect(c.issues.filter((i) => i.level === 'error')).toEqual([]);
+    const [q] = c.quizzes[0].questions;
+    expect(q.type).toBe('cloze');
+    expect(q.choices).toEqual([]);
+    expect(q.expected?.gaps).toHaveLength(3);
+    expect(q.expected?.text?.fr).toBe('Yesterday, she {{1}} to London\nand {{2}} a friend. She {{3}} two cats.');
+    expect(q.expected?.text?.en).toBe(q.expected?.text?.fr);
+  });
+
+  it('signale un texte sans trou ou des trous différents d’une langue à l’autre', () => {
+    expect(errors(files(CLOZE.replace(/= .*\n= .*\n/, '= Rien à compléter.\n')))).toEqual([expect.stringContaining('sans trou')]);
+    expect(errors(files(CLOZE.replace('> *go – went*, *see – saw*.\n\n### en\nComplete with the past simple.\n', '> x\n\n### en\nComplete.\n\n= She {went} home.\n')))).toEqual([
+      expect.stringContaining('diffèrent'),
+    ]);
   });
 });

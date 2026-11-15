@@ -44,6 +44,7 @@ le contenu de l'appareil (le code PIN de l'appareil est conservé).
 | `single` | une case à cocher parmi `choices` | exactement un choix `correct` |
 | `multiple` | plusieurs cases à cocher | au moins un choix `correct` |
 | `short` | texte à saisir | `choices` vide ; `expected.accepted` (formes acceptées), `expected.caseSensitive` |
+| `cloze` | texte à trous | `choices` vide ; `expected.text` (texte par langue, trous marqués `{{1}}`, `{{2}}`…), `expected.gaps` |
 | `numeric` | nombre à saisir | `choices` vide ; `expected.value`, `expected.tolerance` (écart absolu), `expected.unit` (affichée, pas saisie) |
 
 ```json
@@ -57,9 +58,26 @@ le contenu de l'appareil (le code PIN de l'appareil est conservé).
   unification des apostrophes ; les majuscules sont ignorées sauf `caseSensitive`. Les accents comptent.
 - **Réponse numérique** : virgule ou point décimal, signe moins typographique, espaces de milliers et notation
   scientifique (`1,5e3`) sont acceptés. La réponse est juste si |saisie − `value`| ≤ `tolerance`.
-- Les deux types sont notés en tout ou rien. Dans les réponses d'une sauvegarde, le texte saisi est dans `text`.
-- Sans corrigé (`includesSolutions: false`), `expected` est retiré, sauf l'unité.
-- **Compatibilité** : `short` et `numeric` datent d'Abbon 0.2.0. Un lecteur plus ancien refuse un QCM qui en
+- Ces deux types sont notés en tout ou rien. Dans les réponses d'une sauvegarde, le texte saisi est dans `text`.
+- **Texte à trous** :
+
+  ```json
+  { "id": "q3", "type": "cloze", "prompt": { "fr": "Complétez." }, "points": 1, "position": 2, "choices": [],
+    "expected": {
+      "text": { "fr": "She {{1}} to London. She {{2}} two cats." },
+      "gaps": [
+        { "kind": "text", "accepted": ["went", "did go"] },
+        { "kind": "select", "accepted": ["has"], "options": ["have", "had"] }
+      ] } }
+  ```
+
+  Le trou n° *n* du texte est `gaps[n-1]` ; le texte de chaque langue contient chaque repère une fois. Un trou
+  `text` se compare comme une réponse courte ; un trou `select` est une liste déroulante formée de sa bonne
+  réponse (`accepted[0]`) et de ses `options`. Notation : tout ou rien, ou part des trous justes si le QCM est en
+  notation partielle. Les réponses de l'apprenant sont dans `texts`, une par trou.
+- Sans corrigé (`includesSolutions: false`), `expected` est retiré, sauf l'unité d'une réponse numérique, et sauf le
+  texte et les propositions des listes d'un texte à trous.
+- **Compatibilité** : `short`, `numeric` et `cloze` datent d'Abbon 0.2.0. Un lecteur plus ancien refuse un QCM qui en
   contient (le QCM est signalé invalide, les autres s'importent).
 
 ## Modules
@@ -110,4 +128,5 @@ Les sources et l'outillage des modules d'Abbon sont décrits dans [modules.md](.
 Abbon importe et exporte aussi le format texte GIFT : choix unique, choix multiples (poids `~%50%`), vrai/faux,
 réponse courte (`{=Paris =paris}`) et réponse numérique (`{#3.14:0.01}`, `{#1..5}`),
 retours `#` et `####`. Les autres types (appariement, rédaction, réponse numérique à plusieurs valeurs) sont
-signalés et ignorés. L'unité d'une réponse numérique, sans équivalent en GIFT, est ajoutée à l'énoncé. À l'export, chaque bonne réponse d'un choix multiple vaut `100/n %` et chaque mauvaise `-100 %`.
+signalés et ignorés. L'unité d'une réponse numérique, sans équivalent en GIFT, est ajoutée à l'énoncé. Un texte
+à trous n'est pas exporté (GIFT ne décrit qu'un trou par question) : il est laissé en commentaire. À l'export, chaque bonne réponse d'un choix multiple vaut `100/n %` et chaque mauvaise `-100 %`.

@@ -1,8 +1,9 @@
 <script lang="ts">
   import { tick } from 'svelte';
   import { move, newChoice, renumber, setQuestionType, toggleCorrect } from '$lib/domain/factory';
+  import { removeMarker } from '$lib/domain/cloze';
   import { parseNumber } from '$lib/domain/typed';
-  import type { ExpectedAnswer, Question, QuestionType, RichDoc } from '$lib/domain/types';
+  import type { ClozeGap, ExpectedAnswer, Question, QuestionType, RichDoc } from '$lib/domain/types';
   import { t } from '$lib/i18n/index.svelte';
   import RichEditor from '$lib/rich/RichEditor.svelte';
 
@@ -28,7 +29,7 @@
     await tick();
   }
 
-  const TYPES: QuestionType[] = ['single', 'multiple', 'short', 'numeric'];
+  const TYPES: QuestionType[] = ['single', 'multiple', 'short', 'numeric', 'cloze'];
 
   // ---- Réponse attendue (réponse courte, réponse numérique) ----------------
   const expected = $derived<ExpectedAnswer>(question.expected ?? {});
@@ -45,6 +46,38 @@
     } else patchExpected({ [key]: key === 'tolerance' ? Math.abs(n) : n });
   }
   const shown = (n: number | undefined) => (typeof n === 'number' ? String(n).replace('.', lang === 'fr' ? ',' : '.') : '');
+
+  // ---- Texte à trous -----------------------------------------------------
+  const gaps = $derived<ClozeGap[]>(expected.gaps ?? []);
+  const clozeText = $derived(expected.text?.[lang] ?? '');
+  let clozeArea = $state<HTMLTextAreaElement | null>(null);
+  const setClozeText = (v: string) => patchExpected({ text: { ...(expected.text ?? {}), [lang]: v } });
+  const patchGap = (i: number, p: Partial<ClozeGap>) => patchExpected({ gaps: gaps.map((g, k) => (k === i ? { ...g, ...p } : g)) });
+  const list = (v: string) => v.split('|').map((x) => x.trim()).filter(Boolean);
+
+  /** Ajoute un trou et son repère « {{n}} » à l'endroit du curseur, dans le texte de la langue en cours. */
+  async function insertGap() {
+    const marker = `{{${gaps.length + 1}}}`;
+    const at = clozeArea?.selectionStart ?? clozeText.length;
+    const end = clozeArea?.selectionEnd ?? at;
+    question.expected = {
+      ...expected,
+      text: { ...(expected.text ?? {}), [lang]: clozeText.slice(0, at) + marker + clozeText.slice(end) },
+      gaps: [...gaps, { kind: 'text', accepted: [] }],
+    };
+    await tick();
+    clozeArea?.focus();
+    clozeArea?.setSelectionRange(at + marker.length, at + marker.length);
+  }
+
+  /** Supprime un trou : son repère disparaît de chaque langue et les suivants sont renumérotés. */
+  function removeGap(i: number) {
+    question.expected = {
+      ...expected,
+      text: Object.fromEntries(Object.entries(expected.text ?? {}).map(([l, v]) => [l, removeMarker(v, i)])),
+      gaps: gaps.filter((_, k) => k !== i),
+    };
+  }
 
   function removeChoice(i: number) {
     question.choices.splice(i, 1);
@@ -103,6 +136,38 @@
           {t('qe.caseSensitive')}
         </label>
       </div>
+    </div>
+  {:else if question.type === 'cloze'}
+    <div class="field">
+      <label class="label" for="cloze-{question.id}">{t('qe.clozeText')}</label>
+      <p class="hint muted">{t('qe.clozeHint')}</p>
+      {#key lang}
+        <textarea id="cloze-{question.id}" bind:this={clozeArea} rows="4" {lang} spellcheck="true" value={clozeText} oninput={(e) => setClozeText(e.currentTarget.value)}></textarea>
+      {/key}
+      <div class="row"><button type="button" class="secondary" onclick={insertGap}>{t('qe.insertGap')}</button></div>
+    </div>
+    <div class="field">
+      <span class="label">{t('qe.gaps')}</span>
+      {#if gaps.length === 0}<p class="muted">{t('qe.noGap')}</p>{/if}
+      <ol class="gaps">
+        {#each gaps as g, i (i)}
+          <li>
+            <strong>{t('qe.gap', { n: i + 1 })}</strong>
+            <select aria-label={t('qe.gapKind', { n: i + 1 })} value={g.kind} onchange={(e) => patchGap(i, { kind: e.currentTarget.value as ClozeGap['kind'], accepted: g.accepted.slice(0, e.currentTarget.value === 'select' ? 1 : undefined) })}>
+              <option value="text">{t('qe.gapKind.text')}</option>
+              <option value="select">{t('qe.gapKind.select')}</option>
+            </select>
+            {#if g.kind === 'select'}
+              <label>{t('qe.gapAnswer')} <input type="text" value={g.accepted[0] ?? ''} onchange={(e) => patchGap(i, { accepted: list(e.currentTarget.value).slice(0, 1) })} /></label>
+              <label>{t('qe.gapOptions')} <input type="text" value={(g.options ?? []).join(' | ')} onchange={(e) => patchGap(i, { options: list(e.currentTarget.value) })} /></label>
+            {:else}
+              <label>{t('qe.gapAccepted')} <input type="text" value={g.accepted.join(' | ')} onchange={(e) => patchGap(i, { accepted: list(e.currentTarget.value) })} /></label>
+              <label class="check"><input type="checkbox" checked={g.caseSensitive ?? false} onchange={(e) => patchGap(i, { caseSensitive: e.currentTarget.checked })} /> {t('qe.caseSensitive')}</label>
+            {/if}
+            <button type="button" class="ghost danger" aria-label={t('qe.gapDelete', { n: i + 1 })} title={t('qe.gapDelete', { n: i + 1 })} onclick={() => removeGap(i)}>✕</button>
+          </li>
+        {/each}
+      </ol>
     </div>
   {:else if question.type === 'numeric'}
     <div class="field">
@@ -178,6 +243,51 @@
     margin: 0;
     font-size: 1.15rem;
     margin-inline-end: auto;
+  }
+  textarea {
+    inline-size: 100%;
+    padding: 0.6rem 0.8rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    resize: vertical;
+  }
+  .gaps {
+    display: grid;
+    gap: 0.6rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .gaps li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 0.5rem 1rem;
+    padding: 0.6rem 0.8rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .gaps strong {
+    align-self: center;
+  }
+  .gaps label:not(.check) {
+    display: grid;
+    gap: 0.2rem;
+    flex: 1 1 14rem;
+    font-size: 0.9rem;
+  }
+  .gaps input[type='text'],
+  .gaps select {
+    min-block-size: 2.4rem;
+    padding-inline: 0.6rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
   }
   .accepted {
     display: grid;

@@ -11,7 +11,7 @@ import { parse as parseYaml } from 'yaml';
 import { isEmptyRich } from '$lib/domain/rich';
 import { quizVersionOf } from '$lib/domain/semver';
 import { parseNumber } from '$lib/domain/typed';
-import type { Category, ExpectedAnswer, I18nRich, I18nText, ModuleManifest, Question, QuestionType, Quiz } from '$lib/domain/types';
+import type { Category, ClozeGap, ExpectedAnswer, I18nRich, I18nText, ModuleManifest, Question, QuestionType, Quiz } from '$lib/domain/types';
 import { CategorySchema, QuizSchema } from '$lib/interchange/format';
 import { MODULE_FORMAT, MODULE_FORMAT_VERSION, modulePrefix, ModuleSchema } from '$lib/interchange/module';
 import { toDocument, toRich } from './markdown';
@@ -60,7 +60,28 @@ interface RawQuestion {
   langs: Map<string, { prompt: string; choices: { correct: boolean; text: string }[]; answers: string[]; explanation: string }>;
 }
 
-const TYPES: readonly string[] = ['single', 'multiple', 'short', 'numeric'];
+const TYPES: readonly string[] = ['single', 'multiple', 'short', 'numeric', 'cloze'];
+
+/**
+ * Texte à trous d'une source : les trous sont entre accolades.
+ *   {went|did go}        saisie, avec les formes acceptées
+ *   {has ~have ~had}     liste déroulante : la bonne réponse, puis les autres propositions après « ~ »
+ * Renvoie le texte au format de l'application (« {{1}} », « {{2}} »…) et les trous. `\{` écrit une accolade.
+ */
+export function parseClozeSource(src: string): { text: string; gaps: ClozeGap[] } {
+  const gaps: ClozeGap[] = [];
+  const text = src
+    .replace(/\\([{}])/g, (_m, c: string) => (c === '{' ? '\u0001' : '\u0002'))
+    .replace(/\{([^{}]*)\}/g, (_m, body: string) => {
+      const [first, ...others] = body.split('~').map((x) => x.trim());
+      if (others.length) gaps.push({ kind: 'select', accepted: [first], options: others.filter(Boolean) });
+      else gaps.push({ kind: 'text', accepted: first.split('|').map((x) => x.trim()).filter(Boolean) });
+      return `{{${gaps.length}}}`;
+    })
+    .replaceAll('\u0001', '{')
+    .replaceAll('\u0002', '}');
+  return { text, gaps };
+}
 
 /**
  * Réponse numérique d'une source : « 9,81 », « 9,81 ± 0,01 », « 9,81 ± 0,01 m/s² », « 4 faces ».
@@ -262,11 +283,31 @@ export function compileModule(files: readonly SourceFile[]): Compiled {
         const flags = first.choices.map((c) => c.correct);
         const right = flags.filter(Boolean).length;
         const type: QuestionType = raw.type ?? (first.answers.length && !flags.length ? 'short' : right > 1 ? 'multiple' : 'single');
-        const typed = type === 'short' || type === 'numeric';
+        const typed = type === 'short' || type === 'numeric' || type === 'cloze';
 
         // Questions à saisie : lignes « = réponse ». Les formes acceptées de toutes les langues s'additionnent.
         let expected: ExpectedAnswer | null = null;
-        if (typed) {
+        if (type === 'cloze') {
+          // Lignes « = texte avec {trous} ». Une langue sans texte reprend celui de la langue principale.
+          if (flags.length) err(f.path, 'texte à trous : pas de réponses à cocher (« - [ ] »)', ref);
+          const main0 = parseClozeSource(first.answers.join('\n'));
+          if (!main0.gaps.length) err(f.path, 'texte à trous : ligne « = texte avec {trou} » manquante ou sans trou', ref);
+          if (main0.gaps.some((g) => !g.accepted.length || !g.accepted[0])) err(f.path, 'texte à trous : un trou est vide', ref);
+          if (main0.gaps.some((g) => g.kind === 'select' && !g.options?.length)) err(f.path, 'texte à trous : une liste n’a qu’une proposition', ref);
+          const text: Record<string, string> = {};
+          for (const l of languages) {
+            const lines = raw.langs.get(l)?.answers ?? [];
+            if (!lines.length || l === main) {
+              text[l] = main0.text;
+              continue;
+            }
+            const other = parseClozeSource(lines.join('\n'));
+            if (JSON.stringify(other.gaps) !== JSON.stringify(main0.gaps))
+              err(f.path, `texte à trous : les trous en « ${l} » diffèrent de ceux en « ${main} »`, ref);
+            text[l] = other.text;
+          }
+          expected = { text, gaps: main0.gaps };
+        } else if (typed) {
           const all = [...new Set(languages.flatMap((l) => raw.langs.get(l)?.answers ?? []).map((a) => a.trim()))];
           if (flags.length) err(f.path, `question « ${type} » : pas de réponses à cocher (« - [ ] »), seulement des lignes « = réponse »`, ref);
           if (!all.length) err(f.path, 'réponse attendue manquante (ligne « = réponse »)', ref);
