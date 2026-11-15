@@ -78,7 +78,10 @@ npm run tauri build -- --bundles msi,nsis            # Windows (sur Windows)
 - [`build.yml`](.github/workflows/build.yml) : paquets Linux, Android et Windows.
   - **À la demande** : onglet *Actions* → *Build* → *Run workflow*, puis saisir la branche (ou un tag, un commit) et
     cocher les plateformes. Les paquets se téléchargent depuis les *artifacts* de l'exécution.
-    Avec `gh` : `gh workflow run build.yml -f ref=init -f windows=false`.
+    Avec `gh` : `gh workflow run build.yml --ref init -f ref=init -f windows=false`.
+    Attention : GitHub exécute le fichier de workflow de la branche choisie dans « Use workflow from »
+    (option `--ref`), le champ `ref` ne choisit que le code compilé. Pour tester une modification du
+    workflow lui-même, choisir la même branche aux deux endroits.
   - **Sur un tag `vX.Y.Z`** : les trois plateformes, puis un brouillon de release avec les empreintes SHA-256.
     Le tag doit correspondre à la version de `package.json`, sinon le build s'arrête.
 
