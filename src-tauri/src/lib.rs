@@ -4,6 +4,7 @@
 //! (`src/lib/domain`). Ici on enregistre les plugins et les migrations SQLite.
 
 mod batch;
+mod update;
 
 use tauri_plugin_sql::{Migration, MigrationKind};
 
@@ -37,7 +38,16 @@ pub fn migrations() -> Vec<Migration> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let builder = tauri::Builder::default();
+    // Mises à jour : seulement sur ordinateur, et seulement si une clé publique a été fournie
+    // à la compilation (sinon rien n'est vérifiable, donc rien n'est proposé).
+    #[cfg(desktop)]
+    let builder = match update::pubkey() {
+        Some(key) => builder.plugin(tauri_plugin_updater::Builder::new().pubkey(key).build()),
+        None => builder,
+    };
+    builder
+        .plugin(tauri_plugin_opener::init())
         // Fenêtres « Enregistrer sous » ; le chemin choisi est ajouté à la portée du plugin fs.
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
@@ -46,7 +56,13 @@ pub fn run() {
                 .add_migrations(DB_URL, migrations())
                 .build(),
         )
-        .invoke_handler(tauri::generate_handler![batch::run_batch])
+        .invoke_handler(tauri::generate_handler![
+            batch::run_batch,
+            update::update_support,
+            update::fetch_release,
+            update::platform::check_update,
+            update::platform::install_update
+        ])
         .run(tauri::generate_context!())
         .expect("erreur au lancement d'Abbon");
 }

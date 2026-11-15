@@ -101,6 +101,8 @@
     t(`problem.${p.code}` as MessageKey, { ref: p.ref ? (p.ref.length > 20 ? p.ref.slice(0, 12) + '…' : p.ref) : '', detail: p.detail ?? '' });
 </script>
 
+<svelte:head><title>{t('import.title')} — Abbon</title></svelte:head>
+
 <AdminGate>
   <a class="back" href="/admin">← {t('admin.title')}</a>
   <h1>{t('import.title')}</h1>

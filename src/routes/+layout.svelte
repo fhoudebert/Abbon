@@ -1,21 +1,33 @@
 <script lang="ts">
   import '../app.css';
   import { onMount, type Snippet } from 'svelte';
+  import { afterNavigate } from '$app/navigation';
   import { page } from '$app/state';
   import { app } from '$lib/app.svelte';
+  import { prefs } from '$lib/prefs.svelte';
+  import { updates } from '$lib/update.svelte';
   import { i18n, t, SUPPORTED } from '$lib/i18n/index.svelte';
 
   let { children }: { children: Snippet } = $props();
 
-  onMount(() => {
-    app.init();
+  onMount(async () => {
+    await app.init();
+    await prefs.load();
+    void updates.init(); // vérification éventuelle, sans bloquer l'affichage
+  });
+
+  // Changement d'écran : le focus va au contenu (lecteurs d'écran, clavier), comme un chargement de page.
+  afterNavigate(({ type }) => {
+    if (type !== 'enter') document.getElementById('main')?.focus();
   });
 
   const langNames: Record<string, string> = { fr: 'Français', en: 'English' };
 </script>
 
+<a class="skip" href="#main">{t('a11y.skip')}</a>
+
 <header class="top">
-  <a class="brand" href="/" aria-label={t('nav.home')}>
+  <a class="brand" href="/">
     <img src="/abbon.png" alt="" width="40" height="40" />
     <span>
       <strong>{t('app.name')}</strong>
@@ -40,7 +52,14 @@
   </label>
 </header>
 
-<main>
+{#if updates.status === 'available' && updates.release && page.url.pathname !== '/settings'}
+  <div class="banner" role="status">
+    {t('update.banner', { version: updates.release.version })}
+    <a href="/settings#updates">{t('update.see')}</a>
+  </div>
+{/if}
+
+<main id="main" tabindex="-1">
   {@render children()}
 </main>
 
@@ -89,6 +108,29 @@
   nav a[aria-current='page'] {
     color: var(--text);
     border-color: var(--accent);
+  }
+  .banner {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    background: var(--accent-soft);
+    border-block-end: 1px solid var(--accent);
+  }
+  /* Téléphone : en-tête compact (la langue se choisit dans Paramètres), non collé en haut. */
+  @media (max-width: 600px) {
+    .top {
+      position: static;
+      padding-block-end: 0.25rem;
+      gap: 0.25rem 1rem;
+    }
+    .lang {
+      display: none;
+    }
+    nav {
+      inline-size: 100%;
+      justify-content: space-between;
+    }
   }
   main {
     max-inline-size: 1100px;

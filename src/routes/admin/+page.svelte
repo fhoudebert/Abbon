@@ -31,6 +31,8 @@
   }
 </script>
 
+<svelte:head><title>{t('admin.title')} — Abbon</title></svelte:head>
+
 <AdminGate>
   <div class="head">
     <h1>{t('admin.title')}</h1>
@@ -142,6 +144,12 @@
     }
     .list li .actions {
       grid-column: 1 / -1;
+      flex-wrap: nowrap;
+      gap: 0;
+      justify-content: space-between;
+    }
+    .list li .actions > * {
+      padding-inline: 0.6rem;
     }
   }
 </style>

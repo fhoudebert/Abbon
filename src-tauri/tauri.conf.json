@@ -48,15 +48,40 @@
     "windows": {
       "webviewInstallMode": {
         "type": "downloadBootstrapper"
+      },
+      "nsis": {
+        "languages": [
+          "French",
+          "English"
+        ],
+        "displayLanguageSelector": false,
+        "installMode": "currentUser"
+      },
+      "wix": {
+        "language": [
+          "fr-FR",
+          "en-US"
+        ]
       }
     },
     "linux": {
       "deb": {
-        "depends": []
+        "depends": [],
+        "section": "education"
+      },
+      "rpm": {
+        "release": "1"
       }
     },
     "android": {
       "minSdkVersion": 24
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "",
+      "endpoints": [],
+      "requireSignedVersion": true
     }
   }
 }

@@ -1,0 +1,36 @@
+# Abbon — configuration Apache pour un hébergement mutualisé.
+# Chaque bloc est conditionné au module correspondant : rien ne casse si un module manque.
+
+DirectoryIndex index.php index.html
+Options -Indexes
+
+# Types des fichiers proposés au téléchargement
+AddType application/vnd.android.package-archive .apk
+AddType application/x-debian-package .deb
+AddType application/x-rpm .rpm
+AddType application/x-msi .msi
+AddType application/octet-stream .AppImage .exe .sig .qcm
+AddType application/json .json
+AddType text/plain .txt
+
+# HTTPS obligatoire (les mises à jour refusent HTTP)
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  # Les manifestes changent à chaque version : jamais en cache.
+  <FilesMatch "\.json$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+  # Les paquets ne changent jamais (nom versionné) : cache long.
+  <FilesMatch "\.(apk|AppImage|deb|rpm|msi|exe|sig)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+    Header set Content-Disposition "attachment"
+  </FilesMatch>
+</IfModule>
+

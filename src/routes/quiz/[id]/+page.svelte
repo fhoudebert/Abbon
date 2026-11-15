@@ -36,6 +36,8 @@
   }
 </script>
 
+<svelte:head><title>{quiz ? localize(quiz.title, lang, quiz.languages[0]) : t('app.name')} — Abbon</title></svelte:head>
+
 <a class="back" href="/">← {t('common.back')}</a>
 
 {#if quiz === undefined}

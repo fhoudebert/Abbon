@@ -32,6 +32,8 @@
   const byProgress = (p: Progress): QuizEntry[] => visible.filter((e) => e.info.progress === p);
 </script>
 
+<svelte:head><title>{t('nav.home')} — Abbon</title></svelte:head>
+
 {#if app.error}
   <p role="alert" class="error">{t('home.error', { error: app.error })}</p>
 {:else if !app.ready}

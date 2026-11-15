@@ -50,6 +50,8 @@
   }
 </script>
 
+<svelte:head><title>{t('cat.title')} — Abbon</title></svelte:head>
+
 <AdminGate>
   <a class="back" href="/admin">← {t('admin.title')}</a>
   <div class="head">

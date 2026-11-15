@@ -99,6 +99,8 @@
   }
 </script>
 
+<svelte:head><title>{quiz ? localize(quiz.title, lang, fallback) : t('app.name')} — Abbon</title></svelte:head>
+
 <svelte:window onkeydown={onKey} />
 
 {#if session.error}
@@ -118,7 +120,7 @@
     </span>
   </div>
 
-  <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax={total} aria-valuenow={session.answeredCount}>
+  <div class="progress" role="progressbar" aria-label={t('play.progress')} aria-valuemin="0" aria-valuemax={total} aria-valuenow={session.answeredCount}>
     <span style="inline-size: {(session.answeredCount / Math.max(1, total)) * 100}%"></span>
   </div>
 

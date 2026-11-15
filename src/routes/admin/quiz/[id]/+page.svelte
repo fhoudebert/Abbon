@@ -180,6 +180,8 @@
   const questionHasError = (qid: string) => errors.some((e) => e.questionId === qid);
 </script>
 
+<svelte:head><title>{`${draft ? localize(draft.title, editLang, main) || t('admin.untitled') : t('admin.title')}`} — Abbon</title></svelte:head>
+
 <svelte:window onkeydown={onKey} />
 
 <AdminGate>

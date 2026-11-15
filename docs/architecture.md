@@ -93,6 +93,14 @@ Quatre couches, de la plus stable à la plus dépendante de la plateforme.
 - **Fichiers** : export par « Enregistrer sous » (plugins Tauri dialog + fs ; le chemin choisi est seul autorisé en
   écriture), import par `<input type="file">` (sans permission). Les droits fs sont limités au dossier `backups/`.
 
+## Distribution (lot 4)
+
+Voir [distribution.md](distribution.md). En bref : plugin updater de Tauri sur ordinateur (clé publique et adresse
+du serveur intégrées à la compilation par `ABBON_UPDATER_PUBKEY` et `ABBON_UPDATE_URL` ; sans clé, le plugin
+n'est pas chargé), lecture de `releases/version.json` par une commande Rust (`ureq`) pour Android et pour les
+notes de version, ouverture de l'APK ou de la page de téléchargement par le plugin opener (HTTPS seulement).
+`requireSignedVersion` empêche de faire installer une ancienne version signée.
+
 ## Limites connues
 
 - Les liens ne sont pas proposés dans l'éditeur (pas d'ouverture du navigateur externe pour l'instant).

@@ -26,3 +26,7 @@ export const fmtDate = (iso: string) =>
 export const fmtNum = (n: number) => new Intl.NumberFormat(i18n.lang, { maximumFractionDigits: 2 }).format(n);
 
 export { SUPPORTED, type UiLang } from './translate';
+
+/** Taille de fichier lisible (ex. « 12,4 Mo » / « 12.4 MB »). */
+export const fmtSize = (bytes: number) =>
+  new Intl.NumberFormat(i18n.lang, { style: 'unit', unit: 'megabyte', maximumFractionDigits: 1 }).format(bytes / 1_000_000);
