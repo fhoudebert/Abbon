@@ -33,6 +33,12 @@ pub fn migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/0003_media.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 4,
+            description: "modules",
+            sql: include_str!("../migrations/0004_modules.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 

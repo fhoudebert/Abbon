@@ -76,7 +76,10 @@ for f in "$ks" "$props"; do
 done
 
 # --- Outils du SDK Android ----------------------------------------------------------------------
-sdk=${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}
+# ANDROID_HOME, sinon sdk.dir de local.properties, sinon ~/Android/Sdk ; à défaut, outils du PATH.
+# shellcheck source=env.sh
+source "$root/scripts/android/env.sh" 2>/dev/null || true
+sdk=${ANDROID_HOME:-}
 bt=
 if [ -n "$sdk" ] && [ -d "$sdk/build-tools" ]; then
   bt=$(ls -d "$sdk"/build-tools/* 2>/dev/null | sort -V | tail -1)

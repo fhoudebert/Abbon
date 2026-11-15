@@ -1,4 +1,4 @@
-import type { Answer, Attempt, Category, Quiz, QuizSummary } from '$lib/domain/types';
+import type { Answer, Attempt, Category, InstalledModule, ModuleManifest, Quiz, QuizSummary } from '$lib/domain/types';
 
 /**
  * Accès aux données d'Abbon. L'interface ne dépend d'aucune technologie de
@@ -32,6 +32,20 @@ export interface Repository {
   /** Enregistre une image (sans effet si la même empreinte existe déjà). */
   saveMedia(media: Media): Promise<void>;
 
+  // ---- Modules ----
+  listModules(): Promise<InstalledModule[]>;
+  /**
+   * Installe ou met à jour un module, dans une seule transaction : catégories et QCM du module
+   * écrits (contenu protégé), QCM retirés de la nouvelle version supprimés (leur historique est mis
+   * de côté), historique mis de côté lors d'une désinstallation précédente remis en place.
+   */
+  installModule(install: ModuleInstall): Promise<void>;
+  /**
+   * Retire un module d'un bloc (QCM, catégories devenues vides, fiches). L'historique des tentatives
+   * est mis de côté (`keepHistory`) pour une réinstallation future, ou supprimé.
+   */
+  uninstallModule(id: string, keepHistory: boolean): Promise<void>;
+
   // ---- Sauvegarde complète ----
   /** Toutes les tentatives (avec l'instantané du QCM) et toutes les réponses. */
   exportHistory(): Promise<{ attempts: Attempt[]; answers: AnswerRow[] }>;
@@ -64,6 +78,15 @@ export interface AnswerRow extends Answer {
   attemptId: string;
 }
 
+/** Ce qu'il faut écrire pour installer un module (voir `planModule`). */
+export interface ModuleInstall {
+  manifest: ModuleManifest;
+  quizzes: Quiz[];
+  categories: Category[];
+  removedQuizIds: string[];
+  now?: Date;
+}
+
 /** Tout le contenu d'un appareil (sauvegarde / restauration). */
 export interface FullData {
   categories: Category[];
@@ -72,4 +95,5 @@ export interface FullData {
   answers: AnswerRow[];
   settings: Record<string, string>;
   media: Media[];
+  modules?: InstalledModule[];
 }

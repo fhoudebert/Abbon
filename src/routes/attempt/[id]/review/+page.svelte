@@ -7,6 +7,7 @@
   import { localize } from '$lib/domain/text';
   import RichContent from '$lib/rich/RichContent.svelte';
   import { i18n, t } from '$lib/i18n/index.svelte';
+  import { app } from '$lib/app.svelte';
   import { AttemptSession } from '$lib/session.svelte';
 
   const session = new AttemptSession();
@@ -18,6 +19,7 @@
   const attempt = $derived(session.attempt);
   const result = $derived(quiz && attempt ? resultOf(quiz, attempt, Object.values(session.answers)) : null);
   const fallback = $derived(quiz?.languages[0]);
+  const hasSheet = $derived(!!app.sheetOf(quiz?.categoryId));
 
   onMount(async () => {
     await session.load(id);
@@ -49,6 +51,7 @@
   <a class="back" href="/attempt/{id}/result">← {t('result.title')}</a>
   <div class="head">
     <h1>{t('review.title')} — {localize(quiz.title, lang, fallback)}</h1>
+    {#if hasSheet}<a class="button secondary" href="/sheet/{quiz.categoryId}">{t('sheet.open')}</a>{/if}
     <label class="toggle">
       <input type="checkbox" bind:checked={onlyErrors} />
       {t('review.onlyErrors')}

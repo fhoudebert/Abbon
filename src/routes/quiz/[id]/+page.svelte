@@ -22,6 +22,7 @@
   const finished = $derived(attempts.filter((a) => a.status === 'finished'));
   const lang = $derived(i18n.lang);
   const category = $derived(app.categories.find((c) => c.id === quiz?.categoryId));
+  const hasSheet = $derived(!!app.sheetOf(quiz?.categoryId));
 
   async function start(mode: AttemptMode) {
     if (!quiz || busy) return;
@@ -57,6 +58,7 @@
         <span>{t('quiz.bestScore', { score: pct(info.bestScore / info.maxScore) })}</span>
       {/if}
     </p>
+    {#if hasSheet}<p><a class="button secondary" href="/sheet/{quiz.categoryId}">{t('sheet.open')}</a></p>{/if}
   </header>
 
   {#if info.resumable}

@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { RichNode as Node } from '$lib/domain/types';
+  import { t } from '$lib/i18n/index.svelte';
   import Hast from './Hast.svelte';
   import { lowlight } from './lowlight';
   import { mediaUrl } from './media.svelte';
@@ -74,7 +75,9 @@
     <span class="img-missing" role="img" aria-label={String(node.attrs?.alt ?? '')}></span>
   {/if}
 {:else if node.type === 'table'}
-  <div class="table-wrap"><table><tbody>{@render kids()}</tbody></table></div>
+  <!-- Un tableau large défile dans son bloc : la zone doit pouvoir recevoir le focus clavier. -->
+  <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+  <div class="table-wrap" role="region" aria-label={t('rich.table')} tabindex="0"><table><tbody>{@render kids()}</tbody></table></div>
 {:else if node.type === 'tableRow'}
   <tr>{@render kids()}</tr>
 {:else if node.type === 'tableHeader'}

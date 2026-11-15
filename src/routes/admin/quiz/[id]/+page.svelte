@@ -25,6 +25,8 @@
   let message = $state<string | null>(null);
   let busy = $state(false);
   let notFound = $state(false);
+  /** QCM d'un module : contenu protégé, l'éditeur ne s'ouvre pas. */
+  let locked = $state<Quiz | null>(null);
   /** Section « informations générales » ouverte au départ pour un QCM sans titre (non réactif ensuite). */
   let generalOpen = $state(false);
   let pendingUrl: URL | null = null;
@@ -53,6 +55,8 @@
     void (async () => {
       const quiz = await (await app.repo()).getQuiz(quizId);
       if (!quiz) return (notFound = true);
+      if (quiz.moduleId) return (locked = quiz);
+      locked = null;
       const values = quiz.questions.flatMap((q) => [
         ...Object.values(q.prompt),
         ...Object.values(q.explanation ?? {}),
@@ -178,6 +182,12 @@
     return t(`issue.${i.code}`, params);
   }
   const questionHasError = (qid: string) => errors.some((e) => e.questionId === qid);
+
+  async function duplicateLocked() {
+    if (!locked) return;
+    const copyId = await app.duplicateQuiz(locked.id, t('admin.copySuffix'));
+    await goto(`/admin/quiz/${copyId}`);
+  }
 </script>
 
 <svelte:head><title>{`${draft ? localize(draft.title, editLang, main) || t('admin.untitled') : t('admin.title')}`} — Abbon</title></svelte:head>
@@ -187,6 +197,15 @@
 <AdminGate>
   {#if notFound}
     <p>{t('quiz.notFound')}</p>
+  {:else if locked}
+    <a class="back" href="/admin">← {t('admin.title')}</a>
+    <h1>{localize(locked.title, i18n.lang, locked.languages[0])}</h1>
+    <p class="muted">{t('module.quizOf', { title: localize(app.moduleOf(locked.moduleId)?.manifest.title ?? {}, i18n.lang) })}</p>
+    <p>{t('module.protected')}</p>
+    <div class="actions">
+      <a class="button secondary" href="/admin/quiz/{locked.id}/preview">{t('preview.title')}</a>
+      <button onclick={duplicateLocked}>{t('module.duplicateToEdit')}</button>
+    </div>
   {:else if !draft}
     <p aria-busy="true">{t('home.loading')}</p>
   {:else}

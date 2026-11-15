@@ -40,6 +40,16 @@ jobs:
       - run: npm test
       - run: npm run build
 
+      - name: Modules de contenu — vérification et construction
+        run: |
+          npm run module:check
+          npm run module:build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: abbon-modules
+          path: dist/modules/*.qcm
+          if-no-files-found: error
+
       - name: Rust — format, lint, tests
         working-directory: src-tauri
         run: |

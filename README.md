@@ -5,9 +5,13 @@
 Application de QCM hors ligne pour s'entraîner aux certifications (informatique, langues) et à la culture générale.
 Une seule base de code HTML5 / TypeScript, empaquetée avec [Tauri 2](https://v2.tauri.app) pour **Linux**, **Android** et **Windows**.
 
-Logiciel libre sous licence [MIT](LICENSE).
+Logiciel libre sous licence [MIT](LICENSE). Le contenu des modules (dossier `modules/`) est sous licence
+[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.fr).
 
-> **État : lot 5 (finition).** Accessibilité vérifiée (WCAG 2.1 AA, clair et sombre), thème et taille du texte
+> **État : lot 6 (modules de contenu).** Un module est un fichier `.qcm` versionné, installé, mis à jour et retiré
+> d'un bloc, avec fiches de révision ; premier module pilote : « Anglais : verbes irréguliers »
+> ([docs/modules.md](docs/modules.md)).
+> Lot 5 : accessibilité vérifiée (WCAG 2.1 AA, clair et sombre), thème et taille du texte
 > réglables, interface utilisable sur téléphone, installation testée en CI sur Debian, Ubuntu, Fedora, Windows et
 > un émulateur Android, installateur Windows en français et en anglais.
 > Lots précédents : distribution et mises à jour ([docs/distribution.md](docs/distribution.md)), échange (`.qcm`,
@@ -67,6 +71,8 @@ npm run tauri android dev
 npm run check              # types TypeScript + Svelte
 npm test                   # tests du domaine, de l'i18n, du SQL (SQLite de Node) et des formats d'échange
 npm run schema             # régénère les JSON Schema publiés dans docs/format-qcm
+npm run module:check       # vérifie les sources des modules (dossier modules/)
+npm run module:build       # construit dist/modules/Abbon-<nom>-<version>.qcm
 cd src-tauri && cargo test # tests Rust (migrations)
 ```
 
@@ -96,7 +102,7 @@ npm run tauri build -- --bundles msi,nsis            # Windows (sur Windows)
 - [`build.yml`](.github/workflows/build.yml) : paquets Linux, Android et Windows.
   - **À la demande** : onglet *Actions* → *Build* → *Run workflow*, puis saisir la branche (ou un tag, un commit) et
     cocher les plateformes. Les paquets se téléchargent depuis les *artifacts* de l'exécution.
-    Avec `gh` : `gh workflow run build.yml --ref init -f ref=init -f windows=false`.
+    Avec `gh` : `gh workflow run build.yml --ref main -f ref=main -f windows=false`.
     Attention : GitHub exécute le fichier de workflow de la branche choisie dans « Use workflow from »
     (option `--ref`), le champ `ref` ne choisit que le code compilé. Pour tester une modification du
     workflow lui-même, choisir la même branche aux deux endroits.
@@ -122,17 +128,35 @@ keytool -list -v -keystore abbon.keystore -alias abbon | grep SHA256   # emprein
 Le script [`scripts/android/sign-apk.sh`](scripts/android/sign-apk.sh) aligne, signe et vérifie l'APK. Il prend la
 signature dans **une** des deux sources suivantes ; si les deux existent, l'environnement l'emporte.
 
-**Sur GitHub** (variables d'environnement alimentées par les réglages du dépôt) :
+**Sur GitHub** : les secrets sont rangés dans l'**environnement** `android-release`
+(Settings → Environments), que le job Android déclare. Sur un tag, le build échoue si la clé manque ; sinon
+il produit un APK de debug.
 
-| Réglage du dépôt | Variable lue par le script | |
+Deux points à vérifier si l'APK sort en debug alors que les secrets existent :
+
+- **Le fichier de workflow exécuté est celui de la branche choisie dans « Use workflow from »** (`main` par
+  défaut), pas celui de la branche compilée. La déclaration de l'environnement doit donc être présente sur `main`.
+- **Règles de déploiement de l'environnement** (*Deployment branches and tags*) : si elles sont limitées, elles
+  doivent autoriser la branche `main` **et les tags `v*`**, sinon le job Android d'une release est refusé.
+
+| Réglage de l'environnement `android-release` | Variable lue par le script | |
 |---|---|---|
-| secret `ANDROID_KEYSTORE_BASE64` | `ABBON_KEYSTORE_FILE` (fichier décodé) | `base64 -w0 abbon.keystore` |
+| secret `ANDROID_KEYSTORE_BASE64` | `ABBON_KEYSTORE_FILE` (fichier décodé) | voir ci-dessous |
 | secret `ANDROID_KEYSTORE_PASSWORD` | `ABBON_KEYSTORE_PASSWORD` | mot de passe du magasin |
 | secret `ANDROID_KEY_ALIAS` | `ABBON_KEY_ALIAS` | défaut `abbon` |
 | secret `ANDROID_KEY_PASSWORD` | `ABBON_KEY_PASSWORD` | défaut : celui du magasin (règle du PKCS12) |
 | variable `ANDROID_CERT_SHA256` | `ABBON_CERT_SHA256` | facultatif : le build échoue si la clé n'est pas la bonne |
 
-Sans ces secrets, la CI produit un APK de debug.
+Valeur du secret `ANDROID_KEYSTORE_BASE64`, sans passer par un fichier (qui finirait par être commité) :
+
+```sh
+base64 -w0 abbon.keystore | gh secret set ANDROID_KEYSTORE_BASE64 --env android-release   # Linux
+base64 -i abbon.keystore | gh secret set ANDROID_KEYSTORE_BASE64 --env android-release    # macOS
+base64 -w0 abbon.keystore | xclip -selection clipboard    # ou copier, puis coller dans la page GitHub
+```
+
+Sous Windows (PowerShell) :
+`[Convert]::ToBase64String([IO.File]::ReadAllBytes("abbon.keystore")) | Set-Clipboard`.
 
 **Sur le poste** : déposer `abbon.keystore` et `keystore.properties` à la racine du dépôt. Ces deux fichiers
 sont **ignorés par git** (`git check-ignore -v keystore.properties abbon.keystore`), et le script refuse de signer
@@ -146,8 +170,19 @@ keyAlias=abbon
 keyPassword=…
 ```
 
+SDK, NDK et Java : le CLI Tauri **ne lit pas** `local.properties`, il lui faut `ANDROID_HOME` et `NDK_HOME`.
+[`scripts/android/env.sh`](scripts/android/env.sh) les déduit : variables d'environnement, sinon `sdk.dir`
+(et `ndk.dir`) d'un `local.properties` à la racine du dépôt, sinon `~/Android/Sdk` ; le NDK le plus récent de
+`<SDK>/ndk/` ; le JDK d'Android Studio si aucun Java n'est installé. `~` et `$HOME` y sont acceptés (Gradle, lui,
+ne les développe pas : écrire un chemin absolu si `local.properties` sert aussi à Gradle).
+
+```properties
+# local.properties (ignoré par git)
+sdk.dir=~/Android/Sdk
+```
+
 ```sh
-npm run android:apk     # tauri android build --apk, puis signature → abbon-X.Y.Z.apk
+npm run android:apk     # init du projet si besoin, tauri android build --apk, signature → abbon-X.Y.Z.apk
 ```
 
 ## Organisation du code

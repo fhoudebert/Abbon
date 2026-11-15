@@ -9,10 +9,11 @@ manifest.json          description du paquet (fait foi)       → manifest.schem
 categories.json        tableau de catégories                  → category.schema.json (par élément)
 quizzes/<id>.json      un fichier par QCM                     → quiz.schema.json
 media/<sha256>.<ext>   images (png, jpg, gif, webp)
+module.json            facultatif : le fichier est un module           → module.schema.json
 ```
 
 Une **sauvegarde complète** (`"kind": "backup"`) contient en plus `attempts.json` (tentatives, avec la copie du QCM
-au démarrage), `answers.json` et `settings.json`. Elle se restaure depuis *Paramètres › Sauvegarde* et remplace tout
+au démarrage), `answers.json`, `settings.json` et, s'il y en a, `modules.json` (modules installés : manifeste et dates). Elle se restaure depuis *Paramètres › Sauvegarde* et remplace tout
 le contenu de l'appareil (le code PIN de l'appareil est conservé).
 
 ## Règles
@@ -35,6 +36,49 @@ le contenu de l'appareil (le code PIN de l'appareil est conservé).
 - **Limites** : 5 000 fichiers, 200 Mo décompressés, 20 Mo par fichier JSON, 30 niveaux d'imbrication.
 - **Versions du format** : `formatVersion` augmente à chaque changement incompatible ; Abbon refuse un fichier
   d'une version plus récente que la sienne.
+
+## Modules
+
+Un **module** est un fichier `.qcm` ordinaire (`"kind": "content"`) qui contient en plus `module.json`.
+`manifest.json` n'a aucun champ nouveau : un lecteur qui ne connaît pas les modules ignore `module.json` et importe
+les QCM comme un export ordinaire. Un lecteur qui les connaît installe le module d'un bloc, protège son contenu et
+sait le mettre à jour ou le retirer.
+
+```json
+{
+  "format": "abbon-module",
+  "formatVersion": 1,
+  "id": "org.abbon.anglais-verbes",
+  "version": "0.1.0",
+  "title": { "fr": "Anglais : verbes irréguliers", "en": "English: irregular verbs" },
+  "description": { "fr": "…", "en": "…" },
+  "level": "collège-lycée",
+  "license": "CC-BY-NC-SA-4.0",
+  "authors": ["Abbon"],
+  "homepage": "https://github.com/fhoudebert/Abbon",
+  "requires": { "app": ">=0.2.0", "features": [] },
+  "categories": ["org-abbon-anglais-verbes_frequents-50"],
+  "quizzes": ["org-abbon-anglais-verbes_preterit-01"],
+  "sheets": { "org-abbon-anglais-verbes_frequents-50": { "fr": { "type": "doc", "content": [] } } }
+}
+```
+
+- **`id`** : notation inversée en minuscules (`org.abbon.informatique`), stable d'une version à l'autre.
+- **`version`** : SemVer. Une version plus récente met le module à jour ; la `version` entière de chaque QCM doit
+  croître avec elle (Abbon utilise majeur × 1 000 000 + mineur × 1 000 + correctif).
+- **`quizzes`, `categories`** : identifiants des QCM et des catégories du module, présents dans le même fichier.
+  Seuls ceux-là sont installés. Ils doivent rester stables : ils relient l'historique des tentatives aux versions
+  suivantes. Convention d'Abbon : préfixe `org-abbon-informatique_`.
+- **`sheets`** : fiches de révision, par identifiant de catégorie puis par langue (contenu riche, images comprises).
+- **`requires`** : `app` est une version minimale d'Abbon (`>=0.2.0`) ; `features` liste les fonctions de rendu
+  nécessaires (`math`, `svg`… ; aucune n'est encore définie en version 0.2.0). L'installation est refusée si un
+  prérequis manque.
+- **`license`** : identifiant SPDX de la licence du contenu.
+- Un `module.json` invalide, ou d'un `formatVersion` plus récent, est signalé ; le fichier reste importable comme un
+  export ordinaire.
+- À l'installation, un QCM du fichier n'écrase jamais un QCM personnel ni celui d'un autre module.
+
+Les sources et l'outillage des modules d'Abbon sont décrits dans [modules.md](../modules.md).
 
 ## GIFT (Moodle)
 

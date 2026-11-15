@@ -31,7 +31,9 @@ ROUTES = [
     "/admin/categories",
     "/admin/quiz/demo-culture",
     "/admin/quiz/demo-culture/preview",
+    "/admin/quiz/demo-english",
     "/admin/import",
+    "/sheet/cat-lang",
     "/settings",
     "/about",
 ]
