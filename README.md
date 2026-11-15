@@ -7,11 +7,10 @@ Une seule base de code HTML5 / TypeScript, empaquetée avec [Tauri 2](https://v2
 
 Logiciel libre sous licence [MIT](LICENSE).
 
-> **État : lot 3 (échange).** Import / export au format ouvert `.qcm` (voir [docs/format-qcm](docs/format-qcm/README.md))
-> et au format GIFT de Moodle, export « sans corrigé », gestion des doublons à l'import, sauvegarde complète et
-> restauration (sauvegarde automatique avant chaque import ou restauration).
-> Lots précédents : édition des QCM (éditeur riche, catégories, PIN), passage (entraînement, examen, corrigé).
-> À venir : distribution et mises à jour (lot 4), finition (lot 5).
+> **État : lot 4 (distribution).** Site de téléchargement PHP, mises à jour automatiques signées sous Linux et
+> Windows, nouvelle version proposée sous Android ; publication par tag (voir [docs/distribution.md](docs/distribution.md)).
+> Lots précédents : échange (`.qcm`, GIFT, sauvegarde), édition (éditeur riche, catégories, PIN), passage des QCM.
+> À venir : finition (lot 5).
 
 ### Raccourcis clavier (passage d'un QCM)
 
@@ -109,6 +108,9 @@ src/
   lib/i18n/      messages fr / en, pluriels, formats Intl
   lib/rich/      contenu riche : éditeur TipTap, affichage sûr, coloration du code, images
   lib/interchange/  format .qcm (schémas, archive), plan d'import, GIFT
+  lib/update.svelte.ts  mises à jour (Paramètres, bandeau)
+server/          page de téléchargement PHP et .htaccess
+scripts/release/ préparation du site d'une version (version.json, latest.json)
   lib/session.svelte.ts  tentative ouverte à l'écran : réponses, chrono, enregistrement
   lib/components/
   routes/        écrans (SvelteKit en mode SPA)
@@ -116,6 +118,7 @@ src-tauri/
   migrations/    schéma SQLite versionné (ne jamais modifier une migration publiée)
   src/lib.rs     enveloppe Tauri minimale : plugin SQL + migrations
   src/batch.rs   commande run_batch : écritures groupées dans une transaction
+  src/update.rs  mises à jour (plugin updater, lecture de version.json)
 ```
 
 Voir [docs/architecture.md](docs/architecture.md).

@@ -3,12 +3,14 @@
   import { onMount, type Snippet } from 'svelte';
   import { page } from '$app/state';
   import { app } from '$lib/app.svelte';
+  import { updates } from '$lib/update.svelte';
   import { i18n, t, SUPPORTED } from '$lib/i18n/index.svelte';
 
   let { children }: { children: Snippet } = $props();
 
-  onMount(() => {
-    app.init();
+  onMount(async () => {
+    await app.init();
+    void updates.init(); // vérification éventuelle, sans bloquer l'affichage
   });
 
   const langNames: Record<string, string> = { fr: 'Français', en: 'English' };
@@ -39,6 +41,13 @@
     </select>
   </label>
 </header>
+
+{#if updates.status === 'available' && updates.release && page.url.pathname !== '/settings'}
+  <div class="banner" role="status">
+    {t('update.banner', { version: updates.release.version })}
+    <a href="/settings#updates">{t('update.see')}</a>
+  </div>
+{/if}
 
 <main>
   {@render children()}
@@ -89,6 +98,14 @@
   nav a[aria-current='page'] {
     color: var(--text);
     border-color: var(--accent);
+  }
+  .banner {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    background: var(--accent-soft);
+    border-block-end: 1px solid var(--accent);
   }
   main {
     max-inline-size: 1100px;

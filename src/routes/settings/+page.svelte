@@ -5,6 +5,7 @@
   import { languageName } from '$lib/i18n/languages';
   import AdminGate from '$lib/components/AdminGate.svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+  import UpdatePanel from '$lib/components/UpdatePanel.svelte';
   import { readPicked, saveFile } from '$lib/files';
   import type { MessageKey } from '$lib/i18n/fr';
   import { PackageError, parsePackage, type ParsedPackage } from '$lib/interchange/qcmPackage';
@@ -98,7 +99,7 @@
 <section class="panel">
   <h2>{t('pin.title')}</h2>
   <!-- Modifier le PIN exige d'être déjà déverrouillé. -->
-  <AdminGate>
+  <AdminGate inline>
     <p>{app.pinSet ? t('pin.active') : t('pin.none')}</p>
     <form class="pin" onsubmit={savePin}>
       <label>
@@ -123,9 +124,14 @@
   </AdminGate>
 </section>
 
+<section class="panel" id="updates">
+  <h2>{t('update.title')}</h2>
+  <UpdatePanel />
+</section>
+
 <section class="panel">
   <h2>{t('backup.title')}</h2>
-  <AdminGate>
+  <AdminGate inline>
     <p>{t('backup.hint')}</p>
     <div class="actions">
       <button onclick={createBackup}>{t('backup.create')}</button>

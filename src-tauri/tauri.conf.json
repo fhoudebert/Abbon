@@ -58,5 +58,12 @@
     "android": {
       "minSdkVersion": 24
     }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "",
+      "endpoints": [],
+      "requireSignedVersion": true
+    }
   }
 }

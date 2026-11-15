@@ -4,7 +4,8 @@
   import { t } from '$lib/i18n/index.svelte';
 
   /** Affiche le contenu d'administration, ou demande le code PIN s'il y en a un. */
-  let { children }: { children: Snippet } = $props();
+  /** `inline` : formulaire sans titre, à l'intérieur d'une section (Paramètres). */
+  let { children, inline = false }: { children: Snippet; inline?: boolean } = $props();
 
   let pin = $state('');
   let wrong = $state(false);
@@ -25,7 +26,7 @@
   {@render children()}
 {:else}
   <form class="panel gate" onsubmit={submit}>
-    <h1>{t('admin.title')}</h1>
+    {#if !inline}<h1>{t('admin.title')}</h1>{/if}
     <p>{t('pin.locked')}</p>
     <label>
       {t('pin.enter')}

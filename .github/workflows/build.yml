@@ -6,8 +6,13 @@
 # - Sur un tag vX.Y.Z : les trois plateformes, puis un brouillon de release GitHub avec
 #   tous les fichiers et leurs empreintes SHA-256. Le tag doit correspondre à la version de package.json.
 #
-# Secrets facultatifs pour signer l'APK de release (sinon APK de debug) :
-#   ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
+# Configuration (Settings › Secrets and variables › Actions), tout est facultatif :
+#   Variables : ABBON_SITE_URL        adresse du site (https://…), serveur de mises à jour par défaut
+#               TAURI_UPDATER_PUBKEY  clé publique de signature des mises à jour (fichier .pub)
+#   Secrets   : TAURI_SIGNING_PRIVATE_KEY, TAURI_SIGNING_PRIVATE_KEY_PASSWORD   signature des mises à jour
+#               ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
+#               FTP_URL (ftp://, ftps:// ou sftp://hôte), FTP_USER, FTP_PASSWORD, FTP_DIR   dépôt du site
+# Voir docs/distribution.md.
 name: Build
 
 run-name: Build ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.ref_name }}
@@ -89,14 +94,28 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with: { workspaces: src-tauri }
       - run: npm ci
-      - run: npx tauri build --bundles deb,rpm,appimage
+      - name: Paquets Linux (signés pour les mises à jour si la clé est configurée)
+        env:
+          ABBON_UPDATE_URL: ${{ vars.ABBON_SITE_URL }}
+          ABBON_UPDATER_PUBKEY: ${{ vars.TAURI_UPDATER_PUBKEY }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        shell: bash
+        run: |
+          EXTRA=()
+          if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            [ -n "$ABBON_UPDATER_PUBKEY" ] || { echo "::error::variable TAURI_UPDATER_PUBKEY manquante"; exit 1; }
+            # La clé publique doit aussi figurer dans la configuration : le bundler la vérifie en signant.
+            EXTRA=(--config "$(node -p 'JSON.stringify({bundle:{createUpdaterArtifacts:true},plugins:{updater:{pubkey:process.env.ABBON_UPDATER_PUBKEY}}})')")
+          fi
+          npx tauri build --bundles deb,rpm,appimage "${EXTRA[@]}"
       - uses: actions/upload-artifact@v4
         with:
           name: abbon-linux-${{ needs.prepare.outputs.version }}-${{ needs.prepare.outputs.sha }}
           path: |
-            src-tauri/target/release/bundle/deb/*.deb
-            src-tauri/target/release/bundle/rpm/*.rpm
-            src-tauri/target/release/bundle/appimage/*.AppImage
+            src-tauri/target/release/bundle/deb/*.deb*
+            src-tauri/target/release/bundle/rpm/*.rpm*
+            src-tauri/target/release/bundle/appimage/*.AppImage*
 
   android:
     needs: prepare
@@ -106,6 +125,8 @@ jobs:
       NDK_VERSION: 27.2.12479018
       HAS_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
       VERSION: ${{ needs.prepare.outputs.version }}
+      # Serveur de mises à jour par défaut, intégré à la compilation.
+      ABBON_UPDATE_URL: ${{ vars.ABBON_SITE_URL }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -177,25 +198,85 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with: { workspaces: src-tauri }
       - run: npm ci
-      - run: npx tauri build --bundles msi,nsis
+      - name: Installateurs Windows (signés pour les mises à jour si la clé est configurée)
+        env:
+          ABBON_UPDATE_URL: ${{ vars.ABBON_SITE_URL }}
+          ABBON_UPDATER_PUBKEY: ${{ vars.TAURI_UPDATER_PUBKEY }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        shell: bash
+        run: |
+          EXTRA=()
+          if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            [ -n "$ABBON_UPDATER_PUBKEY" ] || { echo "::error::variable TAURI_UPDATER_PUBKEY manquante"; exit 1; }
+            # La clé publique doit aussi figurer dans la configuration : le bundler la vérifie en signant.
+            EXTRA=(--config "$(node -p 'JSON.stringify({bundle:{createUpdaterArtifacts:true},plugins:{updater:{pubkey:process.env.ABBON_UPDATER_PUBKEY}}})')")
+          fi
+          npx tauri build --bundles msi,nsis "${EXTRA[@]}"
       - uses: actions/upload-artifact@v4
         with:
           name: abbon-windows-${{ needs.prepare.outputs.version }}-${{ needs.prepare.outputs.sha }}
           path: |
-            src-tauri/target/release/bundle/msi/*.msi
-            src-tauri/target/release/bundle/nsis/*.exe
+            src-tauri/target/release/bundle/msi/*.msi*
+            src-tauri/target/release/bundle/nsis/*.exe*
 
   release:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     needs: [prepare, linux, android, windows]
     runs-on: ubuntu-24.04
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
     steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.BUILD_REF }}
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
       - uses: actions/download-artifact@v4
         with: { path: dist, merge-multiple: true }
-      - name: Empreintes SHA-256
-        run: cd dist && sha256sum * > SHA256SUMS.txt
+      - name: Site de téléchargement (page, version.json, latest.json, SHA256SUMS)
+        env:
+          SITE_URL: ${{ vars.ABBON_SITE_URL }}
+        run: |
+          node --experimental-strip-types scripts/release/build-site.ts \
+            --dist dist --out site --version "$VERSION" --base-url "$SITE_URL"
+          cp site/releases/SHA256SUMS.txt dist/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: abbon-site-${{ needs.prepare.outputs.version }}
+          path: site
+          include-hidden-files: true # .htaccess
       - uses: softprops/action-gh-release@v2
         with:
           name: Abbon ${{ needs.prepare.outputs.version }}
           draft: true
           files: dist/*
+
+  deploy:
+    # Dépôt du site sur l'hébergement (facultatif : seulement si FTP_URL est configuré).
+    needs: [prepare, release]
+    runs-on: ubuntu-24.04
+    env:
+      HAS_FTP: ${{ secrets.FTP_URL != '' }}
+    steps:
+      - uses: actions/download-artifact@v4
+        if: env.HAS_FTP == 'true'
+        with:
+          name: abbon-site-${{ needs.prepare.outputs.version }}
+          path: site
+      - name: Dépôt (paquets d'abord, manifestes en dernier)
+        if: env.HAS_FTP == 'true'
+        env:
+          FTP_URL: ${{ secrets.FTP_URL }}
+          FTP_USER: ${{ secrets.FTP_USER }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_DIR: ${{ secrets.FTP_DIR }}
+        run: |
+          sudo apt-get install -y lftp
+          DIR="${FTP_DIR:-.}"
+          # Les clients ne voient la nouvelle version qu'une fois tous ses fichiers en ligne.
+          lftp -u "$FTP_USER,$FTP_PASSWORD" "$FTP_URL" -e "
+            set ssl:verify-certificate yes; set ftp:ssl-allow yes; set net:max-retries 3;
+            mirror -R --verbose --exclude-glob *.json site/ $DIR;
+            mirror -R --verbose --include-glob *.json site/releases/ $DIR/releases;
+            bye"
