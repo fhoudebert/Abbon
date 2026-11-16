@@ -10,7 +10,8 @@ Ordre de travail de la branche `qcm`, après le socle (lots 0 à 5). Le cadrage 
 | Lot 6 ter | **Textes à trous** : un énoncé à plusieurs trous, chacun rempli par une réponse courte saisie ou par un choix dans une liste déroulante | fait |
 | Lot 6 quater | **Révision espacée (boîtes de Leitner)** : entraînement par répétitions sur des questions choisies | fait |
 | Lot 7 | Formules (LaTeX, rendu KaTeX), équations chimiques, unités, figures SVG incrustées après nettoyage | fait |
-| Lots 8 à 11 | Modules de contenu : Informatique, Anglais (version complète), Physique-chimie, Maths spécialité, Maths expertes | à faire |
+| Lot 8 | Module Informatique : 13 rubriques, environ 450 questions ; version pilote 0.1.0 (un QCM de bases par rubrique, 130 questions) | en cours |
+| Lots 9 à 11 | Modules de contenu : Anglais (version complète), Physique-chimie, Maths spécialité, Maths expertes | à faire |
 
 ## Lot 6 ter — textes à trous
 
@@ -37,11 +38,27 @@ Ordre de travail de la branche `qcm`, après le socle (lots 0 à 5). Le cadrage 
 - Restent possibles plus tard : délais et taille de session réglables, ajout de tout un QCM d'un coup,
   statistiques de révision.
 
+## Lot 8 — module Informatique
+
+- **13 rubriques** : Python, Rust, Web, SQL et données, Linux, Windows et Android, Réseau, Cybersécurité,
+  Algorithmique, Intelligence artificielle, 3D et graphisme, Électronique et conception d'interface, Logiciel libre
+  et standards.
+- **Cybersécurité** : culture générale, sans sujet exclu. Le but est de comprendre les attaques pour les
+  reconnaître et s'en protéger, pas de fournir des procédures pour les mener.
+- **Langues** : français d'abord. Le module est prêt à recevoir l'anglais : `languages: [fr, en]` dans
+  `module.yaml`, une section `### en` par question, et `module:check` liste ce qui manque.
+- **Version 0.1.0 (pilote)** : un QCM de bases de 10 questions par rubrique, soit 130 questions, à relire pour fixer
+  le ton. Ensuite : niveaux « approfondissement » et « expert », puis les fiches de révision.
+- Les comportements de code annoncés (Python, Rust, JavaScript, SQL) et les calculs ont été vérifiés par
+  exécution ; l'exécution automatique des extraits marqués `run` reste à outiller.
+
 ## Décisions prises
 
 - Licence du contenu : CC BY-NC-SA 4.0.
 - Rendu des formules : KaTeX. Figures en thème sombre : SVG incrusté après nettoyage.
 - Programme de maths spécialité : 2019 d'abord, puis 2026.
 - Distribution des modules : fichiers `.qcm` joints aux releases GitHub, lien dans l'application, puis import.
+- Module Informatique : 13 rubriques ; cybersécurité en culture générale, sans exclusion de sujet ; anglais prévu
+  mais pas dans les premières versions.
 - Tant qu'Abbon n'a pas d'autres utilisateurs, aucune reprise de données n'est exigée d'un lot à l'autre : une
   migration peut être modifiée, et la base locale effacée (`~/.config/org.abbon.app` sous Linux).
