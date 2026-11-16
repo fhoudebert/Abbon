@@ -15,10 +15,10 @@ export const MODULE_FORMAT_VERSION = 1;
 export const MODULE_FILE = 'module.json';
 
 /**
- * Fonctions de rendu que cette version sait afficher (`requires.features`).
- * `math` et `svg` arriveront avec le lot 7 : d'ici là, un module qui les demande est signalé.
+ * Fonctions de rendu que cette version sait afficher (`requires.features`) :
+ * `math` (formules LaTeX, chimie et unités mhchem) et `svg` (figures SVG).
  */
-export const SUPPORTED_FEATURES: readonly string[] = [];
+export const SUPPORTED_FEATURES: readonly string[] = ['math', 'svg'];
 
 const itemId = z.string().min(1).max(100).regex(/^[\w-]+$/, 'identifiant invalide');
 

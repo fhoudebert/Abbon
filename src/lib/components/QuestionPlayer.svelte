@@ -2,7 +2,7 @@
   import ClozeText from '$lib/components/ClozeText.svelte';
   import { gapResults } from '$lib/domain/cloze';
   import { isCorrect } from '$lib/domain/leitner';
-  import { pick } from '$lib/domain/rich';
+  import { mathLabel, pick } from '$lib/domain/rich';
   import { isAnswered, shuffled } from '$lib/domain/session';
   import { expectedText, isTyped } from '$lib/domain/typed';
   import type { Question } from '$lib/domain/types';
@@ -124,6 +124,7 @@
           type={question.type === 'single' ? 'radio' : 'checkbox'}
           name="lp-{question.id}"
           disabled={checked}
+          aria-label={mathLabel(pick(choice.content, lang, fallback))}
           checked={selected.includes(choice.id)}
           onchange={() => choose(choice.id)}
         />

@@ -289,3 +289,68 @@ Complete with the past simple.
     ]);
   });
 });
+
+describe('formules et figures dans un module', () => {
+  const SVG_HASH = 'a'.repeat(64);
+  const PNG_HASH = 'b'.repeat(64);
+  const assets = [
+    { path: 'rust/figures/rc.svg', hash: SVG_HASH, mime: 'image/svg+xml' },
+    { path: 'rust/photo.png', hash: PNG_HASH, mime: 'image/png' },
+    { path: 'rust/casse.svg', hash: 'c'.repeat(64), mime: null },
+  ];
+  const SCI = `---
+id: sci-01
+title: { fr: Sciences, en: Science }
+level: bases
+---
+
+## chute
+Un objet tombe avec $g = 9,81$ : que vaut $v$ après $t$ secondes ?
+
+![Schéma de la chute](figures/rc.svg)
+
+- [x] $v = g\\,t$
+- [ ] $v = \\frac{g}{t}$
+- [ ] $v = g\\,t^2$
+
+> $$v(t) = g\\,t$$
+
+### en
+An object falls with $g = 9.81$: what is $v$ after $t$ seconds?
+
+![Diagram of the fall](figures/rc.svg)
+
+- [x] $v = g\\,t$
+- [ ] $v = \\frac{g}{t}$
+- [ ] $v = g\\,t^2$
+
+> $$v(t) = g\\,t$$
+`;
+
+  it('joint les images utilisées, déclare les fonctions requises et met la virgule décimale française', () => {
+    const c = compileModule(files(SCI), assets);
+    expect(c.issues.filter((i) => i.level === 'error')).toEqual([]);
+    expect(c.assets).toEqual(['rust/figures/rc.svg']);
+    expect(c.manifest.requires).toEqual({ app: '>=0.2.0', features: ['math', 'svg'] });
+    const [q] = c.quizzes[0].questions;
+    expect(JSON.stringify(q.prompt.fr)).toContain('g = 9{,}81');
+    expect(JSON.stringify(q.prompt.en)).toContain('g = 9.81');
+    expect(JSON.stringify(q.prompt.fr)).toContain(`"hash":"${SVG_HASH}","alt":"Schéma de la chute"`);
+    expect(c.issues.filter((i) => i.level === 'warning').map((i) => i.file)).toEqual(
+      expect.arrayContaining(['rust/photo.png', 'rust/casse.svg']),
+    );
+  });
+
+  it('ne déclare rien pour un module sans formule ni figure', () => {
+    expect(compileModule(files()).manifest.requires).toEqual({ app: '>=0.2.0' });
+  });
+
+  it('signale formule fautive, image absente, mal formée ou sans texte alternatif', () => {
+    const e = (from: string, to: string) => errors2(files(SCI.replaceAll(from, to)));
+    const errors2 = (f: SourceFile[]) => compileModule(f, assets).issues.filter((i) => i.level === 'error').map((i) => i.message);
+    expect(e('$v = \\frac{g}{t}$', '$v = \\frac{g}{$')).toEqual(expect.arrayContaining([expect.stringContaining('formule « v = \\frac{g}{ »')]));
+    expect(e('figures/rc.svg', 'figures/absent.svg')).toEqual(expect.arrayContaining([expect.stringContaining('introuvable')]));
+    expect(e('figures/rc.svg', 'casse.svg')).toEqual(expect.arrayContaining([expect.stringContaining('SVG mal formé')]));
+    expect(e('![Schéma de la chute]', '![]')).toEqual(expect.arrayContaining([expect.stringContaining('sans texte alternatif')]));
+  });
+});

@@ -8,7 +8,7 @@ vérifiés par les tests.
 manifest.json          description du paquet (fait foi)       → manifest.schema.json
 categories.json        tableau de catégories                  → category.schema.json (par élément)
 quizzes/<id>.json      un fichier par QCM                     → quiz.schema.json
-media/<sha256>.<ext>   images (png, jpg, gif, webp)
+media/<sha256>.<ext>   images (png, jpg, gif, webp, svg)
 module.json            facultatif : le fichier est un module           → module.schema.json
 ```
 
@@ -37,6 +37,19 @@ le contenu de l'appareil (le code PIN de l'appareil est conservé).
 - **Limites** : 5 000 fichiers, 200 Mo décompressés, 20 Mo par fichier JSON, 30 niveaux d'imbrication.
 - **Versions du format** : `formatVersion` augmente à chaque changement incompatible ; Abbon refuse un fichier
   d'une version plus récente que la sienne.
+
+## Formules et figures
+
+- **Formules** : nœuds `math` (dans le texte) et `mathBlock` (en bloc), dont le contenu est la source LaTeX :
+  `{ "type": "math", "content": [{ "type": "text", "text": "x^2" }] }`. Abbon les rend avec KaTeX et l'extension
+  mhchem (`\ce{…}` pour la chimie, `\pu{…}` pour une grandeur avec unité). Un lecteur qui ne connaît pas ces nœuds
+  affiche leur texte, donc la source LaTeX.
+- **Figures SVG** : un média `image/svg+xml` référencé comme toute image (`{ "type": "image", "attrs": { "hash",
+  "alt" } }`). Le fichier doit être un SVG bien formé, sans déclaration d'entités. Abbon ne l'affiche jamais tel
+  quel : il le réécrit à partir d'une liste blanche (formes, texte, dégradés, masques, marqueurs ; ni script, ni
+  `<style>`, ni `<image>`, ni `<foreignObject>`, ni lien ou référence externe) et l'incruste dans la page, où il
+  hérite de la couleur du texte (`currentColor`).
+- Un module qui en contient l'annonce dans `requires.features` : `math`, `svg`.
 
 ## Types de questions
 
@@ -115,7 +128,7 @@ sait le mettre à jour ou le retirer.
   suivantes. Convention d'Abbon : préfixe `org-abbon-informatique_`.
 - **`sheets`** : fiches de révision, par identifiant de catégorie puis par langue (contenu riche, images comprises).
 - **`requires`** : `app` est une version minimale d'Abbon (`>=0.2.0`) ; `features` liste les fonctions de rendu
-  nécessaires (`math`, `svg`… ; aucune n'est encore définie en version 0.2.0). L'installation est refusée si un
+  nécessaires : `math` (formules) et `svg` (figures SVG), reconnues depuis la version 0.2.0. L'installation est refusée si un
   prérequis manque.
 - **`license`** : identifiant SPDX de la licence du contenu.
 - Un `module.json` invalide, ou d'un `formatVersion` plus récent, est signalé ; le fichier reste importable comme un

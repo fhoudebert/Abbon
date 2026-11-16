@@ -86,7 +86,8 @@ describe('GIFT — import', () => {
 
 describe('GIFT — export', () => {
   it('aller-retour : énoncés, réponses et bonnes réponses conservés', () => {
-    for (const quiz of demoQuizzes) {
+    // Les formules sortent en notation TeX de Moodle : vérifiées à part, plus bas.
+    for (const quiz of demoQuizzes.filter((x) => x.id !== 'demo-science')) {
       const lang = quiz.languages[0];
       const back = parseGift(quizToGift(quiz, lang), 'x', lang).quiz;
       // Les textes à trous n'ont pas d'équivalent en GIFT : ils sont laissés en commentaire.
@@ -153,5 +154,13 @@ describe('GIFT — questions à saisie', () => {
       ['short', { accepted: ['went', 'a=b'] }],
       ['numeric', { value: 9.81, tolerance: 0.01 }],
     ]);
+  });
+});
+
+describe('GIFT — formules', () => {
+  it('écrit les formules en notation TeX de Moodle', () => {
+    const text = quizToGift(demoQuizzes.find((x) => x.id === 'demo-science')!, 'fr');
+    expect(text).toContain('\\\\(f(x) \\= x^2\\\\)');
+    expect(text).toContain('\\\\[\\\\ce\\{CH3COOH');
   });
 });

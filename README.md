@@ -6,9 +6,12 @@ Application de QCM hors ligne pour s'entraîner aux certifications (informatique
 Une seule base de code HTML5 / TypeScript, empaquetée avec [Tauri 2](https://v2.tauri.app) pour **Linux**, **Android** et **Windows**.
 
 Logiciel libre sous licence [MIT](LICENSE). Le contenu des modules (dossier `modules/`) est sous licence
-[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.fr).
+[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.fr). Le rendu des formules embarque
+[KaTeX](https://katex.org) (licence MIT).
 
-> **État : lot 6 quater (révision espacée).** Une boîte de révision (Leitner) commune à tous les QCM : on y range
+> **État : lot 7 (formules et figures).** Formules LaTeX rendues par KaTeX, équations chimiques et unités
+> (mhchem), figures SVG incrustées après nettoyage, qui suivent le thème clair ou sombre.
+> Lot 6 quater (révision espacée) : une boîte de révision (Leitner) commune à tous les QCM : on y range
 > les questions à retenir, elles reviennent à intervalles croissants. Cinq types de questions : choix unique, choix multiples, réponse courte,
 > réponse numérique et texte à trous (saisie ou liste déroulante) ; suite prévue dans [docs/feuille-de-route.md](docs/feuille-de-route.md).
 > Lot 6 (modules de contenu) : un module est un fichier `.qcm` versionné, installé, mis à jour et retiré

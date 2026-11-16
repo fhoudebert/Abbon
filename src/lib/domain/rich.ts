@@ -22,6 +22,7 @@ const BLOCKS = new Set([
   'heading',
   'listItem',
   'codeBlock',
+  'mathBlock',
   'blockquote',
   'tableRow',
   'bulletList',
@@ -85,6 +86,25 @@ export function mediaHashes(values: Iterable<RichValue | null | undefined>): str
     });
   return [...set];
 }
+
+/** Le contenu comporte-t-il une formule (nœuds `math` ou `mathBlock`) ? */
+export function hasMath(value: RichValue | null | undefined): boolean {
+  let found = false;
+  walkRich(value, (n) => {
+    if (n.type === 'math' || n.type === 'mathBlock') found = true;
+  });
+  return found;
+}
+
+/**
+ * Nom accessible à donner à une case dont le libellé contient une formule : la source LaTeX en clair.
+ * Les outils d'audit (axe) et certains lecteurs d'écran ne tirent aucun texte du MathML d'un libellé ;
+ * sans formule, renvoie undefined et le libellé visible sert de nom, comme d'habitude.
+ */
+export const mathLabel = (value: RichValue | null | undefined) => (hasMath(value) ? richToPlain(value) : undefined);
+
+/** Source LaTeX d'un nœud de formule (son contenu textuel). */
+export const mathSource = (node: RichNode) => (node.content ?? []).map((c) => c.text ?? '').join('');
 
 /** Images sans texte alternatif. */
 export function imagesWithoutAlt(value: RichValue | null | undefined): number {

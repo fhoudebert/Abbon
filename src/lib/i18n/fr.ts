@@ -439,6 +439,11 @@ export const fr = {
   'problem.module_unsupported':
     'Module d’un format plus récent (version {detail}) : mettez Abbon à jour pour l’installer. Le fichier est importé comme un export ordinaire.',
   'rich.table': 'Tableau',
+  'rich.formula': 'Formule',
+  'editor.math': 'Formule (LaTeX)',
+  'editor.mathBlock': 'Formule en bloc',
+  'editor.mathPreview': 'Aperçu',
+  'editor.mathHint': 'Écrivez la formule en LaTeX. \\ce{H2O} pour la chimie, \\pu{9,81 m.s-2} pour une grandeur avec unité.',
   'nav.leitner': 'Révision',
   'nav.leitnerDue': { one: '{n} question à revoir', other: '{n} questions à revoir' },
   'leitner.title': 'Ma boîte de révision',

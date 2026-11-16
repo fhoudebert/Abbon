@@ -14,7 +14,8 @@ import { parseNumber } from '$lib/domain/typed';
 import type { Category, ClozeGap, ExpectedAnswer, I18nRich, I18nText, ModuleManifest, Question, QuestionType, Quiz } from '$lib/domain/types';
 import { CategorySchema, QuizSchema } from '$lib/interchange/format';
 import { MODULE_FORMAT, MODULE_FORMAT_VERSION, modulePrefix, ModuleSchema } from '$lib/interchange/module';
-import { toDocument, toRich } from './markdown';
+import { mathError } from '$lib/rich/math';
+import { toDocument, toRich, type MarkdownContext } from './markdown';
 
 export interface SourceFile {
   /** Chemin relatif au dossier du module, avec des « / ». */
@@ -30,7 +31,17 @@ export interface Issue {
   message: string;
 }
 
+/** Image ou figure d'un module, déjà lue : son empreinte SHA-256 et son type reconnu (null : type refusé). */
+export interface Asset {
+  /** Chemin relatif au dossier du module, avec des « / ». */
+  path: string;
+  hash: string;
+  mime: string | null;
+}
+
 export interface Compiled {
+  /** Chemins des images réellement utilisées (à joindre au fichier .qcm). */
+  assets: string[];
   manifest: ModuleManifest;
   quizzes: Quiz[];
   categories: Category[];
@@ -167,8 +178,39 @@ const i18nText = (v: unknown, what: string): I18nText => {
 };
 
 /** Compile un module. Les erreurs sont rassemblées dans `issues` : rien n'est écrit s'il y en a. */
-export function compileModule(files: readonly SourceFile[]): Compiled {
+export function compileModule(files: readonly SourceFile[], assets: readonly Asset[] = []): Compiled {
   const issues: Issue[] = [];
+  const assetByPath = new Map(assets.map((a) => [a.path, a]));
+  const usedAssets = new Set<string>();
+  const features = new Set<string>();
+
+  /** Images et formules d'un fichier source, dans une langue (les chemins d'image sont relatifs au fichier). */
+  const context = (file: string, lang: string): MarkdownContext => ({
+    image(src, alt) {
+      const dir = file.includes('/') ? file.slice(0, file.lastIndexOf('/') + 1) : '';
+      const parts: string[] = [];
+      for (const p of (dir + src).split('/')) {
+        if (p === '..') parts.pop();
+        else if (p && p !== '.') parts.push(p);
+      }
+      const asset = assetByPath.get(parts.join('/'));
+      if (!asset) throw new Error(`image « ${src} » introuvable`);
+      if (!asset.mime) throw new Error(`image « ${src} » : format non reconnu, ou SVG mal formé (PNG, JPEG, GIF, WebP, SVG)`);
+      if (!alt) throw new Error(`image « ${src} » sans texte alternatif : écrire ![description](${src})`);
+      usedAssets.add(asset.path);
+      if (asset.mime === 'image/svg+xml') features.add('svg');
+      return { type: 'image', attrs: { hash: asset.hash, alt } };
+    },
+    math(latex) {
+      // En français, la virgule entre deux chiffres est décimale : sans accolades, LaTeX y met une espace.
+      const tex = lang === 'fr' ? latex.replace(/(\d),(?=\d)/g, '$1{,}') : latex;
+      const problem = mathError(tex);
+      if (problem) throw new Error(`formule « ${latex} » : ${problem}`);
+      features.add('math');
+      return tex;
+    },
+  });
+
   const err = (file: string, message: string, ref?: string) => issues.push({ level: 'error', file, message, ref });
   const warn = (file: string, message: string, ref?: string) => issues.push({ level: 'warning', file, message, ref });
   const byPath = new Map(files.map((f) => [f.path, f]));
@@ -223,7 +265,7 @@ export function compileModule(files: readonly SourceFile[]): Compiled {
       if (!f) continue;
       usedFiles.add(f.path);
       try {
-        sheet[l] = toDocument(f.text.trim());
+        sheet[l] = toDocument(f.text.trim(), context(f.path, l));
         if (isEmptyRich(sheet[l])) err(f.path, 'fiche vide');
       } catch (e) {
         err(f.path, (e as Error).message);
@@ -340,17 +382,18 @@ export function compileModule(files: readonly SourceFile[]): Compiled {
             continue;
           }
           try {
-            prompt[l] = toRich(t.prompt);
+            const ctx = context(f.path, l);
+            prompt[l] = toRich(t.prompt, ctx);
             if (isEmptyRich(prompt[l])) err(f.path, `énoncé vide (${l})`, ref);
             if (!t.explanation.trim()) err(f.path, `explication manquante (${l})`, ref);
-            else explanation[l] = toRich(t.explanation);
+            else explanation[l] = toRich(t.explanation, ctx);
             if (typed) continue;
             if (t.choices.length !== flags.length || t.choices.some((c, k) => c.correct !== flags[k])) {
               err(f.path, `les réponses en « ${l} » ne correspondent pas à celles en « ${main} » (nombre, ordre ou cases cochées)`, ref);
               continue;
             }
             t.choices.forEach((c, k) => {
-              contents[k][l] = toRich(c.text);
+              contents[k][l] = toRich(c.text, ctx);
               if (isEmptyRich(contents[k][l])) err(f.path, `réponse ${k + 1} vide (${l})`, ref);
             });
             const texts = t.choices.map((c) => c.text.trim());
@@ -411,7 +454,12 @@ export function compileModule(files: readonly SourceFile[]): Compiled {
     license: String(y.license ?? ''),
     authors,
     homepage: y.homepage == null ? null : String(y.homepage),
-    requires: (y.requires as ModuleManifest['requires']) ?? null,
+    // Les fonctions de rendu réellement utilisées (formules, SVG) s'ajoutent à celles déclarées.
+    requires: (() => {
+      const declared = (y.requires ?? {}) as NonNullable<ModuleManifest['requires']>;
+      const all = [...new Set([...(declared.features ?? []), ...features])].sort();
+      return y.requires || all.length ? { ...declared, ...(all.length ? { features: all } : {}) } : null;
+    })(),
     categories: categories.map((c) => c.id),
     quizzes: quizzes.map((q) => q.id),
     sheets: Object.keys(sheets).length ? sheets : null,
@@ -433,5 +481,6 @@ export function compileModule(files: readonly SourceFile[]): Compiled {
     const r = QuizSchema.safeParse(q);
     if (!r.success) zerr(seenQuiz.get(q.id) ?? q.id, r.error);
   }
-  return { manifest, quizzes, categories, issues, stats };
+  for (const a of assets) if (!usedAssets.has(a.path)) warn(a.path, 'image non utilisée : elle ne sera pas jointe au module');
+  return { manifest, quizzes, categories, issues, stats, assets: [...usedAssets].sort() };
 }

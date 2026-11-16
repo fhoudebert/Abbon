@@ -1,6 +1,6 @@
 import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate';
 import { describe, expect, it } from 'vitest';
-import { demoCategories, demoModule, demoQuizzes } from '$lib/data/seed';
+import { DEMO_SVG, DEMO_SVG_HASH, demoCategories, demoModule, demoQuizzes } from '$lib/data/seed';
 import type { InstalledModule, ModuleManifest } from '$lib/domain/types';
 import { ManifestSchema } from './format';
 import { checkRequirements, modulePrefix, ModuleSchema, planModule } from './module';
@@ -16,7 +16,9 @@ const english = demoQuizzes.filter((q) => q.id === 'demo-english');
 const nothing = { modules: [], quizzes: [], categories: [] };
 const installed = (version: string): InstalledModule => ({ manifest: manifest({ version }), installedAt: 'x', updatedAt: 'x' });
 
-const pack = (m: ModuleManifest, media = new Map()) =>
+/** La figure SVG du QCM de démonstration « Formules et figures ». */
+const demoMedia = () => new Map([[DEMO_SVG_HASH, { mime: 'image/svg+xml', bytes: new TextEncoder().encode(DEMO_SVG) }]]);
+const pack = (m: ModuleManifest, media = demoMedia()) =>
   buildPackage({ quizzes: demoQuizzes, categories: demoCategories, media, module: m }, { kind: 'content', solutions: true, appVersion: '0.2.0' });
 const rezip = (bytes: Uint8Array, patch: (files: Record<string, Uint8Array>) => void) => {
   const files = unzipSync(bytes);
@@ -41,7 +43,8 @@ describe('manifeste de module', () => {
   it('vérifie la version d’Abbon et les fonctions demandées', () => {
     expect(checkRequirements(manifest(), '0.1.0')).toEqual({ ok: true, appTooOld: undefined, missingFeatures: [] });
     const m = manifest({ requires: { app: '>=0.3.0', features: ['math', 'svg'] } });
-    expect(checkRequirements(m, '0.2.0')).toEqual({ ok: false, appTooOld: '>=0.3.0', missingFeatures: ['math', 'svg'] });
+    expect(checkRequirements(m, '0.2.0', [])).toEqual({ ok: false, appTooOld: '>=0.3.0', missingFeatures: ['math', 'svg'] });
+    expect(checkRequirements(manifest({ requires: { features: ['math', 'svg', 'holo'] } }), '0.2.0').missingFeatures).toEqual(['holo']);
     expect(checkRequirements(m, '0.3.0', ['math', 'svg']).ok).toBe(true);
   });
 });
@@ -105,10 +108,10 @@ describe('fichier .qcm de module', () => {
     const hash = await sha256Hex(PNG);
     const m = manifest();
     m.sheets!['cat-lang'].fr = { type: 'doc', content: [{ type: 'image', attrs: { hash, alt: 'schéma' } }] };
-    const p = await parsePackage(pack(m, new Map([[hash, { mime: 'image/png', bytes: PNG }]])));
+    const p = await parsePackage(pack(m, demoMedia().set(hash, { mime: 'image/png', bytes: PNG })));
     expect(p.problems).toEqual([]);
     expect(p.module).toEqual(m);
-    expect([...p.media.keys()]).toEqual([hash]);
+    expect([...p.media.keys()].sort()).toEqual([hash, DEMO_SVG_HASH].sort());
   });
 
   it('module.json invalide ou trop récent : signalé, le reste s’importe', async () => {
@@ -126,7 +129,7 @@ describe('fichier .qcm de module', () => {
     const modules = [installed('1.0.0')];
     const quizzes = demoQuizzes.map((q) => (q.id === 'demo-english' ? { ...q, moduleId: 'org.abbon.demo' } : q));
     const bytes = buildPackage(
-      { quizzes, categories: demoCategories, media: new Map(), attempts: [], answers: [], settings: {}, modules },
+      { quizzes, categories: demoCategories, media: demoMedia(), attempts: [], answers: [], settings: {}, modules },
       { kind: 'backup', solutions: true, appVersion: '0.2.0' },
     );
     const p = await parsePackage(bytes);

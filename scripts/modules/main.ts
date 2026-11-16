@@ -3,8 +3,8 @@
  */
 import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
-import { buildPackage, parsePackage } from '$lib/interchange/qcmPackage';
-import { compileModule, type Compiled, type SourceFile } from './source';
+import { buildPackage, parsePackage, sha256Hex, sniffMime, type MediaFile } from '$lib/interchange/qcmPackage';
+import { compileModule, type Asset, type Compiled, type SourceFile } from './source';
 
 /** Fichiers texte d'un dossier de module (récursif), chemins relatifs avec des « / ». */
 function readSources(dir: string): SourceFile[] {
@@ -20,6 +20,26 @@ function readSources(dir: string): SourceFile[] {
   return out;
 }
 
+/** Images et figures d'un dossier de module (récursif) : octets, empreinte et type reconnu. */
+async function readAssets(dir: string): Promise<{ assets: Asset[]; bytes: Map<string, Uint8Array> }> {
+  const assets: Asset[] = [];
+  const bytes = new Map<string, Uint8Array>();
+  const walk = async (d: string) => {
+    for (const name of readdirSync(d).sort()) {
+      const p = join(d, name);
+      if (statSync(p).isDirectory()) await walk(p);
+      else if (/\.(svg|png|jpe?g|gif|webp)$/i.test(name)) {
+        const b = new Uint8Array(readFileSync(p));
+        const path = relative(dir, p).split(sep).join('/');
+        bytes.set(path, b);
+        assets.push({ path, hash: await sha256Hex(b), mime: sniffMime(b) });
+      }
+    }
+  };
+  await walk(dir);
+  return { assets, bytes };
+}
+
 function report(name: string, c: Compiled): boolean {
   const errors = c.issues.filter((i) => i.level === 'error');
   const warnings = c.issues.filter((i) => i.level === 'warning');
@@ -28,6 +48,8 @@ function report(name: string, c: Compiled): boolean {
   for (const s of c.stats) console.log(`  ${s.category.padEnd(28)} ${s.level.padEnd(18)} ${String(s.quizzes).padStart(3)} QCM ${String(s.questions).padStart(5)} questions`);
   const sheets = Object.keys(c.manifest.sheets ?? {}).length;
   console.log(`  fiches de révision : ${sheets} / ${c.categories.length} catégorie(s)`);
+  if (c.assets.length || c.manifest.requires?.features?.length)
+    console.log(`  images : ${c.assets.length} ; fonctions requises : ${c.manifest.requires?.features?.join(', ') || 'aucune'}`);
   for (const i of [...errors, ...warnings])
     console.log(`  ${i.level === 'error' ? 'ERREUR' : 'attention'}  modules/${name}/${i.file}${i.ref ? ` [${i.ref}]` : ''} : ${i.message}`);
   if (errors.length) console.log(`  → ${errors.length} erreur(s)`);
@@ -52,8 +74,10 @@ export async function main(argv: string[], root: string): Promise<number> {
   const ids = new Map<string, string>();
   for (const name of names.length ? names : all) {
     let c: Compiled;
+    let images: Awaited<ReturnType<typeof readAssets>>;
     try {
-      c = compileModule(readSources(join(modulesDir, name)));
+      images = await readAssets(join(modulesDir, name));
+      c = compileModule(readSources(join(modulesDir, name)), images.assets);
     } catch (e) {
       console.log(`\n${name}\n  ERREUR  ${(e as Error).message}`);
       ok = false;
@@ -69,8 +93,13 @@ export async function main(argv: string[], root: string): Promise<number> {
     if (!good || command !== 'build') continue;
 
     const now = new Date(c.quizzes[0]?.createdAt ?? 0); // date de publication : fichier reproductible
+    const media = new Map<string, MediaFile>();
+    for (const path of c.assets) {
+      const a = images.assets.find((x) => x.path === path)!;
+      media.set(a.hash, { mime: a.mime!, bytes: images.bytes.get(path)! });
+    }
     const bytes = buildPackage(
-      { quizzes: c.quizzes, categories: c.categories, media: new Map(), module: c.manifest },
+      { quizzes: c.quizzes, categories: c.categories, media, module: c.manifest },
       { kind: 'content', solutions: true, appVersion, now },
     );
     // Relecture par le code d'import : ce qui est publié est ce qu'Abbon saura lire.

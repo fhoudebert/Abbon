@@ -436,6 +436,11 @@ export const en: Messages = {
   'problem.module_unsupported':
     'Module in a newer format (version {detail}): update Abbon to install it. The file is imported as an ordinary export.',
   'rich.table': 'Table',
+  'rich.formula': 'Formula',
+  'editor.math': 'Formula (LaTeX)',
+  'editor.mathBlock': 'Display formula',
+  'editor.mathPreview': 'Preview',
+  'editor.mathHint': 'Write the formula in LaTeX. \\ce{H2O} for chemistry, \\pu{9.81 m.s-2} for a quantity with its unit.',
   'nav.leitner': 'Review',
   'nav.leitnerDue': { one: '{n} question to review', other: '{n} questions to review' },
   'leitner.title': 'My review box',

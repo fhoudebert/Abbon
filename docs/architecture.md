@@ -151,6 +151,21 @@ Voir [modules.md](modules.md) pour l'usage et le format des sources.
   correction immédiate. Il reprend le rendu des questions de l'écran de passage ; les deux sont à tenir alignés.
 - Sauvegarde complète : `leitner.json`.
 
+## Formules et figures (lot 7)
+
+- **Formules** : nœuds `math` et `mathBlock`, la source LaTeX étant le texte du nœud (repli lisible partout où le
+  nœud n'est pas rendu : recherche, GIFT, ancienne version). `rich/math.ts` appelle KaTeX (`trust: false`, avec
+  mhchem) et met le HTML en cache ; `RichNode` l'insère. KaTeX produit HTML + MathML ; ses polices sont embarquées
+  en woff2 seulement (`vite.config.js`).
+- **Éditeur** : la formule s'édite sous sa forme LaTeX, dans une pastille ; l'aperçu rendu et l'erreur éventuelle
+  s'affichent sous la barre d'outils quand le curseur est dans la formule.
+- **SVG** : `domain/svg.ts` est un analyseur XML strict suivi d'une réécriture par liste blanche, sans DOM (il
+  sert aussi à l'outillage). Le fichier d'origine est conservé (son empreinte reste valable) et nettoyé à chaque
+  chargement (`rich/media.svelte.ts`), avec des identifiants préfixés par l'empreinte.
+- **Accessibilité** : MathML pour les lecteurs d'écran ; une case dont le libellé contient une formule reçoit en
+  plus sa source LaTeX comme nom accessible (`mathLabel`), les outils d'audit ne tirant rien du MathML ; texte
+  alternatif obligatoire pour une figure ; formule en bloc et tableau larges défilent dans leur bloc.
+
 ## Limites connues
 
 - Modules : l'historique mis de côté à la désinstallation n'est pas inclus dans la sauvegarde complète ; une

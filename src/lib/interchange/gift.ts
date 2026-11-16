@@ -332,6 +332,11 @@ export function richToHtml(
         for (const m of n.marks ?? []) if (marks[m.type]) s = `<${marks[m.type]}>${s}</${marks[m.type]}>`;
         return s;
       }
+      // Formules : notation TeX de Moodle (filtre « TeX » ou MathJax).
+      case 'math':
+        return `\\(${escHtml((n.content ?? []).map((c) => c.text ?? '').join(''))}\\)`;
+      case 'mathBlock':
+        return `<p>\\[${escHtml((n.content ?? []).map((c) => c.text ?? '').join(''))}\\]</p>`;
       case 'hardBreak':
         return '<br>';
       case 'horizontalRule':

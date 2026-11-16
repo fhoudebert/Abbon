@@ -5,6 +5,7 @@ import { strFromU8, strToU8, unzipSync, zipSync, type Zippable } from 'fflate';
 import { z } from 'zod';
 import { mediaHashes } from '$lib/domain/rich';
 import type { LeitnerCard } from '$lib/domain/leitner';
+import { looksLikeSvg, sanitizeSvg } from '$lib/domain/svg';
 import type { Attempt, Category, InstalledModule, ModuleManifest, Quiz, RichValue } from '$lib/domain/types';
 import {
   AnswerRowSchema,
@@ -97,8 +98,9 @@ const EXT_BY_MIME: Record<string, string> = {
   'image/jpeg': 'jpg',
   'image/gif': 'gif',
   'image/webp': 'webp',
+  'image/svg+xml': 'svg',
 };
-const MIME_BY_EXT: Record<string, string> = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp' };
+const MIME_BY_EXT: Record<string, string> = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', svg: 'image/svg+xml' };
 
 /** Vérifie la signature du fichier (les premiers octets), pas seulement son extension. */
 export function sniffMime(b: Uint8Array): string | null {
@@ -107,6 +109,11 @@ export function sniffMime(b: Uint8Array): string | null {
   if (at(0, 0xff, 0xd8, 0xff)) return 'image/jpeg';
   if (at(0, 0x47, 0x49, 0x46, 0x38)) return 'image/gif';
   if (at(0, 0x52, 0x49, 0x46, 0x46) && at(8, 0x57, 0x45, 0x42, 0x50)) return 'image/webp';
+  // SVG : du texte, reconnu à son début puis vérifié par l'analyseur strict (domain/svg.ts).
+  if (b.length <= 2_000_000 && (b[0] === 0x3c || b[0] === 0xef || b[0] === 0x20 || b[0] === 0x0a || b[0] === 0x0d || b[0] === 0x09)) {
+    const text = new TextDecoder('utf-8', { fatal: false }).decode(b);
+    if (looksLikeSvg(text) && sanitizeSvg(text)) return 'image/svg+xml';
+  }
   return null;
 }
 
@@ -345,7 +352,7 @@ export async function parsePackage(bytes: Uint8Array): Promise<ParsedPackage> {
   // Images : nom = empreinte, signature cohérente, taille raisonnable
   const media = new Map<string, MediaFile>();
   for (const [name, b] of Object.entries(files)) {
-    const m = /^media\/([0-9a-f]{64})\.(png|jpe?g|gif|webp)$/.exec(name);
+    const m = /^media\/([0-9a-f]{64})\.(png|jpe?g|gif|webp|svg)$/.exec(name);
     if (!m) continue;
     const [, hash, ext] = m;
     const mime = sniffMime(b);

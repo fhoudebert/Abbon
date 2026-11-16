@@ -151,7 +151,44 @@ What is the past simple of *to go*?
   `solutionVisibility`, `shuffle`.
 
 Markdown reconnu : `code`, `**gras**`, `*italique*`, blocs de code (```` ```rust ````), listes, citations,
-tableaux à barres verticales, titres `##` et `###` (dans les fiches). Aucun HTML n'est interprété.
+tableaux à barres verticales, titres `##` et `###` (dans les fiches), formules et images (ci-dessous). Aucun HTML
+n'est interprété.
+
+### Formules, chimie, unités
+
+Les formules s'écrivent en LaTeX et sont rendues par KaTeX, hors ligne :
+
+```markdown
+Soit $u_n = \frac{1}{n}$ pour $n \geq 1$.          formule dans le texte
+
+$$\int_0^1 f(x)\,dx$$                             formule en bloc (sur une ou plusieurs lignes)
+
+$\ce{CH3COOH + H2O <=> CH3COO- + H3O+}$           équation chimique (mhchem)
+$\pu{9,81 m.s-2}$                                 grandeur avec son unité
+```
+
+- Chaque formule est compilée par `module:check` : une formule fautive est une erreur, avec le message de KaTeX.
+- En français, une virgule entre deux chiffres est décimale (`$g = 9,81$` s'affiche sans espace après la
+  virgule) ; en anglais, écrire `9.81`.
+- Un dollar ordinaire s'écrit `\$`. Un `$` suivi d'une espace n'ouvre pas de formule.
+- Une réponse (`- [x] $2x$`) peut être une formule.
+
+### Images et figures
+
+```markdown
+![Circuit RC en série avec un générateur](figures/circuit-rc.svg)
+```
+
+- Le chemin est relatif au fichier Markdown. Formats : SVG, PNG, JPEG, GIF, WebP.
+- Le texte alternatif est obligatoire (erreur sinon) : il décrit la figure à qui ne la voit pas.
+- **SVG** : la figure est incrustée dans la page après nettoyage ; seuls les éléments de dessin sont gardés
+  (formes, texte, dégradés, marqueurs), pas les scripts, styles globaux, images ou liens. Pour qu'elle suive le
+  thème clair ou sombre, tracer en `currentColor` sur fond transparent
+  (`stroke="currentColor"`, `fill="currentColor"` pour le texte) et donner un `viewBox`.
+- Une image présente dans le dossier mais non utilisée est signalée et n'est pas jointe.
+
+Les fonctions de rendu utilisées (`math`, `svg`) sont ajoutées d'elles-mêmes à `requires.features` : une version
+d'Abbon qui ne sait pas les afficher refuse d'installer le module, avec un message.
 
 ### Identifiants produits
 
@@ -175,13 +212,12 @@ réponse en choix unique et au moins une en choix multiple, au moins deux répon
 lisible pour une question à saisie, trous présents, non vides et identiques d'une langue à l'autre pour un texte à
 trous, explication présente partout,
 chaque texte présent dans chaque langue, réponses cohérentes d'une langue à l'autre, pas de réponses en double,
-Markdown bien formé. Avertissements : moins de 3 ou plus de 5 réponses, « toutes / aucune des réponses », QCM de
+Markdown bien formé, formules qui compilent, images présentes, lisibles et décrites. Avertissements : moins de 3 ou plus de 5 réponses, « toutes / aucune des réponses », QCM de
 moins de 10 ou plus de 15 questions, niveau absent ou inhabituel. La commande affiche aussi le nombre de QCM et de
 questions par catégorie et par niveau. Après construction, le fichier est relu par le code d'import de
 l'application.
 
-À venir (lot 7 et suivants) : formules, images et figures SVG dans les sources, exécution des extraits de code
-marqués `run`.
+À venir : courbes générées par script au moment de la construction, exécution des extraits de code marqués `run`.
 
 ## Ligne éditoriale
 

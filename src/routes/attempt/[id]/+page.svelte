@@ -7,7 +7,7 @@
   import BoxToggle from '$lib/components/BoxToggle.svelte';
   import ClozeText from '$lib/components/ClozeText.svelte';
   import { gapResults } from '$lib/domain/cloze';
-  import { pick } from '$lib/domain/rich';
+  import { mathLabel, pick } from '$lib/domain/rich';
   import { localize } from '$lib/domain/text';
   import RichContent from '$lib/rich/RichContent.svelte';
   import { i18n, t } from '$lib/i18n/index.svelte';
@@ -202,6 +202,7 @@
               type={question.type === 'single' ? 'radio' : 'checkbox'}
               name="q-{question.id}"
               disabled={session.locked}
+              aria-label={mathLabel(pick(choice.content, lang, fallback))}
               checked={answer?.selected.includes(choice.id) ?? false}
               onchange={() => session.choose(choice.id)}
             />

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
-  import { Editor, Extension, mergeAttributes } from '@tiptap/core';
+  import { Editor, Extension, mergeAttributes, Node as TipTapNode } from '@tiptap/core';
   import StarterKit from '@tiptap/starter-kit';
   import { Image } from '@tiptap/extension-image';
   import { TableKit } from '@tiptap/extension-table';
@@ -9,6 +9,7 @@
   import type { RichDoc, RichValue } from '$lib/domain/types';
   import { t } from '$lib/i18n/index.svelte';
   import { CODE_LANGUAGES, lowlight } from './lowlight';
+  import { mathError, renderMath } from './math';
   import { ACCEPTED_IMAGES, addImage, mediaUrlSync } from './media.svelte';
   import { registerFlush } from './pending';
 
@@ -55,6 +56,31 @@
     },
   });
 
+  /**
+   * Formules : le nœud contient sa source LaTeX comme texte (une version d'Abbon qui ne connaît pas
+   * les formules affiche donc cette source). Dans l'éditeur on écrit la source ; l'aperçu est en dessous.
+   */
+  const MathInline = TipTapNode.create({
+    name: 'math',
+    group: 'inline',
+    inline: true,
+    content: 'text*',
+    marks: '',
+    code: true,
+    parseHTML: () => [{ tag: 'span[data-math]' }],
+    renderHTML: () => ['span', { 'data-math': '', class: 'math-src', spellcheck: 'false' }, 0],
+  });
+  const MathBlock = TipTapNode.create({
+    name: 'mathBlock',
+    group: 'block',
+    content: 'text*',
+    marks: '',
+    code: true,
+    defining: true,
+    parseHTML: () => [{ tag: 'div[data-math-block]' }],
+    renderHTML: () => ['div', { 'data-math-block': '', class: 'math-src block', spellcheck: 'false' }, 0],
+  });
+
   const EnterKey = Extension.create({
     name: 'abbonEnter',
     addKeyboardShortcuts() {
@@ -82,6 +108,7 @@
             link: false,
           }),
           MediaImage,
+          MathInline,
           ...(onenter ? [EnterKey] : []),
         ]
       : [
@@ -89,6 +116,8 @@
           CodeBlockLowlight.configure({ lowlight, defaultLanguage: null }),
           TableKit.configure({ table: { resizable: false } }),
           MediaImage,
+          MathInline,
+          MathBlock,
         ];
     editor = new Editor({
       element,
@@ -164,6 +193,29 @@
     return (editor?.getAttributes('image').alt as string | null) ?? '';
   });
 
+  const inMath = $derived.by(() => active('math') || active('mathBlock'));
+  /** Source de la formule sous le curseur (pour l'aperçu). */
+  const mathLatex = $derived.by(() => {
+    void version;
+    if (!editor || !inMath) return '';
+    const pos = editor.state.selection.$from;
+    for (let d = pos.depth; d >= 0; d--) {
+      const n = pos.node(d);
+      if (n.type.name === 'math' || n.type.name === 'mathBlock') return n.textContent;
+    }
+    return '';
+  });
+
+  /** Insère une formule ; le texte sélectionné devient sa source. */
+  function insertMath(type: 'math' | 'mathBlock') {
+    if (!editor) return;
+    const { from, to } = editor.state.selection;
+    const latex = editor.state.doc.textBetween(from, to, ' ').trim() || 'x';
+    chain()
+      .insertContent({ type, content: [{ type: 'text', text: latex }] })
+      .run();
+  }
+
   async function onFile(e: Event) {
     const file = (e.currentTarget as HTMLInputElement).files?.[0];
     (e.currentTarget as HTMLInputElement).value = '';
@@ -194,6 +246,10 @@
         <button type="button" class="tb" aria-pressed={inTable} title={t('editor.table')} onclick={() => chain().insertTable({ rows: 3, cols: 2, withHeaderRow: true }).run()}>▦</button>
       {/if}
       <span class="sep"></span>
+      <button type="button" class="tb" aria-pressed={active('math')} title={t('editor.math')} aria-label={t('editor.math')} onclick={() => insertMath('math')}>∑</button>
+      {#if !compact}
+        <button type="button" class="tb" aria-pressed={active('mathBlock')} title={t('editor.mathBlock')} aria-label={t('editor.mathBlock')} onclick={() => insertMath('mathBlock')}>∑▭</button>
+      {/if}
       <button type="button" class="tb" title={t('editor.image')} onclick={() => fileInput?.click()}>🖼</button>
       <input bind:this={fileInput} type="file" accept={ACCEPTED_IMAGES} hidden onchange={onFile} />
       <span class="sep"></span>
@@ -210,6 +266,15 @@
             {#each CODE_LANGUAGES as l (l)}<option value={l}>{l}</option>{/each}
           </select>
         </label>
+      </div>
+    {/if}
+    {#if inMath}
+      {@const problem = mathError(mathLatex)}
+      <div class="contextbar math-bar">
+        <span class="muted">{t('editor.mathPreview')} :</span>
+        <span class="math-preview">{@html renderMath(mathLatex, active('mathBlock'))}</span>
+        {#if problem}<span class="error" role="status">{problem}</span>{/if}
+        <span class="muted hint">{t('editor.mathHint')}</span>
       </div>
     {/if}
     {#if inTable}
@@ -240,6 +305,32 @@
 </div>
 
 <style>
+  .math-bar {
+    gap: 0.25rem 0.75rem;
+    padding: 0.4rem 0.6rem;
+  }
+  .math-preview {
+    max-inline-size: 100%;
+    overflow-x: auto;
+  }
+  .math-bar .hint {
+    flex-basis: 100%;
+    font-size: 0.8rem;
+  }
+  .rich-editor :global(.math-src) {
+    font-family: ui-monospace, 'Cascadia Code', 'DejaVu Sans Mono', monospace;
+    font-size: 0.9em;
+    padding: 0.05em 0.35em;
+    border: 1px dashed var(--accent);
+    border-radius: 4px;
+    background: var(--accent-soft);
+  }
+  .rich-editor :global(.math-src.block) {
+    display: block;
+    margin-block: 0 0.6em;
+    padding: 0.4em 0.6em;
+    white-space: pre-wrap;
+  }
   .rich-editor {
     border: 1px solid var(--border);
     border-radius: 10px;
