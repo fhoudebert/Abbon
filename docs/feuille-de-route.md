@@ -8,7 +8,7 @@ Ordre de travail de la branche `qcm`, après le socle (lots 0 à 5). Le cadrage 
 | Lot 6 | Format module, outillage (`module:check`, `module:build`), pilote « Anglais : verbes irréguliers » | fait |
 | Lot 6 bis | Questions à saisie : **réponse courte** et **réponse numérique** (passage, corrigé, éditeur, GIFT, sources de modules) | fait |
 | Lot 6 ter | **Textes à trous** : un énoncé à plusieurs trous, chacun rempli par une réponse courte saisie ou par un choix dans une liste déroulante | fait |
-| Lot 6 quater | **Révision espacée (boîtes de Leitner)** : entraînement par répétitions sur des questions choisies dans les modules | à faire |
+| Lot 6 quater | **Révision espacée (boîtes de Leitner)** : entraînement par répétitions sur des questions choisies | fait |
 | Lot 7 | Formules (LaTeX, rendu KaTeX), équations chimiques, unités, figures SVG incrustées après nettoyage | à faire |
 | Lots 8 à 11 | Modules de contenu : Informatique, Anglais (version complète), Physique-chimie, Maths spécialité, Maths expertes | à faire |
 
@@ -25,16 +25,17 @@ Ordre de travail de la branche `qcm`, après le socle (lots 0 à 5). Le cadrage 
 
 ## Lot 6 quater — révision espacée (Leitner)
 
-Vient après les textes à trous, pour que la révision porte d'emblée sur tous les types de questions.
-
-- Un état par question (boîte, date de prochaine révision), relié aux identifiants stables des modules ; il suit les
-  mises à jour d'un module et est gardé ou supprimé avec l'historique à la désinstallation.
-- Une bonne réponse fait avancer la question d'une boîte, une erreur la renvoie dans la première ; plus la boîte
-  est élevée, plus la révision est espacée (nombre de boîtes et délais à fixer, par exemple 5 boîtes à 1, 2, 4, 7
-  et 15 jours).
-- Une session « Réviser » par module ou par catégorie, avec correction immédiate, qui pioche les questions dues dans
-  tous les QCM ; choix des questions ou des QCM à inclure ; compteur « à revoir » sur l'accueil.
-- Réglage du nombre de questions par jour ; état compris dans la sauvegarde complète.
+- **Une seule boîte pour tous les QCM**, alimentée à la main : le bouton « Ma boîte », pendant un QCM ou dans son
+  corrigé, y range la question affichée (ou l'en retire).
+- Écran « Révision » (menu) : cinq compartiments revus après 1, 2, 4, 7 et 15 jours. Une bonne réponse fait
+  avancer la question d'un compartiment, une erreur la renvoie dans le premier.
+- Session de 20 questions au plus, correction immédiate, tous types de questions. « Réviser quand même » permet de
+  s'entraîner avant la date : une bonne réponse ne fait alors pas avancer la question.
+- Chaque carte garde une copie de sa question : elle reste révisable si le QCM est modifié, supprimé ou
+  désinstallé ; si le QCM existe encore, c'est sa version actuelle qui est affichée.
+- La boîte est comprise dans la sauvegarde complète.
+- Restent possibles plus tard : délais et taille de session réglables, ajout de tout un QCM d'un coup,
+  statistiques de révision.
 
 ## Décisions prises
 

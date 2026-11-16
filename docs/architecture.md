@@ -142,6 +142,15 @@ Voir [modules.md](modules.md) pour l'usage et le format des sources.
   reste un contenu riche.
 - Les propositions d'une liste déroulante sont communes à toutes les langues.
 
+## Révision espacée (lot 6 quater)
+
+- `domain/leitner.ts` (fonctions pures) : compartiments, délais, carte après révision, cartes dues.
+- Table `leitner_card` (migration 7), clé = identifiant de la question, sans clé étrangère : la carte porte une
+  copie de la question (`snapshot`). Les images de ces copies sont gardées par le nettoyage des images.
+- L'écran `/leitner` n'utilise pas les tentatives : `QuestionPlayer.svelte` affiche une question seule avec
+  correction immédiate. Il reprend le rendu des questions de l'écran de passage ; les deux sont à tenir alignés.
+- Sauvegarde complète : `leitner.json`.
+
 ## Limites connues
 
 - Modules : l'historique mis de côté à la désinstallation n'est pas inclus dans la sauvegarde complète ; une

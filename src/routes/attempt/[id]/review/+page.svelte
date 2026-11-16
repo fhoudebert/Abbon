@@ -3,6 +3,7 @@
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
   import { canSeeSolution, choicesOf, outcomeOf, resultOf } from '$lib/domain/session';
+  import BoxToggle from '$lib/components/BoxToggle.svelte';
   import ClozeText from '$lib/components/ClozeText.svelte';
   import { gapResults } from '$lib/domain/cloze';
   import { pick } from '$lib/domain/rich';
@@ -71,6 +72,7 @@
       <header>
         <span class="muted">{t('play.questionOf', { n: i + 1, total: session.questions.length })}</span>
         <span class="badge {outcome}">{t(`outcome.${outcome}`)}</span>
+        <span class="tool"><BoxToggle {quiz} question={q} /></span>
       </header>
       <div class="prompt" lang={q.prompt[lang] ? lang : fallback}><RichContent value={pick(q.prompt, lang, fallback)} /></div>
       {#if q.type === 'cloze'}
@@ -106,6 +108,9 @@
 {/if}
 
 <style>
+  .tool {
+    margin-inline-start: auto;
+  }
   .typed {
     display: grid;
     grid-template-columns: auto 1fr;

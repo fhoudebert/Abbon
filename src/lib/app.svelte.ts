@@ -9,9 +9,10 @@ import { writeAutoBackup } from '$lib/files';
 import { quizToGift } from '$lib/interchange/gift';
 import type { ResolvedImport } from '$lib/interchange/plan';
 import type { ModulePlan } from '$lib/interchange/module';
-import { buildPackage, quizMedia, sheetMedia, type ContentBundle, type MediaFile, type ParsedPackage } from '$lib/interchange/qcmPackage';
+import { buildPackage, cardMedia, quizMedia, sheetMedia, type ContentBundle, type MediaFile, type ParsedPackage } from '$lib/interchange/qcmPackage';
 import { startAttempt } from '$lib/domain/session';
-import type { Attempt, AttemptMode, Category, I18nRich, InstalledModule, Quiz, QuizSummary } from '$lib/domain/types';
+import { dueCards, newCard, reviewCard, type LeitnerCard } from '$lib/domain/leitner';
+import type { Attempt, AttemptMode, Category, I18nRich, InstalledModule, Question, Quiz, QuizSummary } from '$lib/domain/types';
 import { i18n, setLang } from '$lib/i18n/index.svelte';
 
 export interface QuizEntry {
@@ -32,6 +33,8 @@ class AppState {
   attempts = $state<Attempt[]>([]);
   /** Modules installés (contenu protégé, fiches de révision). */
   modules = $state<InstalledModule[]>([]);
+  /** Boîte de révision (Leitner) : une seule pour tous les QCM. */
+  cards = $state<LeitnerCard[]>([]);
   /** Un code PIN protège-t-il l'administration ? */
   pinSet = $state(false);
   /** Administration déverrouillée pour cette session (toujours vrai sans PIN). */
@@ -72,13 +75,15 @@ class AppState {
 
   async reload() {
     if (!this.#repo) return;
-    const [categories, quizzes, attempts, modules] = await Promise.all([
+    const [categories, quizzes, attempts, modules, cards] = await Promise.all([
       this.#repo.listCategories(),
       this.#repo.listQuizzes(),
       this.#repo.listAttempts(),
       this.#repo.listModules(),
+      this.#repo.listCards(),
     ]);
     this.modules = modules;
+    this.cards = cards;
     this.categories = categories;
     this.quizzes = quizzes;
     this.attempts = attempts;
@@ -149,6 +154,44 @@ class AppState {
   async deleteCategory(id: string) {
     await (await this.repo()).deleteCategory(id);
     await this.reload();
+  }
+
+  // ---- Boîte de révision (Leitner) -----------------------------------------
+
+  inBox(questionId: string): boolean {
+    return this.cards.some((c) => c.questionId === questionId);
+  }
+
+  /** Nombre de cartes à revoir maintenant. */
+  dueCount(now = new Date()): number {
+    return dueCards(this.cards, now).length;
+  }
+
+  /** Met une question dans la boîte, ou l'en retire. Renvoie vrai si elle y est après l'appel. */
+  async toggleCard(quiz: Pick<Quiz, 'id' | 'title' | 'languages'>, question: Question): Promise<boolean> {
+    const repo = await this.repo();
+    if (this.inBox(question.id)) {
+      await repo.deleteCard(question.id);
+      this.cards = this.cards.filter((c) => c.questionId !== question.id);
+      return false;
+    }
+    const card = newCard(quiz, $state.snapshot(question) as Question);
+    await repo.saveCard(card);
+    this.cards = [...this.cards, card];
+    return true;
+  }
+
+  async removeCard(questionId: string) {
+    await (await this.repo()).deleteCard(questionId);
+    this.cards = this.cards.filter((c) => c.questionId !== questionId);
+  }
+
+  /** Enregistre le résultat d'une révision : la carte change de compartiment. */
+  async recordReview(card: LeitnerCard, correct: boolean): Promise<LeitnerCard> {
+    const next = reviewCard($state.snapshot(card) as LeitnerCard, correct);
+    await (await this.repo()).saveCard(next);
+    this.cards = this.cards.map((c) => (c.questionId === next.questionId ? next : c));
+    return next;
   }
 
   // ---- Modules -------------------------------------------------------------
@@ -234,12 +277,13 @@ class AppState {
     const history = await repo.exportHistory();
     const snapshots = history.attempts.map((a) => a.quizSnapshot).filter((q): q is Quiz => !!q);
     const modules = await repo.listModules();
+    const cards = await repo.listCards();
     const media = await this.#media([
-      ...new Set([...quizMedia([...content.quizzes, ...snapshots]), ...sheetMedia(modules.map((m) => m.manifest))]),
+      ...new Set([...quizMedia([...content.quizzes, ...snapshots]), ...sheetMedia(modules.map((m) => m.manifest)), ...cardMedia(cards)]),
     ]);
     const { admin_pin: _pin, ...settings } = await repo.listSettings();
     return buildPackage(
-      { ...content, media, ...history, settings, modules },
+      { ...content, media, ...history, settings, modules, cards },
       { kind: 'backup', solutions: true, appVersion: __APP_VERSION__ },
     );
   }
@@ -279,6 +323,7 @@ class AppState {
       answers: p.answers ?? [],
       settings: p.settings ?? {},
       modules: p.modules ?? [],
+      cards: p.cards ?? [],
       media: [...p.media].map(([hash, m]) => ({ hash, mime: m.mime, sizeBytes: m.bytes.length, data: bytesToB64(m.bytes) })),
     });
     const lang = await repo.getSetting('lang');
@@ -292,7 +337,8 @@ class AppState {
     const quizzes = (await Promise.all((await repo.listQuizzes()).map((q) => repo.getQuiz(q.id)))).filter((q): q is Quiz => !!q);
     const snapshots = (await repo.exportHistory()).attempts.map((a) => a.quizSnapshot).filter((q): q is Quiz => !!q);
     const sheets = sheetMedia((await repo.listModules()).map((m) => m.manifest));
-    return repo.deleteUnusedMedia([...new Set([...quizMedia([...quizzes, ...snapshots]), ...sheets])]);
+    const kept = cardMedia(await repo.listCards());
+    return repo.deleteUnusedMedia([...new Set([...quizMedia([...quizzes, ...snapshots]), ...sheets, ...kept])]);
   }
 
   /** Vrai si l'administration est accessible (pas de PIN, ou PIN déjà saisi). */

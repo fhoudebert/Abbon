@@ -37,6 +37,7 @@ ROUTES = [
     "/admin/quiz/demo-english",
     "/admin/import",
     "/sheet/cat-lang",
+    "/leitner",
     "/settings",
     "/about",
 ]

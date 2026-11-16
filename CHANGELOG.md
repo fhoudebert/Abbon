@@ -13,6 +13,7 @@ Leur contenu est repris tel quel dans les notes de version (page de télécharge
 - Deux nouveaux types de questions : réponse courte (texte à saisir) et réponse numérique (valeur, écart toléré, unité).
 - Import et export GIFT des réponses courtes et numériques.
 - Textes à trous : chaque trou se remplit par une saisie ou par une liste déroulante.
+- Boîte de révision (Leitner) : rangez les questions à retenir avec « Ma boîte », révisez-les à intervalles croissants.
 
 ### en
 - Content modules: a `.qcm` file is installed, updated and removed as a whole; its quizzes are protected (“Duplicate to edit” makes a personal copy).
@@ -22,6 +23,7 @@ Leur contenu est repris tel quel dans les notes de version (page de télécharge
 - Two new question types: short answer (typed text) and numerical answer (value, tolerance, unit).
 - GIFT import and export of short and numerical answers.
 - Fill-in-the-gap questions: each gap is typed or picked from a drop-down list.
+- Review box (Leitner): put the questions to remember in it with “My box”, review them at growing intervals.
 
 ## 0.1.0
 

@@ -1,3 +1,4 @@
+import type { LeitnerCard } from '$lib/domain/leitner';
 import type { Answer, Attempt, Category, Choice, InstalledModule, ModuleManifest, Question, Quiz, QuizSummary } from '$lib/domain/types';
 import type { AnswerRow, FullData, Media, ModuleInstall, Repository } from './repository';
 
@@ -300,6 +301,32 @@ export class SqliteRepository implements Repository {
     await this.db.batch(st);
   }
 
+  // ---- Boîte de révision ----------------------------------------------------
+
+  async listCards(): Promise<LeitnerCard[]> {
+    const rows = await this.db.select<Row>('SELECT * FROM leitner_card ORDER BY added_at, question_id');
+    return rows.map((r) => ({
+      questionId: String(r.question_id),
+      quizId: String(r.quiz_id),
+      box: Number(r.box),
+      dueAt: String(r.due_at),
+      addedAt: String(r.added_at),
+      lastAt: (r.last_at as string) ?? null,
+      reviews: Number(r.reviews),
+      lapses: Number(r.lapses),
+      snapshot: parse<LeitnerCard['snapshot']>(r.snapshot, null as never),
+    }));
+  }
+
+  async saveCard(card: LeitnerCard): Promise<void> {
+    const st = cardStatement(card);
+    await this.db.execute(st.sql, st.params);
+  }
+
+  async deleteCard(questionId: string): Promise<void> {
+    await this.db.execute('DELETE FROM leitner_card WHERE question_id = $1', [questionId]);
+  }
+
   // ---- Sauvegarde complète --------------------------------------------------
 
   async exportHistory(): Promise<{ attempts: Attempt[]; answers: AnswerRow[] }> {
@@ -345,6 +372,7 @@ export class SqliteRepository implements Repository {
       { sql: 'DELETE FROM answer_archive', params: [] },
       { sql: 'DELETE FROM attempt_archive', params: [] },
       { sql: 'DELETE FROM module', params: [] },
+      { sql: 'DELETE FROM leitner_card', params: [] },
       // Le code PIN de l'appareil est conservé.
       { sql: "DELETE FROM setting WHERE key <> 'admin_pin'", params: [] },
     ];
@@ -356,6 +384,7 @@ export class SqliteRepository implements Repository {
         sql: 'INSERT INTO module (id, version, manifest, installed_at, updated_at) VALUES ($1, $2, $3, $4, $5)',
         params: [m.manifest.id, m.manifest.version, JSON.stringify(m.manifest), m.installedAt, m.updatedAt],
       });
+    for (const c of data.cards ?? []) st.push(cardStatement(c));
     for (const q of data.quizzes) st.push(...quizStatements(q));
     for (const m of data.media)
       st.push({
@@ -419,6 +448,16 @@ function orderCategories(categories: readonly Category[]): Category[] {
     out.push(c);
   }
   return out;
+}
+
+function cardStatement(c: LeitnerCard): Statement {
+  return {
+    sql: `INSERT INTO leitner_card (question_id, quiz_id, box, due_at, added_at, last_at, reviews, lapses, snapshot)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       ON CONFLICT(question_id) DO UPDATE SET quiz_id = $2, box = $3, due_at = $4, added_at = $5, last_at = $6,
+         reviews = $7, lapses = $8, snapshot = $9`,
+    params: [c.questionId, c.quizId, c.box, c.dueAt, c.addedAt, c.lastAt, c.reviews, c.lapses, JSON.stringify(c.snapshot)],
+  };
 }
 
 function categoryStatement(c: Category): Statement {

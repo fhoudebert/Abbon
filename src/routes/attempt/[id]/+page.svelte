@@ -4,6 +4,7 @@
   import { page } from '$app/state';
   import { formatDuration, isAnswered, showsInstantFeedback } from '$lib/domain/session';
   import { expectedText, isTyped } from '$lib/domain/typed';
+  import BoxToggle from '$lib/components/BoxToggle.svelte';
   import ClozeText from '$lib/components/ClozeText.svelte';
   import { gapResults } from '$lib/domain/cloze';
   import { pick } from '$lib/domain/rich';
@@ -135,13 +136,16 @@
   <article class="panel question">
     <div class="qhead">
       <p class="muted">{t('play.questionOf', { n: session.index + 1, total })}</p>
-      <button
-        class="ghost flag"
-        aria-pressed={answer?.flagged ?? false}
-        onclick={() => session.toggleFlag()}
-      >
-        {answer?.flagged ? '★' : '☆'} {t('play.flag')}
-      </button>
+      <span class="qtools">
+        <BoxToggle {quiz} {question} />
+        <button
+          class="ghost flag"
+          aria-pressed={answer?.flagged ?? false}
+          onclick={() => session.toggleFlag()}
+        >
+          {answer?.flagged ? '★' : '☆'} {t('play.flag')}
+        </button>
+      </span>
     </div>
 
     <!-- Pas de fieldset/legend : WebKitGTK y ajoute un espace parasite au premier rendu. -->
@@ -319,6 +323,11 @@
   }
   .qhead p {
     margin: 0;
+  }
+  .qtools {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
   }
   .flag[aria-pressed='true'] {
     color: var(--warn);

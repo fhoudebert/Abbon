@@ -1,3 +1,4 @@
+import { dueAfter, newCard } from '$lib/domain/leitner';
 import type { Attempt, Category, ModuleManifest, Question, Quiz } from '$lib/domain/types';
 import type { Repository } from './repository';
 
@@ -276,6 +277,10 @@ export async function seedDemo(repo: Repository): Promise<boolean> {
   for (const [questionId, text, correct] of [['demo-typed-q-1', 'rome', true], ['demo-typed-q-2', '90', false]] as const)
     await repo.saveAnswer('demo-attempt-typed', { questionId, selected: [], text, correct, points: correct ? 1 : 0, timeSec: 40, flagged: false });
   if (repo.backend === 'memory') {
+    // Aperçu seulement : une boîte de révision déjà garnie (une question à revoir, une autre plus tard).
+    const typedQuiz = demoQuizzes.find((quiz) => quiz.id === 'demo-typed')!;
+    await repo.saveCard(newCard(typedQuiz, typedQuiz.questions[0]));
+    await repo.saveCard({ ...newCard(demoQuizzes[0], demoQuizzes[0].questions[0]), box: 3, reviews: 2, dueAt: dueAfter(new Date(), 4) });
     await repo.installModule({
       manifest: demoModule,
       quizzes: demoQuizzes.filter((quiz) => demoModule.quizzes.includes(quiz.id)),
