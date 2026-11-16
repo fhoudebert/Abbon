@@ -2,8 +2,10 @@
   import type { RichNode as Node } from '$lib/domain/types';
   import { t } from '$lib/i18n/index.svelte';
   import Hast from './Hast.svelte';
+  import { mathSource } from '$lib/domain/rich';
   import { lowlight } from './lowlight';
-  import { mediaUrl } from './media.svelte';
+  import { renderMath } from './math';
+  import { mediaSvg, mediaUrl } from './media.svelte';
   import RichNode from './RichNode.svelte';
 
   /**
@@ -67,9 +69,20 @@
   {@const code = children.map((c) => c.text ?? '').join('')}
   {@const tree = highlighted(code, node.attrs?.language)}
   <pre class="code"><code class="hljs">{#if tree}<Hast nodes={tree.children} />{:else}{code}{/if}</code></pre>
+{:else if node.type === 'math'}
+  <!-- Formule : la source LaTeX est le texte du nœud ; KaTeX produit un HTML sans script (trust: false). -->
+  <span class="math">{@html renderMath(mathSource(node))}</span>
+{:else if node.type === 'mathBlock'}
+  <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+  <div class="math-block" role="region" aria-label={t('rich.formula')} tabindex="0">{@html renderMath(mathSource(node), true)}</div>
 {:else if node.type === 'image'}
-  {@const src = mediaUrl(typeof node.attrs?.hash === 'string' ? node.attrs.hash : null)}
-  {#if src}
+  {@const hash = typeof node.attrs?.hash === 'string' ? node.attrs.hash : null}
+  {@const src = mediaUrl(hash)}
+  {@const svg = mediaSvg(hash)}
+  {#if svg}
+    <!-- Figure SVG incrustée après nettoyage (domain/svg.ts) : elle suit la couleur du texte, donc le thème. -->
+    <span class="svg-figure" role="img" aria-label={String(node.attrs?.alt ?? '')}>{@html svg}</span>
+  {:else if src}
     <img {src} alt={String(node.attrs?.alt ?? '')} loading="lazy" />
   {:else}
     <span class="img-missing" role="img" aria-label={String(node.attrs?.alt ?? '')}></span>
@@ -89,6 +102,29 @@
 {/if}
 
 <style>
+  .math-block {
+    margin-block: 0 0.6em;
+    padding-block: 0.2em;
+    overflow-x: auto;
+    overflow-y: hidden;
+    text-align: center;
+  }
+  .math-block :global(.katex-display) {
+    margin: 0;
+  }
+  .math :global(.katex) {
+    font-size: 1.1em;
+  }
+  .svg-figure {
+    display: inline-block;
+    max-inline-size: 100%;
+    vertical-align: middle;
+  }
+  .svg-figure :global(svg) {
+    display: block;
+    max-inline-size: 100%;
+    block-size: auto;
+  }
   p {
     margin-block: 0 0.6em;
   }

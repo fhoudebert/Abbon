@@ -4,6 +4,7 @@ import {
   choicesOf,
   emptyAnswer,
   finishAttempt,
+  isAnswered,
   isLocked,
   questionsOf,
   quizOf,
@@ -33,7 +34,7 @@ export class AttemptSession {
     this.quiz && this.attempt && this.question ? choicesOf(this.quiz, this.attempt, this.question) : [],
   );
   locked = $derived(this.attempt ? isLocked(this.attempt, this.answer) : true);
-  answeredCount = $derived(this.questions.filter((q) => (this.answers[q.id]?.selected.length ?? 0) > 0).length);
+  answeredCount = $derived(this.questions.filter((q) => isAnswered(this.answers[q.id])).length);
   remaining = $derived(this.quiz && this.attempt ? remainingSec(this.quiz, this.attempt) : null);
 
   #timer: ReturnType<typeof setInterval> | null = null;
@@ -111,6 +112,26 @@ export class AttemptSession {
     await this.#saveAnswer({ ...current, selected: toggleChoice(q, current.selected, choiceId) });
   }
 
+  /**
+   * Réponse saisie (réponse courte ou numérique). L'état est mis à jour tout de suite ; l'écriture
+   * en base suit avec le chrono, au changement de question, à la validation et à la fin.
+   */
+  typeText(text: string) {
+    const q = this.question;
+    if (!q || this.locked) return;
+    this.answers[q.id] = { ...(this.answers[q.id] ?? emptyAnswer(q.id)), text };
+  }
+
+  /** Réponse à un trou d'un texte à trous (même principe que `typeText`). */
+  typeGap(gap: number, value: string) {
+    const q = this.question;
+    if (!q || this.locked) return;
+    const current = this.answers[q.id] ?? emptyAnswer(q.id);
+    const texts = Array.from({ length: q.expected?.gaps?.length ?? 0 }, (_, i) => current.texts?.[i] ?? '');
+    texts[gap] = value;
+    this.answers[q.id] = { ...current, texts };
+  }
+
   async toggleFlag() {
     const q = this.question;
     if (!q || this.attempt?.status !== 'in_progress') return;
@@ -123,7 +144,7 @@ export class AttemptSession {
     const q = this.question;
     if (!q || !this.quiz || this.locked) return;
     const current = this.answers[q.id] ?? emptyAnswer(q.id);
-    if (!current.selected.length) return;
+    if (!isAnswered(current)) return;
     await this.#saveAnswer(checkAnswer(this.quiz, q, current));
   }
 

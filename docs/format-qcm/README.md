@@ -8,12 +8,13 @@ vérifiés par les tests.
 manifest.json          description du paquet (fait foi)       → manifest.schema.json
 categories.json        tableau de catégories                  → category.schema.json (par élément)
 quizzes/<id>.json      un fichier par QCM                     → quiz.schema.json
-media/<sha256>.<ext>   images (png, jpg, gif, webp)
+media/<sha256>.<ext>   images (png, jpg, gif, webp, svg)
 module.json            facultatif : le fichier est un module           → module.schema.json
 ```
 
 Une **sauvegarde complète** (`"kind": "backup"`) contient en plus `attempts.json` (tentatives, avec la copie du QCM
-au démarrage), `answers.json`, `settings.json` et, s'il y en a, `modules.json` (modules installés : manifeste et dates). Elle se restaure depuis *Paramètres › Sauvegarde* et remplace tout
+au démarrage), `answers.json`, `settings.json` et, s'il y en a, `modules.json` (modules installés : manifeste et dates) et `leitner.json` (boîte de
+révision : compartiment, dates et copie de chaque question). Elle se restaure depuis *Paramètres › Sauvegarde* et remplace tout
 le contenu de l'appareil (le code PIN de l'appareil est conservé).
 
 ## Règles
@@ -36,6 +37,62 @@ le contenu de l'appareil (le code PIN de l'appareil est conservé).
 - **Limites** : 5 000 fichiers, 200 Mo décompressés, 20 Mo par fichier JSON, 30 niveaux d'imbrication.
 - **Versions du format** : `formatVersion` augmente à chaque changement incompatible ; Abbon refuse un fichier
   d'une version plus récente que la sienne.
+
+## Formules et figures
+
+- **Formules** : nœuds `math` (dans le texte) et `mathBlock` (en bloc), dont le contenu est la source LaTeX :
+  `{ "type": "math", "content": [{ "type": "text", "text": "x^2" }] }`. Abbon les rend avec KaTeX et l'extension
+  mhchem (`\ce{…}` pour la chimie, `\pu{…}` pour une grandeur avec unité). Un lecteur qui ne connaît pas ces nœuds
+  affiche leur texte, donc la source LaTeX.
+- **Figures SVG** : un média `image/svg+xml` référencé comme toute image (`{ "type": "image", "attrs": { "hash",
+  "alt" } }`). Le fichier doit être un SVG bien formé, sans déclaration d'entités. Abbon ne l'affiche jamais tel
+  quel : il le réécrit à partir d'une liste blanche (formes, texte, dégradés, masques, marqueurs ; ni script, ni
+  `<style>`, ni `<image>`, ni `<foreignObject>`, ni lien ou référence externe) et l'incruste dans la page, où il
+  hérite de la couleur du texte (`currentColor`).
+- Un module qui en contient l'annonce dans `requires.features` : `math`, `svg`.
+
+## Types de questions
+
+| `type` | Réponse | Champs |
+|---|---|---|
+| `single` | une case à cocher parmi `choices` | exactement un choix `correct` |
+| `multiple` | plusieurs cases à cocher | au moins un choix `correct` |
+| `short` | texte à saisir | `choices` vide ; `expected.accepted` (formes acceptées), `expected.caseSensitive` |
+| `cloze` | texte à trous | `choices` vide ; `expected.text` (texte par langue, trous marqués `{{1}}`, `{{2}}`…), `expected.gaps` |
+| `numeric` | nombre à saisir | `choices` vide ; `expected.value`, `expected.tolerance` (écart absolu), `expected.unit` (affichée, pas saisie) |
+
+```json
+{ "id": "q1", "type": "short", "prompt": { "fr": "Prétérit de to go ?" }, "points": 1, "position": 0,
+  "choices": [], "expected": { "accepted": ["went"] } }
+{ "id": "q2", "type": "numeric", "prompt": { "fr": "Valeur de g ?" }, "points": 1, "position": 1,
+  "choices": [], "expected": { "value": 9.81, "tolerance": 0.01, "unit": "m/s²" } }
+```
+
+- **Réponse courte** : la saisie est comparée à chaque forme acceptée après retrait des espaces superflus et
+  unification des apostrophes ; les majuscules sont ignorées sauf `caseSensitive`. Les accents comptent.
+- **Réponse numérique** : virgule ou point décimal, signe moins typographique, espaces de milliers et notation
+  scientifique (`1,5e3`) sont acceptés. La réponse est juste si |saisie − `value`| ≤ `tolerance`.
+- Ces deux types sont notés en tout ou rien. Dans les réponses d'une sauvegarde, le texte saisi est dans `text`.
+- **Texte à trous** :
+
+  ```json
+  { "id": "q3", "type": "cloze", "prompt": { "fr": "Complétez." }, "points": 1, "position": 2, "choices": [],
+    "expected": {
+      "text": { "fr": "She {{1}} to London. She {{2}} two cats." },
+      "gaps": [
+        { "kind": "text", "accepted": ["went", "did go"] },
+        { "kind": "select", "accepted": ["has"], "options": ["have", "had"] }
+      ] } }
+  ```
+
+  Le trou n° *n* du texte est `gaps[n-1]` ; le texte de chaque langue contient chaque repère une fois. Un trou
+  `text` se compare comme une réponse courte ; un trou `select` est une liste déroulante formée de sa bonne
+  réponse (`accepted[0]`) et de ses `options`. Notation : tout ou rien, ou part des trous justes si le QCM est en
+  notation partielle. Les réponses de l'apprenant sont dans `texts`, une par trou.
+- Sans corrigé (`includesSolutions: false`), `expected` est retiré, sauf l'unité d'une réponse numérique, et sauf le
+  texte et les propositions des listes d'un texte à trous.
+- **Compatibilité** : `short`, `numeric` et `cloze` datent d'Abbon 0.2.0. Un lecteur plus ancien refuse un QCM qui en
+  contient (le QCM est signalé invalide, les autres s'importent).
 
 ## Modules
 
@@ -71,7 +128,7 @@ sait le mettre à jour ou le retirer.
   suivantes. Convention d'Abbon : préfixe `org-abbon-informatique_`.
 - **`sheets`** : fiches de révision, par identifiant de catégorie puis par langue (contenu riche, images comprises).
 - **`requires`** : `app` est une version minimale d'Abbon (`>=0.2.0`) ; `features` liste les fonctions de rendu
-  nécessaires (`math`, `svg`… ; aucune n'est encore définie en version 0.2.0). L'installation est refusée si un
+  nécessaires : `math` (formules) et `svg` (figures SVG), reconnues depuis la version 0.2.0. L'installation est refusée si un
   prérequis manque.
 - **`license`** : identifiant SPDX de la licence du contenu.
 - Un `module.json` invalide, ou d'un `formatVersion` plus récent, est signalé ; le fichier reste importable comme un
@@ -83,5 +140,7 @@ Les sources et l'outillage des modules d'Abbon sont décrits dans [modules.md](.
 ## GIFT (Moodle)
 
 Abbon importe et exporte aussi le format texte GIFT : choix unique, choix multiples (poids `~%50%`), vrai/faux,
-retours `#` et `####`. Les autres types (réponse courte, appariement, numérique, rédaction) sont signalés et
-ignorés. À l'export, chaque bonne réponse d'un choix multiple vaut `100/n %` et chaque mauvaise `-100 %`.
+réponse courte (`{=Paris =paris}`) et réponse numérique (`{#3.14:0.01}`, `{#1..5}`),
+retours `#` et `####`. Les autres types (appariement, rédaction, réponse numérique à plusieurs valeurs) sont
+signalés et ignorés. L'unité d'une réponse numérique, sans équivalent en GIFT, est ajoutée à l'énoncé. Un texte
+à trous n'est pas exporté (GIFT ne décrit qu'un trou par question) : il est laissé en commentaire. À l'export, chaque bonne réponse d'un choix multiple vaut `100/n %` et chaque mauvaise `-100 %`.

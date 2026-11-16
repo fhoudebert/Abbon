@@ -16,7 +16,7 @@ import type { Lang, Question, Quiz, RichNode, RichValue } from '$lib/domain/type
 
 // ---- Import -----------------------------------------------------------------
 
-export type GiftSkipReason = 'short_answer' | 'matching' | 'numerical' | 'essay' | 'description' | 'no_answer_block' | 'no_correct';
+export type GiftSkipReason = 'matching' | 'numerical' | 'essay' | 'description' | 'no_answer_block' | 'no_correct';
 
 export interface GiftResult {
   quiz: Quiz;
@@ -155,8 +155,29 @@ export function parseGift(text: string, title: string, lang: Lang, now = new Dat
       skipped.push({ index, title: label, reason: 'essay' });
       continue;
     }
+    const explanation = general.trim() ? { [lang]: plainToDoc(toText(general, format)) } : null;
     if (body.startsWith('#')) {
-      skipped.push({ index, title: label, reason: 'numerical' });
+      // Réponse numérique : {#4}, {#3.14:0.01} (valeur et écart) ou {#1..5} (intervalle).
+      const num = '[+-]?\\d+(?:\\.\\d+)?';
+      const m = new RegExp(`^#\\s*(${num})\\s*(?:(:|\\.\\.)\\s*(${num}))?\\s*(?:#.*)?$`, 's').exec(body.trim());
+      if (!m) {
+        skipped.push({ index, title: label, reason: 'numerical' });
+        continue;
+      }
+      const a = Number(m[1]);
+      const b2 = m[3] === undefined ? 0 : Number(m[3]);
+      const range = m[2] === '..';
+      const round = (n: number) => Number(n.toPrecision(12));
+      questions.push({
+        id: newId(),
+        type: 'numeric',
+        prompt: { [lang]: plainToDoc(prompt) },
+        points: 1,
+        position: questions.length,
+        explanation,
+        choices: [],
+        expected: range ? { value: round((a + b2) / 2), tolerance: round(Math.abs(b2 - a) / 2) } : { value: a, tolerance: Math.abs(b2) },
+      });
       continue;
     }
     const tf = /^(T|TRUE|F|FALSE)\s*(#.*)?$/is.exec(body.trim());
@@ -186,7 +207,28 @@ export function parseGift(text: string, title: string, lang: Lang, now = new Dat
       continue;
     }
     if (!parts.some((p) => p.startsWith('~'))) {
-      skipped.push({ index, title: label, reason: 'short_answer' });
+      // Réponse courte : que des réponses « = », toutes acceptées (poids et retours ignorés).
+      const accepted = parts
+        .map((p) => {
+          const rest = p.slice(1).replace(/^%-?\d+(?:\.\d+)?%/, '');
+          const fb = indexUnescaped(rest, '#');
+          return toText(fb === -1 ? rest : rest.slice(0, fb), format).trim();
+        })
+        .filter(Boolean);
+      if (!accepted.length) {
+        skipped.push({ index, title: label, reason: 'no_correct' });
+        continue;
+      }
+      questions.push({
+        id,
+        type: 'short',
+        prompt: { [lang]: plainToDoc(prompt) },
+        points: 1,
+        position: questions.length,
+        explanation,
+        choices: [],
+        expected: { accepted: [...new Set(accepted)] },
+      });
       continue;
     }
 
@@ -290,6 +332,11 @@ export function richToHtml(
         for (const m of n.marks ?? []) if (marks[m.type]) s = `<${marks[m.type]}>${s}</${marks[m.type]}>`;
         return s;
       }
+      // Formules : notation TeX de Moodle (filtre « TeX » ou MathJax).
+      case 'math':
+        return `\\(${escHtml((n.content ?? []).map((c) => c.text ?? '').join(''))}\\)`;
+      case 'mathBlock':
+        return `<p>\\[${escHtml((n.content ?? []).map((c) => c.text ?? '').join(''))}\\]</p>`;
       case 'hardBreak':
         return '<br>';
       case 'horizontalRule':
@@ -316,6 +363,7 @@ const pct = (n: number) => String(Math.round(n * 100000) / 100000);
 /**
  * Écrit un QCM en GIFT, dans une langue. Choix multiples : chaque bonne réponse vaut 100/n %,
  * chaque mauvaise −100 % (au plus proche de « tout ou rien » ; Moodle plafonne à 0).
+ * Réponse courte : `{=a =b}` ; réponse numérique : `{#valeur:écart}` ; texte à trous : non exporté.
  */
 export function quizToGift(quiz: Quiz, lang: Lang, image?: (hash: string) => string | undefined, categoryName?: string): string {
   const main = quiz.languages[0];
@@ -326,6 +374,11 @@ export function quizToGift(quiz: Quiz, lang: Lang, image?: (hash: string) => str
   [...quiz.questions]
     .sort((a, b) => a.position - b.position)
     .forEach((q, i) => {
+      if (q.type === 'cloze') {
+        // GIFT ne sait décrire qu'un seul trou par question : les textes à trous ne sont pas exportés.
+        lines.push(`// Q${i + 1} : texte à trous, non exporté (sans équivalent en GIFT)`, '');
+        return;
+      }
       const correct = q.choices.filter((c) => c.correct).length;
       const wrong = q.choices.length - correct;
       const answers = [...q.choices]
@@ -336,8 +389,18 @@ export function quizToGift(quiz: Quiz, lang: Lang, image?: (hash: string) => str
           const fb = c.feedback && pick(c.feedback, lang, main) ? `#${html(c.feedback, true)}` : '';
           return `\t${prefix}${html(c.content, true)}${fb}`;
         });
+      const e = q.expected ?? {};
+      if (q.type === 'short') {
+        answers.length = 0;
+        for (const a of (e.accepted ?? []).filter((x) => x.trim())) answers.push(`\t=${escapeGift(a.trim())}`);
+      } else if (q.type === 'numeric') {
+        // L'unité n'a pas d'équivalent en GIFT : elle est ajoutée à l'énoncé.
+        answers.length = 0;
+        answers.push(`\t#${e.value ?? 0}${e.tolerance ? `:${e.tolerance}` : ''}`);
+      }
+      const unit = q.type === 'numeric' && e.unit ? escapeGift(` (${escHtml(e.unit)})`) : '';
       const expl = q.explanation && pick(q.explanation, lang, main) ? [`\t####${html(q.explanation)}`] : [];
-      lines.push(`::Q${i + 1}:: [html]${html(q.prompt)} {`, ...answers, ...expl, '}', '');
+      lines.push(`::Q${i + 1}:: [html]${html(q.prompt)}${unit} {`, ...answers, ...expl, '}', '');
     });
   return lines.join('\n');
 }

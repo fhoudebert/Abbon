@@ -10,6 +10,9 @@
 
   let { children }: { children: Snippet } = $props();
 
+  /** Questions de la boîte de révision à revoir maintenant (pastille du menu). */
+  const dueCount = $derived(app.ready ? app.dueCount() : 0);
+
   onMount(async () => {
     await app.init();
     await prefs.load();
@@ -37,6 +40,9 @@
 
   <nav>
     <a href="/" aria-current={page.url.pathname === '/' ? 'page' : undefined}>{t('nav.home')}</a>
+    <a href="/leitner" aria-current={page.url.pathname === '/leitner' ? 'page' : undefined}>
+      {t('nav.leitner')}{#if dueCount > 0}<span class="count" aria-hidden="true">{dueCount}</span><span class="visually-hidden"> ({t('nav.leitnerDue', { n: dueCount })})</span>{/if}
+    </a>
     <a href="/admin" aria-current={page.url.pathname.startsWith('/admin') ? 'page' : undefined}>{t('nav.admin')}</a>
     <a href="/settings" aria-current={page.url.pathname === '/settings' ? 'page' : undefined}>{t('nav.settings')}</a>
     <a href="/about" aria-current={page.url.pathname === '/about' ? 'page' : undefined}>{t('nav.about')}</a>
@@ -104,6 +110,18 @@
     text-decoration: none;
     padding-block: 0.5rem;
     border-block-end: 2px solid transparent;
+  }
+  .count {
+    display: inline-block;
+    min-inline-size: 1.5em;
+    margin-inline-start: 0.35em;
+    padding: 0 0.4em;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--surface);
+    font-size: 0.8em;
+    font-weight: 600;
+    text-align: center;
   }
   nav a[aria-current='page'] {
     color: var(--text);

@@ -8,14 +8,28 @@ Leur contenu est repris tel quel dans les notes de version (page de télécharge
 ### fr
 - Modules de contenu : un fichier `.qcm` s'installe, se met à jour et se retire d'un bloc ; ses QCM sont protégés (« Dupliquer pour modifier » en fait une copie personnelle).
 - Fiches de révision par catégorie, depuis la page d'un QCM et depuis le corrigé.
-- Premier module, en version pilote : « Anglais : verbes irréguliers » (30 questions, français et anglais).
+- Premier module, en version pilote : « Anglais : verbes irréguliers » (60 questions, français et anglais).
 - Désinstallation avec ou sans l'historique des tentatives ; gardé, il revient à la réinstallation.
+- Deux nouveaux types de questions : réponse courte (texte à saisir) et réponse numérique (valeur, écart toléré, unité).
+- Import et export GIFT des réponses courtes et numériques.
+- Textes à trous : chaque trou se remplit par une saisie ou par une liste déroulante.
+- Formules mathématiques (LaTeX), équations chimiques et unités, dans les énoncés, les réponses et les explications.
+- Figures SVG, qui suivent le thème clair ou sombre.
+- Module « Informatique », version pilote : 13 rubriques, 130 questions.
+- Boîte de révision (Leitner) : rangez les questions à retenir avec « Ma boîte », révisez-les à intervalles croissants.
 
 ### en
 - Content modules: a `.qcm` file is installed, updated and removed as a whole; its quizzes are protected (“Duplicate to edit” makes a personal copy).
 - Revision sheets per category, from the quiz page and from the answers.
-- First module, pilot version: “English: irregular verbs” (30 questions, French and English).
+- First module, pilot version: “English: irregular verbs” (60 questions, French and English).
 - Uninstall with or without the attempt history; when kept, it comes back on reinstall.
+- Two new question types: short answer (typed text) and numerical answer (value, tolerance, unit).
+- GIFT import and export of short and numerical answers.
+- Fill-in-the-gap questions: each gap is typed or picked from a drop-down list.
+- Mathematical formulas (LaTeX), chemical equations and units, in questions, answers and explanations.
+- SVG figures that follow the light or dark theme.
+- “Computer science” module, pilot version (French only): 13 topics, 130 questions.
+- Review box (Leitner): put the questions to remember in it with “My box”, review them at growing intervals.
 
 ## 0.1.0
 

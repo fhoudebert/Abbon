@@ -3,7 +3,11 @@
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
   import { canSeeSolution, choicesOf, outcomeOf, resultOf } from '$lib/domain/session';
+  import BoxToggle from '$lib/components/BoxToggle.svelte';
+  import ClozeText from '$lib/components/ClozeText.svelte';
+  import { gapResults } from '$lib/domain/cloze';
   import { pick } from '$lib/domain/rich';
+  import { expectedText, isTyped } from '$lib/domain/typed';
   import { localize } from '$lib/domain/text';
   import RichContent from '$lib/rich/RichContent.svelte';
   import { i18n, t } from '$lib/i18n/index.svelte';
@@ -68,8 +72,21 @@
       <header>
         <span class="muted">{t('play.questionOf', { n: i + 1, total: session.questions.length })}</span>
         <span class="badge {outcome}">{t(`outcome.${outcome}`)}</span>
+        <span class="tool"><BoxToggle {quiz} question={q} /></span>
       </header>
       <div class="prompt" lang={q.prompt[lang] ? lang : fallback}><RichContent value={pick(q.prompt, lang, fallback)} /></div>
+      {#if q.type === 'cloze'}
+        {@const texts = session.answers[q.id]?.texts ?? []}
+        <ClozeText question={q} {lang} {fallback} values={texts} locked results={gapResults(q, texts)} />
+      {:else if isTyped(q)}
+        {@const given = session.answers[q.id]?.text?.trim()}
+        <dl class="typed">
+          <dt>{t('review.yourAnswer')}</dt>
+          <dd class:wrong={outcome !== 'correct' && !!given}>{given || t('review.noAnswer')}</dd>
+          <dt>{t('review.expected')}</dt>
+          <dd class="right">{expectedText(q, lang)}</dd>
+        </dl>
+      {:else}
       <ul class="choices">
         {#each choicesOf(quiz, attempt, q) as c (c.id)}
           {@const picked = selected.includes(c.id)}
@@ -82,6 +99,7 @@
         {/each}
       </ul>
       {#if selected.length === 0}<p class="muted">{t('review.noAnswer')}</p>{/if}
+      {/if}
       {#if q.explanation}
         <div class="explanation"><strong>{t('play.explanation')} :</strong> <RichContent value={pick(q.explanation, lang, fallback)} /></div>
       {/if}
@@ -90,6 +108,29 @@
 {/if}
 
 <style>
+  .tool {
+    margin-inline-start: auto;
+  }
+  .typed {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.25rem 1rem;
+    margin-block: 0.75rem;
+  }
+  .typed dt {
+    color: var(--muted);
+  }
+  .typed dd {
+    margin: 0;
+    font-weight: 600;
+  }
+  .typed .wrong {
+    color: var(--bad);
+    text-decoration: line-through;
+  }
+  .typed .right {
+    color: var(--ok);
+  }
   .head {
     display: flex;
     flex-wrap: wrap;

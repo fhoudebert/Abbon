@@ -3,15 +3,29 @@
  *
  * Blocs : paragraphes, titres (`##`, `###`), listes à puces et numérotées (un niveau), blocs de code
  * (``` avec langage), citations (`>`), tableaux à barres verticales, filet (`---`).
- * En ligne : `code`, **gras**, *italique*, retour à la ligne forcé (deux espaces ou `\` en fin de ligne).
+ * En ligne : `code`, **gras**, *italique*, retour à la ligne forcé (deux espaces ou `\` en fin de ligne),
+ * formule `$…$` (LaTeX), image `![texte alternatif](fichier)`. En bloc : formule `$$…$$`.
  * Aucun HTML n'est interprété : une balise reste du texte.
  */
 import type { RichDoc, RichNode, RichValue } from '$lib/domain/types';
 
 type Mark = { type: 'bold' | 'italic' | 'code' };
 
+/** Ce que le compilateur de modules fournit : résolution des images, contrôle des formules. */
+export interface MarkdownContext {
+  /** Nœud image pour `![alt](src)` ; lève une erreur si le fichier manque ou si le texte alternatif est vide. */
+  image?: (src: string, alt: string) => RichNode;
+  /** Source LaTeX à enregistrer (contrôlée, éventuellement adaptée) ; lève une erreur si elle ne compile pas. */
+  math?: (latex: string, display: boolean) => string;
+}
+
+const mathNode = (type: 'math' | 'mathBlock', latex: string, ctx: MarkdownContext): RichNode => ({
+  type,
+  content: [{ type: 'text', text: ctx.math ? ctx.math(latex.trim(), type === 'mathBlock') : latex.trim() }],
+});
+
 /** Texte en ligne → nœuds `text` avec marques. */
-export function parseInline(src: string): RichNode[] {
+export function parseInline(src: string, ctx: MarkdownContext = {}): RichNode[] {
   const out: RichNode[] = [];
   let buf = '';
   let bold = false;
@@ -24,8 +38,34 @@ export function parseInline(src: string): RichNode[] {
   };
   for (let i = 0; i < src.length; i++) {
     const ch = src[i];
-    if (ch === '\\' && i + 1 < src.length && /[\\`*_[\]#>|-]/.test(src[i + 1])) {
+    if (ch === '\\' && i + 1 < src.length && /[\\`*_[\]#>|$!-]/.test(src[i + 1])) {
       buf += src[++i];
+    } else if (ch === '$' && /\S/.test(src[i + 1] ?? '')) {
+      // $formule$ : pas d'espace juste après le premier « $ » ni juste avant le dernier.
+      let end = -1;
+      for (let k = i + 1; k < src.length; k++) {
+        if (src[k] === '\\') k++;
+        else if (src[k] === '$') {
+          end = k;
+          break;
+        }
+      }
+      if (end === -1 || /\s/.test(src[end - 1])) {
+        buf += ch;
+        continue;
+      }
+      flush();
+      out.push(mathNode('math', src.slice(i + 1, end), ctx));
+      i = end;
+    } else if (ch === '!' && src[i + 1] === '[') {
+      const m = /^!\[([^\]]*)\]\(([^)\s]+)\)/.exec(src.slice(i));
+      if (!m || !ctx.image) {
+        buf += ch;
+        continue;
+      }
+      flush();
+      out.push(ctx.image(m[2], m[1].trim()));
+      i += m[0].length - 1;
     } else if (ch === '`') {
       // `code` ou ``code avec ` dedans``
       const fence = /^`+/.exec(src.slice(i))![0];
@@ -55,19 +95,19 @@ export function parseInline(src: string): RichNode[] {
 }
 
 /** Lignes d'un paragraphe → contenu en ligne (retours forcés compris). */
-function inlineLines(lines: string[]): RichNode[] {
+function inlineLines(lines: string[], ctx: MarkdownContext): RichNode[] {
   const out: RichNode[] = [];
   lines.forEach((line, i) => {
     const hard = /( {2,}|\\)$/.test(line) && i < lines.length - 1;
     const text = line.replace(/( {2,}|\\)$/, '').trim() + (hard || i === lines.length - 1 ? '' : ' ');
-    out.push(...parseInline(text));
+    out.push(...parseInline(text, ctx));
     if (hard) out.push({ type: 'hardBreak' });
   });
   return out;
 }
 
-const paragraph = (lines: string[]): RichNode => {
-  const content = inlineLines(lines);
+const paragraph = (lines: string[], ctx: MarkdownContext): RichNode => {
+  const content = inlineLines(lines, ctx);
   return content.length ? { type: 'paragraph', content } : { type: 'paragraph' };
 };
 
@@ -81,7 +121,7 @@ const cells = (l: string) =>
     .map((c) => c.trim().replaceAll('\\|', '|'));
 
 /** Markdown (blocs) → nœuds de document. */
-export function parseBlocks(src: string): RichNode[] {
+export function parseBlocks(src: string, ctx: MarkdownContext = {}): RichNode[] {
   const lines = src.replace(/\r\n?/g, '\n').split('\n');
   const out: RichNode[] = [];
   let i = 0;
@@ -105,10 +145,25 @@ export function parseBlocks(src: string): RichNode[] {
       });
       continue;
     }
+    if (/^\s*\$\$/.test(line)) {
+      // Formule en bloc : « $$ … $$ » sur une ligne, ou sur plusieurs lignes jusqu'au « $$ » fermant.
+      const first = line.trim().slice(2);
+      const body: string[] = [];
+      if (first.trimEnd().endsWith('$$')) body.push(first.trimEnd().slice(0, -2));
+      else {
+        body.push(first);
+        for (i++; i < lines.length && !lines[i].trimEnd().endsWith('$$'); i++) body.push(lines[i]);
+        if (i >= lines.length) throw new Error('formule en bloc « $$ » non refermée');
+        body.push(lines[i].trimEnd().slice(0, -2));
+      }
+      i++;
+      out.push(mathNode('mathBlock', body.join('\n'), ctx));
+      continue;
+    }
     const heading = /^(#{1,4})\s+(.*)$/.exec(line);
     if (heading) {
       // `##` devient le premier niveau sous le titre de la page.
-      out.push({ type: 'heading', attrs: { level: Math.max(1, heading[1].length - 1) }, content: parseInline(heading[2].trim()) });
+      out.push({ type: 'heading', attrs: { level: Math.max(1, heading[1].length - 1) }, content: parseInline(heading[2].trim(), ctx) });
       i++;
       continue;
     }
@@ -120,7 +175,7 @@ export function parseBlocks(src: string): RichNode[] {
     if (isTableRow(line) && i + 1 < lines.length && isTableSep(lines[i + 1])) {
       const row = (l: string, type: 'tableHeader' | 'tableCell'): RichNode => ({
         type: 'tableRow',
-        content: cells(l).map((c) => ({ type, content: [paragraph([c])] })),
+        content: cells(l).map((c) => ({ type, content: [paragraph([c], ctx)] })),
       });
       const rows = [row(line, 'tableHeader')];
       for (i += 2; i < lines.length && isTableRow(lines[i]); i++) rows.push(row(lines[i], 'tableCell'));
@@ -130,7 +185,7 @@ export function parseBlocks(src: string): RichNode[] {
     if (/^\s*>/.test(line)) {
       const body: string[] = [];
       for (; i < lines.length && /^\s*>/.test(lines[i]); i++) body.push(lines[i].replace(/^\s*> ?/, ''));
-      out.push({ type: 'blockquote', content: parseBlocks(body.join('\n')) });
+      out.push({ type: 'blockquote', content: parseBlocks(body.join('\n'), ctx) });
       continue;
     }
     const bullet = /^\s*[-*+]\s+/;
@@ -145,26 +200,26 @@ export function parseBlocks(src: string): RichNode[] {
       }
       out.push({
         type: marker === bullet ? 'bulletList' : 'orderedList',
-        content: items.map((it) => ({ type: 'listItem', content: [paragraph(it)] })),
+        content: items.map((it) => ({ type: 'listItem', content: [paragraph(it, ctx)] })),
       });
       continue;
     }
     const para: string[] = [];
-    for (; i < lines.length && lines[i].trim() && !/^\s*(`{3,}|#{1,4}\s|>|\|)/.test(lines[i]); i++) para.push(lines[i]);
+    for (; i < lines.length && lines[i].trim() && !/^\s*(`{3,}|#{1,4}\s|>|\||\$\$)/.test(lines[i]); i++) para.push(lines[i]);
     if (!para.length) para.push(lines[i++]); // ligne « | » isolée : texte ordinaire
-    out.push(paragraph(para));
+    out.push(paragraph(para, ctx));
   }
   return out;
 }
 
-export const toDocument = (src: string): RichDoc => ({ type: 'doc', content: parseBlocks(src) });
+export const toDocument = (src: string, ctx: MarkdownContext = {}): RichDoc => ({ type: 'doc', content: parseBlocks(src, ctx) });
 
 /**
  * Valeur la plus simple possible : un paragraphe sans mise en forme reste une chaîne
  * (plus lisible dans le JSON, et compatible avec l'export GIFT).
  */
-export function toRich(src: string): RichValue {
-  const doc = toDocument(src.trim());
+export function toRich(src: string, ctx: MarkdownContext = {}): RichValue {
+  const doc = toDocument(src.trim(), ctx);
   const only = doc.content?.length === 1 ? doc.content[0] : null;
   if (only?.type === 'paragraph' && (only.content ?? []).every((n) => n.type === 'text' && !n.marks)) {
     return (only.content ?? []).map((n) => n.text ?? '').join('');

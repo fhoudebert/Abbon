@@ -5,9 +5,23 @@ import process from "node:process";
 const host = process.env.TAURI_DEV_HOST;
 const pkg = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8"));
 
+/**
+ * KaTeX déclare chaque police en trois formats (woff2, woff, ttf). Les trois moteurs d'Abbon lisent
+ * le woff2 : les deux autres sont retirés de la feuille de style, donc du paquet (≈ 0,9 Mo de moins).
+ */
+const katexWoff2Only = {
+  name: "katex-woff2-only",
+  enforce: "pre",
+  /** @param {string} code @param {string} id */
+  transform(code, id) {
+    if (!/katex[^/]*\.css/.test(id)) return null;
+    return code.replace(/,\s*url\([^)]*\.(?:woff|ttf)\)\s*format\("(?:woff|truetype)"\)/g, "");
+  },
+};
+
 // https://vite.dev/config/
 export default defineConfig(() => ({
-  plugins: [sveltekit()],
+  plugins: [katexWoff2Only, sveltekit()],
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
   },

@@ -81,3 +81,48 @@ describe('Markdown des sources de modules', () => {
     expect(() => toDocument('```\ncode')).toThrow(/non refermé/);
   });
 });
+
+describe('formules et images dans les sources', () => {
+  const math = (latex: string) => ({ type: 'math', content: [{ type: 'text', text: latex }] });
+
+  it('reconnaît $…$ en ligne et $$…$$ en bloc', () => {
+    expect(parseInline(String.raw`Soit $u_n = \frac{1}{n}$ pour $n \geq 1$.`)).toEqual([
+      { type: 'text', text: 'Soit ' },
+      math(String.raw`u_n = \frac{1}{n}`),
+      { type: 'text', text: ' pour ' },
+      math(String.raw`n \geq 1`),
+      { type: 'text', text: '.' },
+    ]);
+    const doc = toDocument(['Texte.', '', '$$\\int_0^1 f(x)\\,dx$$', '', '$$', 'a &= b \\\\', 'c &= d', '$$'].join('\n'));
+    expect(doc.content?.map((n) => n.type)).toEqual(['paragraph', 'mathBlock', 'mathBlock']);
+    expect(doc.content?.[1].content?.[0].text).toBe(String.raw`\int_0^1 f(x)\,dx`);
+    expect(doc.content?.[2].content?.[0].text).toBe('a &= b \\\\\nc &= d');
+  });
+
+  it('laisse un dollar ordinaire tranquille', () => {
+    expect(toRich('Cela coûte 5 $ ou 6 $.')).toBe('Cela coûte 5 $ ou 6 $.');
+    expect(toRich(String.raw`Prix : \$5 et \$6.`)).toBe('Prix : $5 et $6.');
+    expect(toRich('Un seul $ ici')).toBe('Un seul $ ici');
+  });
+
+  it('ne lit pas le Markdown à l’intérieur d’une formule', () => {
+    expect(parseInline('$a*b*c$ et `$x$`')).toEqual([math('a*b*c'), { type: 'text', text: ' et ' }, { type: 'text', text: '$x$', marks: [{ type: 'code' }] }]);
+  });
+
+  it('passe images et formules au contexte du compilateur', () => {
+    const seen: string[] = [];
+    const doc = toDocument('Voir ![Un circuit RC](figures/rc.svg) et $x$.', {
+      image: (src, alt) => (seen.push(`${src}|${alt}`), { type: 'image', attrs: { hash: 'h', alt } }),
+      math: (latex) => (seen.push(latex), latex.toUpperCase()),
+    });
+    expect(seen).toEqual(['figures/rc.svg|Un circuit RC', 'x']);
+    expect(doc.content?.[0].content?.map((n) => n.type)).toEqual(['text', 'image', 'text', 'math', 'text']);
+    expect(doc.content?.[0].content?.[3].content?.[0].text).toBe('X');
+    // Sans contexte (pas d'images disponibles) : le texte reste tel quel.
+    expect(toRich('![alt](x.png)')).toBe('![alt](x.png)');
+  });
+
+  it('refuse un bloc $$ non refermé', () => {
+    expect(() => toDocument('$$\nx')).toThrow(/non refermée/);
+  });
+});

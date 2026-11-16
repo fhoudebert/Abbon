@@ -1,4 +1,6 @@
 import { imagesWithoutAlt, isEmptyRich } from './rich';
+import { gapOptions, markersMatch } from './cloze';
+import { isTyped } from './typed';
 import type { Quiz } from './types';
 
 export type IssueCode =
@@ -9,6 +11,12 @@ export type IssueCode =
   | 'choice_empty'
   | 'single_needs_one_correct'
   | 'multiple_needs_correct'
+  | 'short_needs_answer'
+  | 'numeric_needs_value'
+  | 'cloze_needs_gap'
+  | 'cloze_markers'
+  | 'cloze_gap_empty'
+  | 'cloze_select_options'
   | 'points_invalid'
   | 'image_without_alt'
   | 'translation_missing';
@@ -39,8 +47,27 @@ export function validateQuiz(quiz: Quiz): Issue[] {
     .forEach((q, i) => {
       const at = { questionId: q.id, questionNumber: i + 1 };
       if (isEmptyRich(q.prompt[main])) issues.push({ level: 'error', code: 'prompt_empty', lang: main, ...at });
-      if (q.choices.length < 2) issues.push({ level: 'error', code: 'too_few_choices', ...at });
-      if (q.choices.some((c) => isEmptyRich(c.content[main])))
+      const typed = isTyped(q);
+      if (q.type === 'short' && !(q.expected?.accepted ?? []).some((a) => a.trim()))
+        issues.push({ level: 'error', code: 'short_needs_answer', ...at });
+      if (q.type === 'numeric' && !(typeof q.expected?.value === 'number' && Number.isFinite(q.expected.value) && (q.expected.tolerance ?? 0) >= 0))
+        issues.push({ level: 'error', code: 'numeric_needs_value', ...at });
+      if (q.type === 'cloze') {
+        const gaps = q.expected?.gaps ?? [];
+        const text = q.expected?.text ?? {};
+        if (gaps.length === 0) issues.push({ level: 'error', code: 'cloze_needs_gap', ...at });
+        else {
+          // Le texte de chaque langue renseignée doit contenir chaque trou une fois ; celui de la langue principale est obligatoire.
+          for (const lang of [main, ...others])
+            if ((lang === main || text[lang]?.trim()) && !markersMatch(text[lang] ?? '', gaps.length))
+              issues.push({ level: 'error', code: 'cloze_markers', lang, ...at });
+          if (gaps.some((g) => !g.accepted.some((a) => a.trim()))) issues.push({ level: 'error', code: 'cloze_gap_empty', ...at });
+          if (gaps.some((g) => g.kind === 'select' && gapOptions(g).length < 2))
+            issues.push({ level: 'error', code: 'cloze_select_options', ...at });
+        }
+      }
+      if (!typed && q.choices.length < 2) issues.push({ level: 'error', code: 'too_few_choices', ...at });
+      if (!typed && q.choices.some((c) => isEmptyRich(c.content[main])))
         issues.push({ level: 'error', code: 'choice_empty', lang: main, ...at });
       const correct = q.choices.filter((c) => c.correct).length;
       if (q.type === 'single' && correct !== 1)
@@ -57,7 +84,7 @@ export function validateQuiz(quiz: Quiz): Issue[] {
 
       for (const lang of others) {
         const missing =
-          isEmptyRich(q.prompt[lang]) || q.choices.some((c) => isEmptyRich(c.content[lang]));
+          isEmptyRich(q.prompt[lang]) || (!typed && q.choices.some((c) => isEmptyRich(c.content[lang])));
         if (missing) issues.push({ level: 'warning', code: 'translation_missing', lang, ...at });
       }
     });

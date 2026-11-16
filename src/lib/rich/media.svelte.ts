@@ -1,9 +1,21 @@
 import { app } from '$lib/app.svelte';
 import { b64ToBytes, bytesToB64 } from '$lib/data/bytes';
+import { looksLikeSvg, sanitizeSvg } from '$lib/domain/svg';
 
 /** Adresses `blob:` des images déjà chargées, par empreinte (réactif). */
 const urls = $state<Record<string, string>>({});
+/** Figures SVG nettoyées, prêtes à être incrustées, par empreinte (réactif). */
+const svgs = $state<Record<string, string>>({});
 const loading = new Map<string, Promise<void>>();
+
+export const SVG_MIME = 'image/svg+xml';
+/** Identifiants d'une figure : préfixés par son empreinte, pour ne pas se mêler à ceux d'une autre. */
+const svgPrefix = (hash: string) => `s${hash.slice(0, 10)}-`;
+
+function keepSvg(hash: string, bytes: Uint8Array) {
+  const clean = sanitizeSvg(new TextDecoder().decode(bytes), svgPrefix(hash));
+  if (clean) svgs[hash] = clean;
+}
 
 const b64ToBlob = (data: string, mime: string) => new Blob([b64ToBytes(data) as BlobPart], { type: mime });
 
@@ -12,7 +24,9 @@ function load(hash: string): Promise<void> {
   if (!p) {
     p = (async () => {
       const m = await (await app.repo()).getMedia(hash);
-      if (m) urls[hash] = URL.createObjectURL(b64ToBlob(m.data, m.mime));
+      if (!m) return;
+      if (m.mime === SVG_MIME) keepSvg(hash, b64ToBytes(m.data));
+      urls[hash] = URL.createObjectURL(b64ToBlob(m.data, m.mime));
     })();
     loading.set(hash, p);
   }
@@ -26,6 +40,13 @@ export function mediaUrl(hash: string | null | undefined): string | undefined {
   return urls[hash];
 }
 
+/** Figure SVG nettoyée à incruster, si l'image en est une (undefined sinon, ou en attendant). */
+export function mediaSvg(hash: string | null | undefined): string | undefined {
+  if (!hash) return undefined;
+  if (!(hash in urls)) void load(hash);
+  return svgs[hash];
+}
+
 /** Charge des images avant d'ouvrir l'éditeur (qui a besoin des adresses tout de suite). */
 export async function preloadMedia(hashes: readonly string[]) {
   await Promise.all(hashes.map(load));
@@ -37,7 +58,8 @@ export const mediaUrlSync = (hash: string | null | undefined) => (hash ? urls[ha
 // ---- Ajout d'une image ------------------------------------------------------
 
 const MAX_SIDE = 1600;
-export const ACCEPTED_IMAGES = 'image/png,image/jpeg,image/webp,image/gif';
+export const ACCEPTED_IMAGES = 'image/png,image/jpeg,image/webp,image/gif,image/svg+xml,.svg';
+const MAX_SVG_BYTES = 500_000;
 
 async function sha256Hex(bytes: Uint8Array): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', bytes as BufferSource);
@@ -69,6 +91,7 @@ async function compress(file: File): Promise<{ blob: Blob; width: number; height
 
 /** Compresse, enregistre et renvoie l'empreinte de l'image. */
 export async function addImage(file: File): Promise<string> {
+  if (file.type === SVG_MIME || /\.svg$/i.test(file.name)) return addSvg(file);
   const { blob, width, height } = await compress(file);
   const bytes = new Uint8Array(await blob.arrayBuffer());
   const hash = await sha256Hex(bytes);
@@ -81,6 +104,19 @@ export async function addImage(file: File): Promise<string> {
     data: bytesToB64(bytes),
   });
   urls[hash] ??= URL.createObjectURL(blob);
+  loading.set(hash, Promise.resolve());
+  return hash;
+}
+
+/** Figure SVG : gardée telle quelle (elle est nettoyée à chaque affichage), refusée si elle est mal formée. */
+async function addSvg(file: File): Promise<string> {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const text = new TextDecoder().decode(bytes);
+  if (bytes.length > MAX_SVG_BYTES || !looksLikeSvg(text) || !sanitizeSvg(text)) throw new Error('SVG invalide ou trop lourd');
+  const hash = await sha256Hex(bytes);
+  await (await app.repo()).saveMedia({ hash, mime: SVG_MIME, sizeBytes: bytes.length, data: bytesToB64(bytes) });
+  keepSvg(hash, bytes);
+  urls[hash] ??= URL.createObjectURL(new Blob([bytes as BlobPart], { type: SVG_MIME }));
   loading.set(hash, Promise.resolve());
   return hash;
 }

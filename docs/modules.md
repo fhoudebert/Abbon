@@ -98,11 +98,97 @@ What is the past simple of *to go*?
   L'identifiant ne change jamais, même si l'énoncé est corrigé : il relie l'historique aux versions suivantes.
 - Viennent ensuite l'énoncé, les réponses (`- [x]` pour une bonne réponse) et l'explication (lignes `>`).
 - `### en` ouvre la même question dans une autre langue : mêmes réponses, dans le même ordre, mêmes cases cochées.
+- **Questions à saisie** : `· short` (réponse courte) ou `· numeric` (réponse numérique), avec une ligne
+  `= réponse` à la place des cases à cocher :
+
+  ```markdown
+  ## go · short
+  Écrivez le prétérit de *to go*.
+
+  = went
+
+  > *go – went – gone*.
+
+  ### en
+  Write the past simple of *to go*.
+
+  > *go – went – gone*.
+
+  ## g · numeric
+  Quelle est l'intensité de la pesanteur à Paris ?
+
+  = 9,81 ± 0,01 m/s²
+
+  > …
+  ```
+
+  Plusieurs lignes `=` donnent plusieurs formes acceptées ; celles des autres langues s'y ajoutent (`= Londres`
+  en français, `= London` en anglais : les deux sont acceptées partout). `· short · case-sensitive` fait
+  respecter les majuscules. Une réponse numérique s'écrit `= valeur`, `= valeur ± écart`, avec une unité facultative
+  à la fin.
+- **Textes à trous** : `· cloze`, avec le texte sur une ou plusieurs lignes `=` et les trous entre accolades :
+
+  ```markdown
+  ## london · cloze
+  Complétez avec la forme correcte.
+
+  = Yesterday, she {went|did go} (go) to London.
+  = She {has ~have ~had} two cats.
+
+  > *go – went – gone*.
+
+  ### en
+  Complete with the correct form.
+
+  > *go – went – gone*.
+  ```
+
+  `{went|did go}` est un trou à saisir (formes acceptées séparées par `|`) ; `{has ~have ~had}` est une liste
+  déroulante : la bonne réponse d'abord, puis les autres propositions après `~`. Une langue sans ligne `=`
+  reprend le texte de la langue principale ; sinon elle donne son propre texte, avec les mêmes trous. `\{` écrit
+  une accolade. `scoring: partial` dans l'en-tête du QCM compte chaque trou juste.
 - Autres réglages possibles dans l'en-tête : `description`, `timeLimitSec`, `passThreshold`, `scoring`,
   `solutionVisibility`, `shuffle`.
 
 Markdown reconnu : `code`, `**gras**`, `*italique*`, blocs de code (```` ```rust ````), listes, citations,
-tableaux à barres verticales, titres `##` et `###` (dans les fiches). Aucun HTML n'est interprété.
+tableaux à barres verticales, titres `##` et `###` (dans les fiches), formules et images (ci-dessous). Aucun HTML
+n'est interprété.
+
+### Formules, chimie, unités
+
+Les formules s'écrivent en LaTeX et sont rendues par KaTeX, hors ligne :
+
+```markdown
+Soit $u_n = \frac{1}{n}$ pour $n \geq 1$.          formule dans le texte
+
+$$\int_0^1 f(x)\,dx$$                             formule en bloc (sur une ou plusieurs lignes)
+
+$\ce{CH3COOH + H2O <=> CH3COO- + H3O+}$           équation chimique (mhchem)
+$\pu{9,81 m.s-2}$                                 grandeur avec son unité
+```
+
+- Chaque formule est compilée par `module:check` : une formule fautive est une erreur, avec le message de KaTeX.
+- En français, une virgule entre deux chiffres est décimale (`$g = 9,81$` s'affiche sans espace après la
+  virgule) ; en anglais, écrire `9.81`.
+- Un dollar ordinaire s'écrit `\$`. Un `$` suivi d'une espace n'ouvre pas de formule.
+- Une réponse (`- [x] $2x$`) peut être une formule.
+
+### Images et figures
+
+```markdown
+![Circuit RC en série avec un générateur](figures/circuit-rc.svg)
+```
+
+- Le chemin est relatif au fichier Markdown. Formats : SVG, PNG, JPEG, GIF, WebP.
+- Le texte alternatif est obligatoire (erreur sinon) : il décrit la figure à qui ne la voit pas.
+- **SVG** : la figure est incrustée dans la page après nettoyage ; seuls les éléments de dessin sont gardés
+  (formes, texte, dégradés, marqueurs), pas les scripts, styles globaux, images ou liens. Pour qu'elle suive le
+  thème clair ou sombre, tracer en `currentColor` sur fond transparent
+  (`stroke="currentColor"`, `fill="currentColor"` pour le texte) et donner un `viewBox`.
+- Une image présente dans le dossier mais non utilisée est signalée et n'est pas jointe.
+
+Les fonctions de rendu utilisées (`math`, `svg`) sont ajoutées d'elles-mêmes à `requires.features` : une version
+d'Abbon qui ne sait pas les afficher refuse d'installer le module, avec un message.
 
 ### Identifiants produits
 
@@ -122,15 +208,16 @@ ne connaît pas les modules remplace correctement un QCM plus ancien.
 ## Ce que vérifie `module:check`
 
 Erreurs (rien n'est construit) : schémas JSON du format, identifiants uniques et bien formés, exactement une bonne
-réponse en choix unique et au moins une en choix multiple, au moins deux réponses, explication présente partout,
+réponse en choix unique et au moins une en choix multiple, au moins deux réponses, réponse attendue présente et
+lisible pour une question à saisie, trous présents, non vides et identiques d'une langue à l'autre pour un texte à
+trous, explication présente partout,
 chaque texte présent dans chaque langue, réponses cohérentes d'une langue à l'autre, pas de réponses en double,
-Markdown bien formé. Avertissements : moins de 3 ou plus de 5 réponses, « toutes / aucune des réponses », QCM de
+Markdown bien formé, formules qui compilent, images présentes, lisibles et décrites. Avertissements : moins de 3 ou plus de 5 réponses, « toutes / aucune des réponses », QCM de
 moins de 10 ou plus de 15 questions, niveau absent ou inhabituel. La commande affiche aussi le nombre de QCM et de
 questions par catégorie et par niveau. Après construction, le fichier est relu par le code d'import de
 l'application.
 
-À venir (lot 7 et suivants) : formules, images et figures SVG dans les sources, exécution des extraits de code
-marqués `run`.
+À venir : courbes générées par script au moment de la construction, exécution des extraits de code marqués `run`.
 
 ## Ligne éditoriale
 

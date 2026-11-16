@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { checkRequirements } from '$lib/interchange/module';
 import { buildPackage, parsePackage } from '$lib/interchange/qcmPackage';
-import { compileModule, splitQuestions, type SourceFile } from './source';
+import { compileModule, parseClozeSource, parseNumericAnswer, splitQuestions, type SourceFile } from './source';
 
 const MODULE = `id: org.abbon.test
 version: 1.2.3
@@ -149,5 +149,208 @@ describe('compilation d’un module', () => {
   it('refuse un module.yaml incomplet', () => {
     const bad = [{ path: 'module.yaml', text: MODULE.replace('version: 1.2.3', 'version: 1.2').replace('license: CC-BY-NC-SA-4.0\n', '') }, files()[1]];
     expect(errors(bad)).toEqual(expect.arrayContaining([expect.stringContaining('SemVer'), expect.stringContaining('license')]));
+  });
+});
+
+describe('questions à saisie dans les sources', () => {
+  const TYPED = `---
+id: saisie-01
+title: { fr: Saisie, en: Typing }
+level: bases
+---
+
+## go · short
+Écrivez le prétérit de *to go*.
+
+= went
+
+> *go – went – gone*.
+
+### en
+Write the past simple of *to go*.
+
+> *go – went – gone*.
+
+## capitale
+Capitale du Royaume-Uni ?
+
+= Londres
+
+> Londres.
+
+### en
+Capital of the United Kingdom?
+
+= London
+
+> London.
+
+## python · short · case-sensitive
+Nom du langage ?
+
+= Python
+
+> Avec une majuscule.
+
+### en
+Name of the language?
+
+> Capitalised.
+
+## g · numeric
+Valeur de *g* ?
+
+= 9,81 ± 0,01 m/s²
+
+> Environ 9,81.
+
+### en
+Value of *g*?
+
+> About 9.81.
+`;
+
+  it('lit les réponses attendues', () => {
+    const c = compileModule(files(TYPED));
+    expect(c.issues.filter((i) => i.level === 'error')).toEqual([]);
+    expect(c.quizzes[0].questions.map((q) => [q.type, q.choices.length, q.expected])).toEqual([
+      ['short', 0, { accepted: ['went'] }],
+      ['short', 0, { accepted: ['Londres', 'London'] }],
+      ['short', 0, { accepted: ['Python'], caseSensitive: true }],
+      ['numeric', 0, { value: 9.81, tolerance: 0.01, unit: 'm/s²' }],
+    ]);
+  });
+
+  it('lit les réponses numériques', () => {
+    expect(parseNumericAnswer('4')).toEqual({ value: 4, tolerance: 0 });
+    expect(parseNumericAnswer('-1,5e3 +/- 10')).toEqual({ value: -1500, tolerance: 10 });
+    expect(parseNumericAnswer('6 faces')).toEqual({ value: 6, tolerance: 0, unit: 'faces' });
+    expect(parseNumericAnswer('environ 4')).toBeNull();
+  });
+
+  it('signale les incohérences', () => {
+    expect(errors(files(TYPED.replace('= went\n', '')))).toEqual([expect.stringContaining('réponse attendue manquante')]);
+    expect(errors(files(TYPED.replace('= went', '- [x] went')))).toEqual(
+      expect.arrayContaining([expect.stringContaining('pas de réponses à cocher')]),
+    );
+    expect(errors(files(TYPED.replace('= 9,81 ± 0,01 m/s²', '= beaucoup')))).toEqual([expect.stringContaining('illisible')]);
+    expect(errors(files(QUIZ.replace('- [ ] La chaîne est copiée', '= copie')))).toEqual(
+      expect.arrayContaining([expect.stringContaining('ligne « = réponse » dans une question « single »')]),
+    );
+  });
+});
+
+describe('textes à trous dans les sources', () => {
+  const CLOZE = `---
+id: trous-01
+title: { fr: Trous, en: Gaps }
+level: bases
+---
+
+## london · cloze
+Complétez au prétérit.
+
+= Yesterday, she {went|did go} to London
+= and {saw} a friend. She {has ~have ~had} two cats.
+
+> *go – went*, *see – saw*.
+
+### en
+Complete with the past simple.
+
+> *go – went*, *see – saw*.
+`;
+
+  it('lit trous à saisir et listes déroulantes', () => {
+    expect(parseClozeSource('a {b|c} d {e ~f ~g} \\{h\\}')).toEqual({
+      text: 'a {{1}} d {{2}} {h}',
+      gaps: [
+        { kind: 'text', accepted: ['b', 'c'] },
+        { kind: 'select', accepted: ['e'], options: ['f', 'g'] },
+      ],
+    });
+  });
+
+  it('compile un texte à trous, repris tel quel dans une langue sans texte', () => {
+    const c = compileModule(files(CLOZE));
+    expect(c.issues.filter((i) => i.level === 'error')).toEqual([]);
+    const [q] = c.quizzes[0].questions;
+    expect(q.type).toBe('cloze');
+    expect(q.choices).toEqual([]);
+    expect(q.expected?.gaps).toHaveLength(3);
+    expect(q.expected?.text?.fr).toBe('Yesterday, she {{1}} to London\nand {{2}} a friend. She {{3}} two cats.');
+    expect(q.expected?.text?.en).toBe(q.expected?.text?.fr);
+  });
+
+  it('signale un texte sans trou ou des trous différents d’une langue à l’autre', () => {
+    expect(errors(files(CLOZE.replace(/= .*\n= .*\n/, '= Rien à compléter.\n')))).toEqual([expect.stringContaining('sans trou')]);
+    expect(errors(files(CLOZE.replace('> *go – went*, *see – saw*.\n\n### en\nComplete with the past simple.\n', '> x\n\n### en\nComplete.\n\n= She {went} home.\n')))).toEqual([
+      expect.stringContaining('diffèrent'),
+    ]);
+  });
+});
+
+describe('formules et figures dans un module', () => {
+  const SVG_HASH = 'a'.repeat(64);
+  const PNG_HASH = 'b'.repeat(64);
+  const assets = [
+    { path: 'rust/figures/rc.svg', hash: SVG_HASH, mime: 'image/svg+xml' },
+    { path: 'rust/photo.png', hash: PNG_HASH, mime: 'image/png' },
+    { path: 'rust/casse.svg', hash: 'c'.repeat(64), mime: null },
+  ];
+  const SCI = `---
+id: sci-01
+title: { fr: Sciences, en: Science }
+level: bases
+---
+
+## chute
+Un objet tombe avec $g = 9,81$ : que vaut $v$ après $t$ secondes ?
+
+![Schéma de la chute](figures/rc.svg)
+
+- [x] $v = g\\,t$
+- [ ] $v = \\frac{g}{t}$
+- [ ] $v = g\\,t^2$
+
+> $$v(t) = g\\,t$$
+
+### en
+An object falls with $g = 9.81$: what is $v$ after $t$ seconds?
+
+![Diagram of the fall](figures/rc.svg)
+
+- [x] $v = g\\,t$
+- [ ] $v = \\frac{g}{t}$
+- [ ] $v = g\\,t^2$
+
+> $$v(t) = g\\,t$$
+`;
+
+  it('joint les images utilisées, déclare les fonctions requises et met la virgule décimale française', () => {
+    const c = compileModule(files(SCI), assets);
+    expect(c.issues.filter((i) => i.level === 'error')).toEqual([]);
+    expect(c.assets).toEqual(['rust/figures/rc.svg']);
+    expect(c.manifest.requires).toEqual({ app: '>=0.2.0', features: ['math', 'svg'] });
+    const [q] = c.quizzes[0].questions;
+    expect(JSON.stringify(q.prompt.fr)).toContain('g = 9{,}81');
+    expect(JSON.stringify(q.prompt.en)).toContain('g = 9.81');
+    expect(JSON.stringify(q.prompt.fr)).toContain(`"hash":"${SVG_HASH}","alt":"Schéma de la chute"`);
+    expect(c.issues.filter((i) => i.level === 'warning').map((i) => i.file)).toEqual(
+      expect.arrayContaining(['rust/photo.png', 'rust/casse.svg']),
+    );
+  });
+
+  it('ne déclare rien pour un module sans formule ni figure', () => {
+    expect(compileModule(files()).manifest.requires).toEqual({ app: '>=0.2.0' });
+  });
+
+  it('signale formule fautive, image absente, mal formée ou sans texte alternatif', () => {
+    const e = (from: string, to: string) => errors2(files(SCI.replaceAll(from, to)));
+    const errors2 = (f: SourceFile[]) => compileModule(f, assets).issues.filter((i) => i.level === 'error').map((i) => i.message);
+    expect(e('$v = \\frac{g}{t}$', '$v = \\frac{g}{$')).toEqual(expect.arrayContaining([expect.stringContaining('formule « v = \\frac{g}{ »')]));
+    expect(e('figures/rc.svg', 'figures/absent.svg')).toEqual(expect.arrayContaining([expect.stringContaining('introuvable')]));
+    expect(e('figures/rc.svg', 'casse.svg')).toEqual(expect.arrayContaining([expect.stringContaining('SVG mal formé')]));
+    expect(e('![Schéma de la chute]', '![]')).toEqual(expect.arrayContaining([expect.stringContaining('sans texte alternatif')]));
   });
 });

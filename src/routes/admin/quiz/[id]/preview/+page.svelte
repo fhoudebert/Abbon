@@ -4,7 +4,9 @@
   import AdminGate from '$lib/components/AdminGate.svelte';
   import { localize } from '$lib/domain/text';
   import type { Quiz } from '$lib/domain/types';
+  import ClozeText from '$lib/components/ClozeText.svelte';
   import { pick } from '$lib/domain/rich';
+  import { expectedText, isTyped } from '$lib/domain/typed';
   import { i18n, t } from '$lib/i18n/index.svelte';
   import { languageName } from '$lib/i18n/languages';
   import RichContent from '$lib/rich/RichContent.svelte';
@@ -58,9 +60,18 @@
       <article class="panel q">
         <p class="muted">
           {t('play.questionOf', { n: i + 1, total: quiz.questions.length })} ·
-          {q.type === 'single' ? t('play.single') : t('play.multiple')}
+          {t(`play.${q.type}`)}
         </p>
         <div class="prompt" lang={q.prompt[lang] ? lang : main}><RichContent value={pick(q.prompt, lang, main)} /></div>
+        {#if q.type === 'cloze'}
+          <ClozeText question={q} {lang} fallback={main} locked values={showAnswers ? (q.expected?.gaps ?? []).map((g) => g.accepted[0] ?? '') : []} />
+        {:else if isTyped(q)}
+          <p class="typed">
+            <span class="box" aria-hidden="true">{showAnswers ? expectedText(q, lang) : '…'}</span>
+            {#if showAnswers}<span class="visually-hidden">{t('play.expected', { answer: expectedText(q, lang) })}</span>
+            {:else if q.type === 'numeric' && q.expected?.unit}<span>{q.expected.unit}</span>{/if}
+          </p>
+        {/if}
         <ul class="choices">
           {#each [...q.choices].sort((a, b) => a.position - b.position) as c (c.id)}
             <li class:correct={showAnswers && c.correct}>
@@ -81,6 +92,18 @@
 </AdminGate>
 
 <style>
+  .typed {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .typed .box {
+    min-inline-size: 10rem;
+    padding: 0.4rem 0.8rem;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    font-weight: 600;
+  }
   .head {
     display: flex;
     flex-wrap: wrap;

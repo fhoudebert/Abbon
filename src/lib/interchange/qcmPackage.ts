@@ -4,6 +4,8 @@
 import { strFromU8, strToU8, unzipSync, zipSync, type Zippable } from 'fflate';
 import { z } from 'zod';
 import { mediaHashes } from '$lib/domain/rich';
+import type { LeitnerCard } from '$lib/domain/leitner';
+import { looksLikeSvg, sanitizeSvg } from '$lib/domain/svg';
 import type { Attempt, Category, InstalledModule, ModuleManifest, Quiz, RichValue } from '$lib/domain/types';
 import {
   AnswerRowSchema,
@@ -11,15 +13,29 @@ import {
   CategorySchema,
   FORMAT_NAME,
   FORMAT_VERSION,
+  I18nTextSchema,
   jsonDepth,
   LIMITS,
   ManifestSchema,
+  QuestionSchema,
   QuizSchema,
   SettingsSchema,
   type AnswerRow,
   type Manifest,
 } from './format';
 import { MODULE_FILE, MODULE_FORMAT, MODULE_FORMAT_VERSION, ModuleSchema } from './module';
+
+const LeitnerCardSchema = z.object({
+  questionId: z.string().min(1).max(100),
+  quizId: z.string().min(1).max(100),
+  box: z.number().int().min(1).max(20),
+  dueAt: z.string().max(40),
+  addedAt: z.string().max(40),
+  lastAt: z.string().max(40).nullable(),
+  reviews: z.number().int().min(0),
+  lapses: z.number().int().min(0),
+  snapshot: z.object({ question: QuestionSchema, quizTitle: I18nTextSchema, languages: z.array(z.string().max(20)).max(50) }),
+});
 
 const InstalledModuleSchema = z.object({
   manifest: ModuleSchema,
@@ -46,6 +62,8 @@ export interface BackupBundle extends ContentBundle {
   settings: Record<string, string>;
   /** Modules installés (sauvegarde complète : `modules.json`). */
   modules?: InstalledModule[];
+  /** Boîte de révision (sauvegarde complète : `leitner.json`). */
+  cards?: LeitnerCard[];
 }
 
 /** Problème non bloquant relevé à la lecture (l'élément concerné est ignoré ou corrigé). */
@@ -80,8 +98,9 @@ const EXT_BY_MIME: Record<string, string> = {
   'image/jpeg': 'jpg',
   'image/gif': 'gif',
   'image/webp': 'webp',
+  'image/svg+xml': 'svg',
 };
-const MIME_BY_EXT: Record<string, string> = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp' };
+const MIME_BY_EXT: Record<string, string> = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', svg: 'image/svg+xml' };
 
 /** Vérifie la signature du fichier (les premiers octets), pas seulement son extension. */
 export function sniffMime(b: Uint8Array): string | null {
@@ -90,6 +109,11 @@ export function sniffMime(b: Uint8Array): string | null {
   if (at(0, 0xff, 0xd8, 0xff)) return 'image/jpeg';
   if (at(0, 0x47, 0x49, 0x46, 0x38)) return 'image/gif';
   if (at(0, 0x52, 0x49, 0x46, 0x46) && at(8, 0x57, 0x45, 0x42, 0x50)) return 'image/webp';
+  // SVG : du texte, reconnu à son début puis vérifié par l'analyseur strict (domain/svg.ts).
+  if (b.length <= 2_000_000 && (b[0] === 0x3c || b[0] === 0xef || b[0] === 0x20 || b[0] === 0x0a || b[0] === 0x0d || b[0] === 0x09)) {
+    const text = new TextDecoder('utf-8', { fatal: false }).decode(b);
+    if (looksLikeSvg(text) && sanitizeSvg(text)) return 'image/svg+xml';
+  }
   return null;
 }
 
@@ -100,7 +124,7 @@ export async function sha256Hex(bytes: Uint8Array): Promise<string> {
 
 // ---- Contenu ---------------------------------------------------------------
 
-function richValues(q: Quiz): (RichValue | null | undefined)[] {
+function richValues(q: Pick<Quiz, 'questions'>): (RichValue | null | undefined)[] {
   return q.questions.flatMap((x) => [
     ...Object.values(x.prompt),
     ...Object.values(x.explanation ?? {}),
@@ -109,7 +133,11 @@ function richValues(q: Quiz): (RichValue | null | undefined)[] {
 }
 
 /** Empreintes des images utilisées par des QCM. */
-export const quizMedia = (quizzes: readonly Quiz[]) => mediaHashes(quizzes.flatMap(richValues));
+export const quizMedia = (quizzes: readonly Pick<Quiz, 'questions'>[]) => mediaHashes(quizzes.flatMap(richValues));
+
+/** Empreintes des images utilisées par les cartes de la boîte de révision. */
+export const cardMedia = (cards: readonly Pick<LeitnerCard, 'snapshot'>[]) =>
+  quizMedia(cards.map((c) => ({ questions: [c.snapshot.question] })));
 
 /** Empreintes des images utilisées par les fiches de révision de modules. */
 export const sheetMedia = (modules: readonly Pick<ModuleManifest, 'sheets'>[]) =>
@@ -121,6 +149,22 @@ export function stripSolutions(quiz: Quiz): Quiz {
   q.questions = q.questions.map((x) => ({
     ...x,
     explanation: null,
+    // La réponse attendue est retirée ; l'unité d'une réponse numérique fait partie de l'énoncé.
+    expected:
+      x.type === 'numeric' && x.expected?.unit
+        ? { unit: x.expected.unit }
+        : x.type === 'cloze' && x.expected
+          ? {
+              // Le texte et les listes font partie de l'énoncé ; les bonnes réponses sont retirées
+              // (les propositions d'une liste sont triées pour ne pas trahir la bonne).
+              text: x.expected.text,
+              gaps: (x.expected.gaps ?? []).map((g) =>
+                g.kind === 'select'
+                  ? { kind: g.kind, accepted: [], options: [...new Set([...g.accepted.slice(0, 1), ...(g.options ?? [])])].sort() }
+                  : { kind: g.kind, accepted: [] },
+              ),
+            }
+          : null,
     choices: x.choices.map(({ correct: _c, feedback: _f, ...c }) => c as Quiz['questions'][number]['choices'][number]),
   }));
   return q;
@@ -157,7 +201,8 @@ export function buildPackage(bundle: ContentBundle | BackupBundle, opts: BuildOp
   const module = opts.kind === 'content' ? bundle.module : undefined;
   const modules = isBackup ? (bundle.modules ?? []) : [];
   const sheets = sheetMedia([...(module ? [module] : []), ...modules.map((m) => m.manifest)]);
-  const used = [...new Set([...quizMedia([...quizzes, ...snapshots]), ...sheets])].filter((h) => bundle.media.has(h));
+  const kept = isBackup ? cardMedia(bundle.cards ?? []) : [];
+  const used = [...new Set([...quizMedia([...quizzes, ...snapshots]), ...sheets, ...kept])].filter((h) => bundle.media.has(h));
 
   const manifest: Manifest = {
     format: FORMAT_NAME,
@@ -189,6 +234,7 @@ export function buildPackage(bundle: ContentBundle | BackupBundle, opts: BuildOp
     files['answers.json'] = json(bundle.answers);
     files['settings.json'] = json(bundle.settings);
     if (modules.length) files['modules.json'] = json(modules);
+    if (bundle.cards?.length) files['leitner.json'] = json(bundle.cards);
   }
   // Date fixe si `now` est fourni : deux constructions du même contenu donnent le même fichier.
   return zipSync(files, { level: 6, ...(opts.now ? { mtime: opts.now } : {}) });
@@ -205,6 +251,8 @@ export interface ParsedPackage {
   module?: ModuleManifest;
   /** Modules installés (sauvegarde complète). */
   modules?: InstalledModule[];
+  /** Boîte de révision (sauvegarde complète). */
+  cards?: LeitnerCard[];
   attempts?: Attempt[];
   answers?: AnswerRow[];
   settings?: Record<string, string>;
@@ -304,7 +352,7 @@ export async function parsePackage(bytes: Uint8Array): Promise<ParsedPackage> {
   // Images : nom = empreinte, signature cohérente, taille raisonnable
   const media = new Map<string, MediaFile>();
   for (const [name, b] of Object.entries(files)) {
-    const m = /^media\/([0-9a-f]{64})\.(png|jpe?g|gif|webp)$/.exec(name);
+    const m = /^media\/([0-9a-f]{64})\.(png|jpe?g|gif|webp|svg)$/.exec(name);
     if (!m) continue;
     const [, hash, ext] = m;
     const mime = sniffMime(b);
@@ -320,6 +368,7 @@ export async function parsePackage(bytes: Uint8Array): Promise<ParsedPackage> {
   let answers: AnswerRow[] | undefined;
   let settings: Record<string, string> | undefined;
   let modules: InstalledModule[] | undefined;
+  let cards: LeitnerCard[] | undefined;
   if (manifest.kind === 'backup') {
     attempts = [];
     answers = [];
@@ -336,6 +385,12 @@ export async function parsePackage(bytes: Uint8Array): Promise<ParsedPackage> {
       }
       const s = SettingsSchema.safeParse(readJson(files, 'settings.json') ?? {});
       settings = s.success ? s.data : {};
+      cards = [];
+      for (const c of (readJson(files, 'leitner.json') as unknown[]) ?? []) {
+        const r = LeitnerCardSchema.safeParse(c);
+        if (r.success) cards.push(r.data as LeitnerCard);
+        else problems.push({ code: 'history_invalid', detail: issueText(r.error) });
+      }
       modules = [];
       for (const m of (readJson(files, 'modules.json') as unknown[]) ?? []) {
         const r = InstalledModuleSchema.safeParse(m);
@@ -376,5 +431,5 @@ export async function parsePackage(bytes: Uint8Array): Promise<ParsedPackage> {
   const sheets = sheetMedia([...(module ? [module] : []), ...(modules ?? []).map((m) => m.manifest)]);
   for (const h of new Set([...quizMedia(quizzes), ...sheets])) if (!media.has(h)) problems.push({ code: 'media_missing', ref: h });
 
-  return { manifest, quizzes, categories, media, module, modules, attempts, answers, settings, problems };
+  return { manifest, quizzes, categories, media, module, modules, cards, attempts, answers, settings, problems };
 }

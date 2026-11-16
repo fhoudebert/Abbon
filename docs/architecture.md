@@ -121,6 +121,51 @@ Voir [modules.md](modules.md) pour l'usage et le format des sources.
   d'écriture de l'application ; `cli.mjs` les charge par Vite (alias `$lib`, TypeScript). La construction est
   reproductible : mêmes sources, même fichier.
 
+## Questions à saisie (lot 6 bis)
+
+- Types `short` et `numeric` : pas de `choices`, une réponse attendue dans `question.expected` (colonne JSON) ;
+  le texte saisi est dans `answer.text`. Comparaison dans `domain/typed.ts` (fonctions pures : normalisation du
+  texte, lecture d'un nombre, écart toléré) ; `scoreQuestion` les note en tout ou rien.
+- « Répondu » ne se déduit plus des cases cochées : `isAnswered` (session.ts) tient compte du texte.
+- Le texte saisi est gardé en mémoire à chaque frappe et écrit en base avec le chrono, au changement de question,
+  à la validation et à la fin.
+- Migration 5 (colonnes) ; la contrainte `CHECK` de `question.type` a été élargie dans la migration 1, aucune base
+  n'étant à reprendre (voir [feuille-de-route.md](feuille-de-route.md)).
+
+## Textes à trous (lot 6 ter)
+
+- Type `cloze` : `expected.text` (texte brut par langue, repères `{{n}}`) et `expected.gaps` (saisie ou liste
+  déroulante) ; réponses de l'apprenant dans `answer.texts` (migration 6). Logique dans `domain/cloze.ts`.
+- `ClozeText.svelte` affiche le texte et ses champs ; il sert au passage, au corrigé et à l'aperçu. Les
+  propositions d'une liste sont mélangées par tentative (même graine que les réponses à cocher).
+- Le texte à trous est du texte brut (retours à la ligne conservés), sans mise en forme : la consigne, elle,
+  reste un contenu riche.
+- Les propositions d'une liste déroulante sont communes à toutes les langues.
+
+## Révision espacée (lot 6 quater)
+
+- `domain/leitner.ts` (fonctions pures) : compartiments, délais, carte après révision, cartes dues.
+- Table `leitner_card` (migration 7), clé = identifiant de la question, sans clé étrangère : la carte porte une
+  copie de la question (`snapshot`). Les images de ces copies sont gardées par le nettoyage des images.
+- L'écran `/leitner` n'utilise pas les tentatives : `QuestionPlayer.svelte` affiche une question seule avec
+  correction immédiate. Il reprend le rendu des questions de l'écran de passage ; les deux sont à tenir alignés.
+- Sauvegarde complète : `leitner.json`.
+
+## Formules et figures (lot 7)
+
+- **Formules** : nœuds `math` et `mathBlock`, la source LaTeX étant le texte du nœud (repli lisible partout où le
+  nœud n'est pas rendu : recherche, GIFT, ancienne version). `rich/math.ts` appelle KaTeX (`trust: false`, avec
+  mhchem) et met le HTML en cache ; `RichNode` l'insère. KaTeX produit HTML + MathML ; ses polices sont embarquées
+  en woff2 seulement (`vite.config.js`).
+- **Éditeur** : la formule s'édite sous sa forme LaTeX, dans une pastille ; l'aperçu rendu et l'erreur éventuelle
+  s'affichent sous la barre d'outils quand le curseur est dans la formule.
+- **SVG** : `domain/svg.ts` est un analyseur XML strict suivi d'une réécriture par liste blanche, sans DOM (il
+  sert aussi à l'outillage). Le fichier d'origine est conservé (son empreinte reste valable) et nettoyé à chaque
+  chargement (`rich/media.svelte.ts`), avec des identifiants préfixés par l'empreinte.
+- **Accessibilité** : MathML pour les lecteurs d'écran ; une case dont le libellé contient une formule reçoit en
+  plus sa source LaTeX comme nom accessible (`mathLabel`), les outils d'audit ne tirant rien du MathML ; texte
+  alternatif obligatoire pour une figure ; formule en bloc et tableau larges défilent dans leur bloc.
+
 ## Limites connues
 
 - Modules : l'historique mis de côté à la désinstallation n'est pas inclus dans la sauvegarde complète ; une

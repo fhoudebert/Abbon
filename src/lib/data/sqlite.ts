@@ -1,3 +1,4 @@
+import type { LeitnerCard } from '$lib/domain/leitner';
 import type { Answer, Attempt, Category, Choice, InstalledModule, ModuleManifest, Question, Quiz, QuizSummary } from '$lib/domain/types';
 import type { AnswerRow, FullData, Media, ModuleInstall, Repository } from './repository';
 
@@ -97,6 +98,7 @@ export class SqliteRepository implements Repository {
       position: Number(r.position),
       explanation: parse(r.explanation, null),
       choices: choicesByQuestion.get(String(r.id)) ?? [],
+      ...(r.expected ? { expected: parse(r.expected, null) } : {}),
     }));
     return { ...quizFromRow(row), questions };
   }
@@ -183,6 +185,8 @@ export class SqliteRepository implements Repository {
     return rows.map((r) => ({
       questionId: String(r.question_id),
       selected: parse(r.selected, []),
+      ...(r.text != null ? { text: String(r.text) } : {}),
+      ...(r.texts != null ? { texts: parse<string[]>(r.texts, []) } : {}),
       correct: r.correct == null ? null : bool(r.correct),
       points: num(r.points),
       timeSec: Number(r.time_sec),
@@ -192,10 +196,10 @@ export class SqliteRepository implements Repository {
 
   async saveAnswer(attemptId: string, a: Answer): Promise<void> {
     await this.db.execute(
-      `INSERT INTO answer (attempt_id, question_id, selected, correct, points, time_sec, flagged)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO answer (attempt_id, question_id, selected, correct, points, time_sec, flagged, text, texts)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        ON CONFLICT(attempt_id, question_id) DO UPDATE SET selected = $3, correct = $4, points = $5,
-         time_sec = $6, flagged = $7`,
+         time_sec = $6, flagged = $7, text = $8, texts = $9`,
       [
         attemptId,
         a.questionId,
@@ -204,6 +208,8 @@ export class SqliteRepository implements Repository {
         a.points ?? null,
         a.timeSec,
         a.flagged ? 1 : 0,
+        a.text ?? null,
+        a.texts ? json(a.texts) : null,
       ],
     );
   }
@@ -295,6 +301,32 @@ export class SqliteRepository implements Repository {
     await this.db.batch(st);
   }
 
+  // ---- Boîte de révision ----------------------------------------------------
+
+  async listCards(): Promise<LeitnerCard[]> {
+    const rows = await this.db.select<Row>('SELECT * FROM leitner_card ORDER BY added_at, question_id');
+    return rows.map((r) => ({
+      questionId: String(r.question_id),
+      quizId: String(r.quiz_id),
+      box: Number(r.box),
+      dueAt: String(r.due_at),
+      addedAt: String(r.added_at),
+      lastAt: (r.last_at as string) ?? null,
+      reviews: Number(r.reviews),
+      lapses: Number(r.lapses),
+      snapshot: parse<LeitnerCard['snapshot']>(r.snapshot, null as never),
+    }));
+  }
+
+  async saveCard(card: LeitnerCard): Promise<void> {
+    const st = cardStatement(card);
+    await this.db.execute(st.sql, st.params);
+  }
+
+  async deleteCard(questionId: string): Promise<void> {
+    await this.db.execute('DELETE FROM leitner_card WHERE question_id = $1', [questionId]);
+  }
+
   // ---- Sauvegarde complète --------------------------------------------------
 
   async exportHistory(): Promise<{ attempts: Attempt[]; answers: AnswerRow[] }> {
@@ -304,6 +336,8 @@ export class SqliteRepository implements Repository {
       attemptId: String(r.attempt_id),
       questionId: String(r.question_id),
       selected: parse<string[]>(r.selected, []),
+      ...(r.text != null ? { text: String(r.text) } : {}),
+      ...(r.texts != null ? { texts: parse<string[]>(r.texts, []) } : {}),
       correct: r.correct == null ? null : bool(r.correct),
       points: num(r.points),
       timeSec: Number(r.time_sec),
@@ -338,6 +372,7 @@ export class SqliteRepository implements Repository {
       { sql: 'DELETE FROM answer_archive', params: [] },
       { sql: 'DELETE FROM attempt_archive', params: [] },
       { sql: 'DELETE FROM module', params: [] },
+      { sql: 'DELETE FROM leitner_card', params: [] },
       // Le code PIN de l'appareil est conservé.
       { sql: "DELETE FROM setting WHERE key <> 'admin_pin'", params: [] },
     ];
@@ -349,6 +384,7 @@ export class SqliteRepository implements Repository {
         sql: 'INSERT INTO module (id, version, manifest, installed_at, updated_at) VALUES ($1, $2, $3, $4, $5)',
         params: [m.manifest.id, m.manifest.version, JSON.stringify(m.manifest), m.installedAt, m.updatedAt],
       });
+    for (const c of data.cards ?? []) st.push(cardStatement(c));
     for (const q of data.quizzes) st.push(...quizStatements(q));
     for (const m of data.media)
       st.push({
@@ -371,9 +407,9 @@ export class SqliteRepository implements Repository {
     for (const r of data.answers) {
       if (!attemptIds.has(r.attemptId)) continue;
       st.push({
-        sql: `INSERT INTO answer (attempt_id, question_id, selected, correct, points, time_sec, flagged)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        params: [r.attemptId, r.questionId, json(r.selected), r.correct == null ? null : r.correct ? 1 : 0, r.points ?? null, r.timeSec, r.flagged ? 1 : 0],
+        sql: `INSERT INTO answer (attempt_id, question_id, selected, correct, points, time_sec, flagged, text, texts)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        params: [r.attemptId, r.questionId, json(r.selected), r.correct == null ? null : r.correct ? 1 : 0, r.points ?? null, r.timeSec, r.flagged ? 1 : 0, r.text ?? null, r.texts ? json(r.texts) : null],
       });
     }
     for (const [k, v] of Object.entries(data.settings))
@@ -412,6 +448,16 @@ function orderCategories(categories: readonly Category[]): Category[] {
     out.push(c);
   }
   return out;
+}
+
+function cardStatement(c: LeitnerCard): Statement {
+  return {
+    sql: `INSERT INTO leitner_card (question_id, quiz_id, box, due_at, added_at, last_at, reviews, lapses, snapshot)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       ON CONFLICT(question_id) DO UPDATE SET quiz_id = $2, box = $3, due_at = $4, added_at = $5, last_at = $6,
+         reviews = $7, lapses = $8, snapshot = $9`,
+    params: [c.questionId, c.quizId, c.box, c.dueAt, c.addedAt, c.lastAt, c.reviews, c.lapses, JSON.stringify(c.snapshot)],
+  };
 }
 
 function categoryStatement(c: Category): Statement {
@@ -475,9 +521,9 @@ function quizStatements(quiz: Quiz): Statement[] {
   ];
   for (const q of quiz.questions) {
     statements.push({
-      sql: `INSERT INTO question (id, quiz_id, type, prompt, points, position, explanation)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      params: [q.id, quiz.id, q.type, json(q.prompt), q.points, q.position, json(q.explanation)],
+      sql: `INSERT INTO question (id, quiz_id, type, prompt, points, position, explanation, expected)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      params: [q.id, quiz.id, q.type, json(q.prompt), q.points, q.position, json(q.explanation), json(q.expected)],
     });
     for (const c of q.choices) {
       statements.push({
@@ -492,7 +538,7 @@ function quizStatements(quiz: Quiz): Statement[] {
 
 const ATTEMPT_COLUMNS = `id, quiz_id, quiz_version, mode, status, started_at, finished_at,
   elapsed_sec, current_index, question_order, score, max_score`;
-const ANSWER_COLUMNS = 'attempt_id, question_id, selected, correct, points, time_sec, flagged';
+const ANSWER_COLUMNS = 'attempt_id, question_id, selected, correct, points, time_sec, flagged, text, texts';
 
 function attemptFromRow(r: Row): Attempt {
   return {

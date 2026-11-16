@@ -2,8 +2,12 @@
   import { onDestroy, onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
-  import { formatDuration, showsInstantFeedback } from '$lib/domain/session';
-  import { pick } from '$lib/domain/rich';
+  import { formatDuration, isAnswered, showsInstantFeedback } from '$lib/domain/session';
+  import { expectedText, isTyped } from '$lib/domain/typed';
+  import BoxToggle from '$lib/components/BoxToggle.svelte';
+  import ClozeText from '$lib/components/ClozeText.svelte';
+  import { gapResults } from '$lib/domain/cloze';
+  import { mathLabel, pick } from '$lib/domain/rich';
   import { localize } from '$lib/domain/text';
   import RichContent from '$lib/rich/RichContent.svelte';
   import { i18n, t } from '$lib/i18n/index.svelte';
@@ -63,7 +67,7 @@
   }
 
   async function primary() {
-    if (needsValidation && answer?.selected.length) return session.validate();
+    if (needsValidation && isAnswered(answer)) return session.validate();
     if (isLast) return askFinish();
     return session.go(session.index + 1);
   }
@@ -82,6 +86,11 @@
     }
   }
 
+  /** Met le curseur dans le champ d'une question à saisie encore sans réponse (pas sur écran tactile : clavier intempestif). */
+  function focusIfEmpty(node: HTMLInputElement) {
+    if (!node.value && !node.readOnly && !matchMedia('(pointer: coarse)').matches) node.focus();
+  }
+
   function choiceState(choiceId: string, correct: boolean): string {
     if (!checked) return '';
     const picked = answer?.selected.includes(choiceId);
@@ -92,7 +101,7 @@
   function mapState(qid: string): string {
     const a = session.answers[qid];
     const parts: string[] = [];
-    if (a?.selected.length) parts.push('answered');
+    if (isAnswered(a)) parts.push('answered');
     if (a?.flagged) parts.push('flagged');
     if (instant && a?.correct != null) parts.push(a.correct ? 'ok' : 'ko');
     return parts.join(' ');
@@ -127,13 +136,16 @@
   <article class="panel question">
     <div class="qhead">
       <p class="muted">{t('play.questionOf', { n: session.index + 1, total })}</p>
-      <button
-        class="ghost flag"
-        aria-pressed={answer?.flagged ?? false}
-        onclick={() => session.toggleFlag()}
-      >
-        {answer?.flagged ? '★' : '☆'} {t('play.flag')}
-      </button>
+      <span class="qtools">
+        <BoxToggle {quiz} {question} />
+        <button
+          class="ghost flag"
+          aria-pressed={answer?.flagged ?? false}
+          onclick={() => session.toggleFlag()}
+        >
+          {answer?.flagged ? '★' : '☆'} {t('play.flag')}
+        </button>
+      </span>
     </div>
 
     <!-- Pas de fieldset/legend : WebKitGTK y ajoute un espace parasite au premier rendu. -->
@@ -141,8 +153,44 @@
       <div class="prompt" id="prompt-{question.id}" lang={question.prompt[lang] ? lang : fallback}>
         <RichContent value={pick(question.prompt, lang, fallback)} />
       </div>
-      <p class="hint muted">{question.type === 'single' ? t('play.single') : t('play.multiple')}</p>
+      <p class="hint muted">{t(`play.${question.type}`)}</p>
 
+      {#if question.type === 'cloze'}
+        <ClozeText
+          {question}
+          {lang}
+          {fallback}
+          values={answer?.texts ?? []}
+          locked={session.locked}
+          results={checked ? gapResults(question, answer?.texts) : null}
+          seed={quiz.shuffle ? `${attempt.id}:${question.id}` : null}
+          labelledby="prompt-{question.id}"
+          onchange={(i, v) => session.typeGap(i, v)}
+          oncommit={() => session.persist()}
+        />
+      {:else if isTyped(question)}
+        <!-- {#key} : un champ neuf par question, qui reçoit le focus. -->
+        {#key question.id}
+          <label class="typed" class:is-correct={checked && answer?.correct} class:is-wrong={checked && !answer?.correct}>
+            <span class="visually-hidden">{t('play.yourAnswer')}</span>
+            <input
+              type="text"
+              inputmode={question.type === 'numeric' ? 'decimal' : 'text'}
+              autocomplete="off"
+              autocapitalize="off"
+              spellcheck="false"
+              aria-describedby="prompt-{question.id}"
+              placeholder={t('play.yourAnswer')}
+              value={answer?.text ?? ''}
+              readonly={session.locked}
+              oninput={(e) => session.typeText(e.currentTarget.value)}
+              onchange={() => session.persist()}
+              {@attach focusIfEmpty}
+            />
+            {#if question.type === 'numeric' && question.expected?.unit}<span class="unit">{question.expected.unit}</span>{/if}
+          </label>
+        {/key}
+      {:else}
       <div
         class="choices"
         role={question.type === 'single' ? 'radiogroup' : 'group'}
@@ -154,6 +202,7 @@
               type={question.type === 'single' ? 'radio' : 'checkbox'}
               name="q-{question.id}"
               disabled={session.locked}
+              aria-label={mathLabel(pick(choice.content, lang, fallback))}
               checked={answer?.selected.includes(choice.id) ?? false}
               onchange={() => session.choose(choice.id)}
             />
@@ -162,6 +211,7 @@
           </label>
         {/each}
       </div>
+      {/if}
     </div>
 
     {#if checked && answer}
@@ -169,6 +219,7 @@
         <strong>
           {answer.correct ? t('play.correct') : (answer.points ?? 0) > 0 ? t('play.partial') : t('play.wrong')}
         </strong>
+        {#if isTyped(question) && question.type !== 'cloze' && !answer.correct}<p class="expected">{t('play.expected', { answer: expectedText(question, lang) })}</p>{/if}
         {#if question.explanation}
           <div class="expl"><span class="muted">{t('play.explanation')} :</span> <RichContent value={pick(question.explanation, lang, fallback)} /></div>
         {/if}
@@ -180,7 +231,7 @@
         ← {t('play.prev')}
       </button>
       {#if needsValidation}
-        <button disabled={!answer?.selected.length} onclick={() => session.validate()}>{t('play.validate')}</button>
+        <button disabled={!isAnswered(answer)} onclick={() => session.validate()}>{t('play.validate')}</button>
       {:else if isLast}
         <button onclick={askFinish}>{t('play.finish')}</button>
       {:else}
@@ -274,6 +325,11 @@
   .qhead p {
     margin: 0;
   }
+  .qtools {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
   .flag[aria-pressed='true'] {
     color: var(--warn);
   }
@@ -316,6 +372,39 @@
   .choices .choice.is-wrong {
     border-color: var(--bad);
     background: var(--bad-soft);
+  }
+  .typed {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .typed input {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+    max-inline-size: 28rem;
+    min-block-size: var(--tap);
+    padding: 0.5rem 0.9rem;
+    font: inherit;
+    font-size: 1.1rem;
+    color: var(--text);
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+  }
+  .typed.is-correct input {
+    border-color: var(--ok);
+    background: var(--ok-soft);
+  }
+  .typed.is-wrong input {
+    border-color: var(--bad);
+    background: var(--bad-soft);
+  }
+  .unit {
+    font-size: 1.1rem;
+  }
+  .expected {
+    margin-block: 0.35rem 0;
+    font-weight: 600;
   }
   .choice.locked {
     cursor: default;

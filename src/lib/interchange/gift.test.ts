@@ -29,17 +29,23 @@ Le soleil se lève à l'est. {T}
 
 ::Nombre:: Combien font 2+2 ? {#4}
 
+::Pi:: Valeur de pi ? {#3.14:0.01}
+
+::Intervalle:: Un nombre entre 1 et 5 ? {#1..5}
+
+::Deux nombres:: Racines ? {# =1 =2}
+
 Le caractère \\{ est une accolade et 1 \\= 1. {=Vrai ~Faux}
 `;
 
 describe('GIFT — import', () => {
   const r = parseGift(SAMPLE, 'Exemple', 'fr', new Date('2026-11-15T10:00:00Z'));
-  const [https, tcp, sun, esc] = r.quiz.questions;
+  const [https, tcp, sun, capital, four, pi, range, esc] = r.quiz.questions;
   const plain = (v: unknown) => richToPlain(v as never);
 
   it('crée un QCM brouillon avec les questions prises en charge', () => {
     expect(r.quiz).toMatchObject({ title: { fr: 'Exemple' }, status: 'draft', languages: ['fr'] });
-    expect(r.quiz.questions).toHaveLength(4);
+    expect(r.quiz.questions).toHaveLength(8);
     expect(r.categoriesIgnored).toBe(true);
   });
 
@@ -64,24 +70,38 @@ describe('GIFT — import', () => {
 
   it('signale les types non pris en charge', () => {
     expect(r.skipped.map((s) => [s.title, s.reason])).toEqual([
-      ['Capitale', 'short_answer'],
       ['Associer', 'matching'],
       ['Essai', 'essay'],
-      ['Nombre', 'numerical'],
+      ['Deux nombres', 'numerical'],
     ]);
+  });
+
+  it('réponse courte et réponse numérique', () => {
+    expect([capital.type, capital.choices, capital.expected]).toEqual(['short', [], { accepted: ['Paris', 'paris'] }]);
+    expect([four.type, four.expected]).toEqual(['numeric', { value: 4, tolerance: 0 }]);
+    expect(pi.expected).toEqual({ value: 3.14, tolerance: 0.01 });
+    expect(range.expected).toEqual({ value: 3, tolerance: 2 });
   });
 });
 
 describe('GIFT — export', () => {
   it('aller-retour : énoncés, réponses et bonnes réponses conservés', () => {
-    for (const quiz of demoQuizzes) {
+    // Les formules sortent en notation TeX de Moodle : vérifiées à part, plus bas.
+    for (const quiz of demoQuizzes.filter((x) => x.id !== 'demo-science')) {
       const lang = quiz.languages[0];
       const back = parseGift(quizToGift(quiz, lang), 'x', lang).quiz;
-      expect(back.questions.length).toBe(quiz.questions.length);
-      quiz.questions.forEach((q, i) => {
+      // Les textes à trous n'ont pas d'équivalent en GIFT : ils sont laissés en commentaire.
+      const exported = quiz.questions.filter((q) => q.type !== 'cloze');
+      expect(quizToGift(quiz, lang).split('non exporté').length - 1).toBe(quiz.questions.length - exported.length);
+      expect(back.questions.length).toBe(exported.length);
+      exported.forEach((q, i) => {
         const b = back.questions[i];
         expect(b.type).toBe(q.type);
-        expect(richToPlain(b.prompt[lang])).toBe(richToPlain(q.prompt[lang]));
+        // L'unité d'une réponse numérique n'existe pas en GIFT : elle rejoint l'énoncé.
+        const unit = q.expected?.unit ? ` (${q.expected.unit})` : '';
+        expect(richToPlain(b.prompt[lang]).replace(/\s+/g, ' ')).toBe(richToPlain(q.prompt[lang]) + unit);
+        expect(b.expected?.accepted).toEqual(q.expected?.accepted);
+        expect(b.expected?.value).toBe(q.expected?.value);
         expect(b.choices.map((c) => [richToPlain(c.content[lang]), c.correct])).toEqual(
           q.choices.map((c) => [richToPlain(c.content[lang]), c.correct]),
         );
@@ -114,5 +134,33 @@ describe('GIFT — export', () => {
       (h) => (h === 'h' ? 'data:image/png;base64,AAAA' : undefined),
     );
     expect(html).toBe('<pre><code>if (a &lt; b) {}</code></pre><img src="data:image/png;base64,AAAA" alt="schéma">');
+  });
+});
+
+describe('GIFT — questions à saisie', () => {
+  it('aller-retour d’une réponse courte et d’une réponse numérique', () => {
+    const quiz = structuredClone(demoQuizzes[0]);
+    quiz.questions = [
+      { id: 'a', type: 'short', prompt: { fr: 'Prétérit de go ?' }, points: 1, position: 0, explanation: null, choices: [], expected: { accepted: ['went', 'a=b'] } },
+      { id: 'b', type: 'numeric', prompt: { fr: 'g ?' }, points: 1, position: 1, explanation: null, choices: [], expected: { value: 9.81, tolerance: 0.01, unit: 'm/s²' } },
+    ];
+    const text = quizToGift(quiz, 'fr');
+    expect(text).toContain('\t=went');
+    expect(text).toContain('\t=a\\=b');
+    expect(text).toContain('\t#9.81:0.01');
+    expect(text).toContain('(m/s²)');
+    const back = parseGift(text, 'x', 'fr').quiz.questions;
+    expect(back.map((q) => [q.type, q.expected])).toEqual([
+      ['short', { accepted: ['went', 'a=b'] }],
+      ['numeric', { value: 9.81, tolerance: 0.01 }],
+    ]);
+  });
+});
+
+describe('GIFT — formules', () => {
+  it('écrit les formules en notation TeX de Moodle', () => {
+    const text = quizToGift(demoQuizzes.find((x) => x.id === 'demo-science')!, 'fr');
+    expect(text).toContain('\\\\(f(x) \\= x^2\\\\)');
+    expect(text).toContain('\\\\[\\\\ce\\{CH3COOH');
   });
 });

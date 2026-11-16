@@ -29,7 +29,42 @@ export type RichValue = string | RichDoc;
 /** Contenu riche multilingue. */
 export type I18nRich = Record<Lang, RichValue>;
 
-export type QuestionType = 'single' | 'multiple';
+/**
+ * single, multiple : réponses à cocher (`choices`).
+ * short, numeric : réponse à saisir, comparée à `expected` (pas de `choices`).
+ * cloze : texte à trous (`expected.text` et `expected.gaps`).
+ */
+export type QuestionType = 'single' | 'multiple' | 'short' | 'numeric' | 'cloze';
+
+/** Un trou d'un texte à trous. */
+export interface ClozeGap {
+  /** text : réponse à saisir ; select : réponse à choisir dans une liste déroulante. */
+  kind: 'text' | 'select';
+  /** Formes acceptées (saisie), ou la bonne réponse seule (liste). */
+  accepted: string[];
+  /** Saisie : respecter les majuscules. */
+  caseSensitive?: boolean;
+  /** Liste déroulante : les autres propositions. */
+  options?: string[];
+}
+
+/** Réponse attendue d'une question à saisie. */
+export interface ExpectedAnswer {
+  /** Réponse courte : formes acceptées (toutes sont affichées dans le corrigé). */
+  accepted?: string[];
+  /** Réponse courte : respecter les majuscules (faux par défaut). */
+  caseSensitive?: boolean;
+  /** Réponse numérique : valeur exacte attendue. */
+  value?: number;
+  /** Réponse numérique : écart toléré, en valeur absolue (0 par défaut). */
+  tolerance?: number;
+  /** Réponse numérique : unité affichée à côté du champ (elle n'est pas à saisir). */
+  unit?: string | null;
+  /** Texte à trous : le texte par langue, où « {{1}} », « {{2}} »… marquent les trous. */
+  text?: I18nText;
+  /** Texte à trous : les trous, dans l'ordre de leur numéro. */
+  gaps?: ClozeGap[];
+}
 export type ScoringRule = 'all_or_nothing' | 'partial';
 export type SolutionVisibility = 'never' | 'after_submit' | 'after_pass';
 export type QuizStatus = 'draft' | 'published';
@@ -62,6 +97,8 @@ export interface Question {
   position: number;
   explanation?: I18nRich | null;
   choices: Choice[];
+  /** Réponse attendue (types short et numeric). */
+  expected?: ExpectedAnswer | null;
 }
 
 export interface Quiz {
@@ -94,6 +131,10 @@ export type QuizSummary = Omit<Quiz, 'questions'> & { questionCount: number };
 export interface Answer {
   questionId: string;
   selected: string[];
+  /** Réponse saisie (types short et numeric). */
+  text?: string | null;
+  /** Réponses aux trous d'un texte à trous, dans l'ordre des trous. */
+  texts?: string[] | null;
   correct?: boolean | null;
   points?: number | null;
   timeSec: number;

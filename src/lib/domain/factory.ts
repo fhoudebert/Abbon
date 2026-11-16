@@ -1,3 +1,4 @@
+import { richToPlain } from './rich';
 import { newId } from './text';
 import type { Choice, Lang, Question, QuestionType, Quiz } from './types';
 
@@ -30,11 +31,18 @@ export function newChoice(position: number): Choice {
   return { id: newId(), content: {}, correct: false, position, feedback: null };
 }
 
-/** Nouvelle question avec deux réponses vides (la première marquée juste en choix unique). */
+const typed = (type: QuestionType) => type === 'short' || type === 'numeric' || type === 'cloze';
+const emptyExpected = (type: QuestionType) =>
+  type === 'short' ? { accepted: [''] } : type === 'numeric' ? { tolerance: 0 } : type === 'cloze' ? { text: {}, gaps: [] } : null;
+
+/**
+ * Nouvelle question : deux réponses vides à cocher (la première marquée juste en choix unique),
+ * ou une réponse attendue vide pour une question à saisie.
+ */
 export function newQuestion(type: QuestionType, position: number): Question {
-  const choices = [newChoice(0), newChoice(1)];
+  const choices = typed(type) ? [] : [newChoice(0), newChoice(1)];
   if (type === 'single') choices[0].correct = true;
-  return { id: newId(), type, prompt: {}, points: 1, position, explanation: null, choices };
+  return { id: newId(), type, prompt: {}, points: 1, position, explanation: null, choices, expected: emptyExpected(type) };
 }
 
 /** Copie d'une question avec de nouveaux identifiants. */
@@ -84,7 +92,23 @@ export function toggleCorrect(q: Question, choiceId: string) {
 
 /** Change le type ; vers « choix unique », ne garde que la première bonne réponse. */
 export function setQuestionType(q: Question, type: QuestionType) {
+  const was = q.type;
   q.type = type;
+  if (typed(type)) {
+    // Question à saisie : plus de réponses à cocher. La bonne réponse d'un choix unique sert d'amorce.
+    if (was !== type) {
+      const first = q.choices.find((c) => c.correct);
+      const seed = first ? Object.values(first.content).map((v) => richToPlain(v)).find(Boolean) : undefined;
+      q.expected = type === 'short' ? { accepted: [seed ?? ''] } : emptyExpected(type);
+    }
+    q.choices = [];
+    return;
+  }
+  q.expected = null;
+  if (q.choices.length === 0) {
+    q.choices = [newChoice(0), newChoice(1)];
+    if (type === 'single') q.choices[0].correct = true;
+  }
   if (type === 'single') {
     let seen = false;
     for (const c of q.choices) {

@@ -1,3 +1,4 @@
+import type { LeitnerCard } from '$lib/domain/leitner';
 import type { Answer, Attempt, Category, InstalledModule, ModuleManifest, Quiz, QuizSummary } from '$lib/domain/types';
 
 /**
@@ -45,6 +46,12 @@ export interface Repository {
    * est mis de côté (`keepHistory`) pour une réinstallation future, ou supprimé.
    */
   uninstallModule(id: string, keepHistory: boolean): Promise<void>;
+
+  // ---- Boîte de révision (Leitner) ----
+  listCards(): Promise<LeitnerCard[]>;
+  /** Crée ou remplace une carte (clé : identifiant de la question). */
+  saveCard(card: LeitnerCard): Promise<void>;
+  deleteCard(questionId: string): Promise<void>;
 
   // ---- Sauvegarde complète ----
   /** Toutes les tentatives (avec l'instantané du QCM) et toutes les réponses. */
@@ -96,4 +103,5 @@ export interface FullData {
   settings: Record<string, string>;
   media: Media[];
   modules?: InstalledModule[];
+  cards?: LeitnerCard[];
 }
