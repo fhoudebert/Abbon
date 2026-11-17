@@ -1,7 +1,7 @@
 ---
 id: math-01
 title: { fr: "math : bac - les bases" }
-description: { fr: "Dérivation, Suite, Logarithme, Exponentielle" }
+description: { fr: "Dérivation, Suite, Logarithme, Exponentielle, Probabilités" }
 level: bases
 tags: [math, bac]
 ---
@@ -44,6 +44,11 @@ réponse :
 Simplifier : ln (a)^p
 réponse : 
 p ln(a)
+
+## Logarithme Népérien
+dérivée de ln(x) ?:
+réponse : 
+La dérivée de ln(x) est 1/x.
 
 ## Suite
 
@@ -88,9 +93,36 @@ réponse :
 1
 
 ## Exponentielle
+Quelle est la limite de \(e^x\) lorsque \(x\) tend vers \(-\infty\) ?
+réponse : 
+0
+
+
+## Exponentielle
 
 Simplifier e⁽a)xe⁽b) ?
 réponse : 
 e⁽a+b)
+
+## Probabilités
+Une pièce équilibrée est lancée 3 fois. Quelle est la probabilité d'obtenir exactement 2 fois pile ?
+
+réponse :
+Il y a 3 issues favorables sur 8 : 3/8.
+
+
+## Intégrale
+calculer 
+
+\[
+\int_0^2 3x^2\,dx
+\]
+réponse : 
+8
+
+
+
+
+
 
 
