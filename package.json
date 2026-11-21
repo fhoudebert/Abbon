@@ -1,0 +1,59 @@
+{
+  "name": "abbon",
+  "version": "0.2.0",
+  "description": "Abbon — application de QCM multiplateforme (Tauri + Svelte)",
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "prepare": "svelte-kit sync || echo ''",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "tauri": "tauri",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "schema": "UPDATE_SCHEMA=1 vitest run src/lib/interchange/schema-doc.test.ts",
+    "a11y": "python3 scripts/a11y/audit.py",
+    "module:check": "node scripts/modules/cli.mjs check",
+    "module:build": "node scripts/modules/cli.mjs build",
+    "android:apk": "bash scripts/android/build-apk.sh"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-dialog": "^2.8.4",
+    "@tauri-apps/plugin-fs": "^2.7.1",
+    "@tauri-apps/plugin-opener": "^2.7.3",
+    "@tauri-apps/plugin-sql": "^2.6.0",
+    "@tiptap/core": "^3.34.0",
+    "@tiptap/extension-code-block-lowlight": "^3.34.0",
+    "@tiptap/extension-image": "^3.34.0",
+    "@tiptap/extension-table": "^3.34.0",
+    "@tiptap/pm": "^3.34.0",
+    "@tiptap/starter-kit": "^3.34.0",
+    "fflate": "^0.8.3",
+    "katex": "^0.19.1",
+    "lowlight": "^3.3.0",
+    "mathlive": "0.111.4",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@rdkit/rdkit": "2026.9.2",
+    "@sveltejs/adapter-static": "^3.0.10",
+    "@sveltejs/kit": "^2.65.1",
+    "@sveltejs/vite-plugin-svelte": "^7.1.2",
+    "@tauri-apps/cli": "^2",
+    "@types/node": "^26.6.6",
+    "axe-core": "^4.14.0",
+    "svelte": "^5.56.3",
+    "svelte-check": "^4.6.0",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.16",
+    "vitest": "^5.1.0",
+    "yaml": "^2.9.1"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

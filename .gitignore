@@ -1,0 +1,27 @@
+.DS_Store
+node_modules
+/build
+/.svelte-kit
+/package
+.env
+.env.*
+*.patch
+!.env.example
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# Signature de l'APK : jamais dans le dépôt (voir docs/distribution.md).
+# keystore.properties porte les mots de passe en clair.
+keystore.properties
+*.keystore
+*.keystore[0-9]*
+*.p12
+*.base64
+*.b64
+keystore.base64
+*.jks
+/abbon-*.apk
+commandes.txt
+local.properties
+/dist
+/site

@@ -1,0 +1,49 @@
+# Module « Informatique » — niveau terminale NSI exigeant, début de BTS SIO / BUT informatique.
+# Format des sources : docs/modules.md. Vérifier : npm run module:check ; construire : npm run module:build
+
+id: org.abbon.informatique
+version: 0.2.0
+date: 2026-11-21
+title:
+  fr: "Informatique"
+description:
+  fr: "Quatorze rubriques, de Python à la cybersécurité et au matériel. Version pilote : un QCM de bases par rubrique, plus HTML5 et CSS sans JavaScript et HTML5 avancé avec JavaScript ; 175 questions."
+level: terminale+
+license: CC-BY-NC-SA-4.0
+authors: [Abbon]
+homepage: https://github.com/fhoudebert/Abbon
+# Français d'abord. Pour ajouter l'anglais : languages: [fr, en], puis une section « ### en » par
+# question et les textes « en » des titres ci-dessous ; module:check signale ce qui manque.
+languages: [fr]
+requires:
+  app: ">=0.2.0"
+
+categories:
+  - id: python
+    name: { fr: "Python" }
+  - id: rust
+    name: { fr: "Rust" }
+  - id: web
+    name: { fr: "Web : HTML, CSS, JavaScript" }
+  - id: sql
+    name: { fr: "SQL et données" }
+  - id: linux
+    name: { fr: "Systèmes : Linux" }
+  - id: windows-android
+    name: { fr: "Systèmes : Windows et Android" }
+  - id: reseau
+    name: { fr: "Réseau" }
+  - id: cybersecurite
+    name: { fr: "Cybersécurité" }
+  - id: algorithmique
+    name: { fr: "Algorithmique" }
+  - id: ia
+    name: { fr: "Intelligence artificielle" }
+  - id: graphisme-3d
+    name: { fr: "3D et graphisme" }
+  - id: electronique-interface
+    name: { fr: "Électronique et conception d'interface" }
+  - id: materiel
+    name: { fr: "Matériel : composants et périphériques" }
+  - id: logiciel-libre
+    name: { fr: "Logiciel libre et standards" }

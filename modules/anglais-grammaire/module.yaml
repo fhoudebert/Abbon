@@ -1,0 +1,32 @@
+# Module « Anglais : grammaire et pièges des francophones » — niveaux B1 (bases), B2 / TOEIC (approfondissement),
+# C1 / Cambridge Advanced (expert). Niveau bases repris d'une série de 50 questions fournie, reformulée et classée.
+# Format des sources : docs/modules.md. Vérifier : npm run module:check ; construire : npm run module:build
+
+id: org.abbon.anglais-grammaire
+version: 0.1.0
+date: 2026-11-21
+title:
+  fr: "Anglais : grammaire et pièges des francophones"
+description:
+  fr: "Prépositions, temps, verbes, faux amis et structures de phrase : les erreurs typiques des francophones, du niveau B1 au C1 (TOEIC, Cambridge). Version pilote : 150 questions et leurs fiches de révision."
+level: B1-C1
+license: CC-BY-NC-SA-4.0
+authors: [Abbon]
+homepage: https://github.com/fhoudebert/Abbon
+languages: [fr]
+requires:
+  app: ">=0.2.0"
+defaults:
+  passThreshold: 0.7
+
+categories:
+  - id: prepositions
+    name: { fr: "Prépositions et constructions" }
+  - id: temps
+    name: { fr: "Temps, aspects et conditionnel" }
+  - id: verbes
+    name: { fr: "Gérondif, infinitif et modaux" }
+  - id: vocabulaire
+    name: { fr: "Faux amis et collocations" }
+  - id: structures
+    name: { fr: "Structures de phrase" }
