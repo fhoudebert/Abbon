@@ -11,6 +11,7 @@
     resultOf,
   } from '$lib/domain/session';
   import { localize } from '$lib/domain/text';
+  import { pick, richToPlain } from '$lib/domain/rich';
   import { fmtNum, i18n, pct, t } from '$lib/i18n/index.svelte';
   import { AttemptSession } from '$lib/session.svelte';
 
@@ -30,6 +31,20 @@
   const solution = $derived(quiz && attempt && result ? canSeeSolution(quiz, attempt, result.passed) : false);
   const missed = $derived(result ? missedQuestionIds(result) : []);
   const fallback = $derived(quiz?.languages[0]);
+
+  // ---- Questions à retenir : les questions échouées choisies vont dans la boîte de révision ----
+  const missedQuestions = $derived(session.questions.filter((q) => missed.includes(q.id)));
+  let chosen = $state<string[]>([]);
+  let kept = $state<number | null>(null);
+  const plain = (q: (typeof session.questions)[number]) => richToPlain(pick(q.prompt, lang, fallback)) || '—';
+  async function keep() {
+    if (!quiz || !chosen.length) return;
+    const qs = missedQuestions.filter((q) => chosen.includes(q.id) && !app.inBox(q.id));
+    await app.addCards(quiz, qs, true);
+    kept = qs.length;
+    chosen = [];
+  }
+  const attemptPoints = $derived(app.showRewards && app.attemptPoints?.attemptId === id ? app.attemptPoints.points : 0);
 
   async function retry(onlyMissed: boolean) {
     if (!quiz || !attempt || busy) return;
@@ -62,6 +77,7 @@
       <span>{t('result.threshold', { pct: pct(quiz.passThreshold) })}</span>
       <span>{attempt.mode === 'exam' ? t('quiz.exam') : t('quiz.training')}</span>
     </p>
+    {#if attemptPoints}<p class="gain">{t('result.quizPoints', { n: attemptPoints })}</p>{/if}
     <div class="actions">
       {#if solution}
         <a class="button" href="/attempt/{id}/review">{t('result.review')}</a>
@@ -79,6 +95,29 @@
       </p>
     {/if}
   </section>
+
+  {#if missedQuestions.length}
+    <section class="panel keep" aria-labelledby="keep-title">
+      <h2 id="keep-title">{t('result.keep.title')}</h2>
+      <p class="muted">{t('result.keep.intro')}</p>
+      <ul>
+        {#each missedQuestions as q (q.id)}
+          {@const inBox = app.inBox(q.id)}
+          <li>
+            <label>
+              {#if inBox}<input type="checkbox" checked disabled />{:else}<input type="checkbox" value={q.id} bind:group={chosen} />{/if}
+              <span class="q">{plain(q)}</span>
+              {#if inBox}<span class="muted small">({t('result.keep.inBox')})</span>{/if}
+            </label>
+          </li>
+        {/each}
+      </ul>
+      <div class="actions">
+        <button disabled={!chosen.length} onclick={keep}>{chosen.length ? t('result.keep.add', { n: chosen.length }) : t('result.keep.addNone')}</button>
+        {#if kept !== null}<span role="status">{t('result.keep.done', { n: kept })}</span>{/if}
+      </div>
+    </section>
+  {/if}
 
   <section>
     <h2>{t('result.details')}</h2>
@@ -189,5 +228,39 @@
     .details li {
       grid-template-columns: 2rem 1fr auto;
     }
+  }
+  .gain {
+    font-weight: 600;
+    color: var(--accent);
+  }
+  .keep {
+    margin-block-end: 2rem;
+  }
+  .keep h2 {
+    margin-block-start: 0;
+  }
+  .keep ul {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: 0.35rem;
+  }
+  .keep label {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+  .keep .q {
+    overflow-wrap: anywhere;
+  }
+  .keep .small {
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+  .keep .actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
   }
 </style>

@@ -14,7 +14,8 @@ module.json            facultatif : le fichier est un module           → modul
 
 Une **sauvegarde complète** (`"kind": "backup"`) contient en plus `attempts.json` (tentatives, avec la copie du QCM
 au démarrage), `answers.json`, `settings.json` et, s'il y en a, `modules.json` (modules installés : manifeste et dates) et `leitner.json` (boîte de
-révision : compartiment, dates et copie de chaque question). Elle se restaure depuis *Paramètres › Sauvegarde* et remplace tout
+révision : compartiment, dates, date d'acquisition et copie de chaque question) et `rewards.json` (points : type
+d'événement, référence, points, date). Elle se restaure depuis *Paramètres › Sauvegarde* et remplace tout
 le contenu de l'appareil (le code PIN de l'appareil est conservé).
 
 ## Règles

@@ -17,7 +17,10 @@ Ordre de travail de la branche `qcm`, après le socle (lots 0 à 5). Le cadrage 
 | Technique B | **Version macOS en CI** : application universelle (Apple silicon et Intel), `.dmg`, mises à jour automatiques | fait, validé sur GitHub |
 | Lot 13 | **MathLive** : saisie visuelle des formules dans l'éditeur, puis réponses sous forme d'expression | éditeur fait (à valider sous Linux et Android) ; type « expression » à faire |
 | Lot 14 | **Molécules** : formules topologiques générées en SVG à la construction des modules ; Ketcher plus tard, si besoin | à étudier |
-| Lot 15 | **Ceintures et points** : récompenser surtout la révision régulière, selon le planning de la boîte, et la mémorisation ; la collecte des questions échouées un peu ; les QCM et modules terminés accessoirement | étudié (barème revu), à valider |
+| Lot 15 | **Ceintures et points** : récompenser surtout la révision régulière, selon le planning de la boîte, et la mémorisation ; la collecte des questions échouées un peu ; les QCM et modules terminés accessoirement | fait (avant le perfectionnement des QCM) |
+
+Ordre retenu ensuite : lot 15 (fait), puis le type « expression » (lot 13) et les molécules (lot 14), qui
+servent le perfectionnement des QCM de bac (niveaux « approfondissement » et « expert ») qui les suit.
 
 ## Lot 6 ter — textes à trous
 
@@ -34,7 +37,8 @@ Ordre de travail de la branche `qcm`, après le socle (lots 0 à 5). Le cadrage 
 
 - **Une seule boîte pour tous les QCM**, alimentée à la main : le bouton « Ma boîte », pendant un QCM ou dans son
   corrigé, y range la question affichée (ou l'en retire).
-- Écran « Révision » (menu) : cinq compartiments revus après 1, 2, 4, 8 et 16 jours (le délai double d'un compartiment au suivant). Une bonne réponse fait
+- Écran « Révision » (menu) : cinq compartiments revus après 1, 2, 4, 8 et 16 jours (le délai double d'un compartiment au suivant) ;
+  une bonne réponse au compartiment 5 rend la question acquise, hors du planning (lot 15). Une bonne réponse fait
   avancer la question d'un compartiment, une erreur la renvoie dans le premier.
 - Session de 20 questions au plus, correction immédiate, tous types de questions. « Réviser quand même » permet de
   s'entraîner avant la date : une bonne réponse ne fait alors pas avancer la question.
@@ -152,7 +156,7 @@ Ordre de travail de la branche `qcm`, après le socle (lots 0 à 5). Le cadrage 
 - **Opportunité** : la génération au build oui, dès que la chimie organique entre dans le module ; Ketcher dans
   l'application, non pour l'instant.
 
-## Lot 15 — ceintures et points (étude)
+## Lot 15 — ceintures et points
 
 **But** : faire réviser chaque jour, selon le planning de la boîte, des questions choisies — en priorité celles
 qu'on a échouées — jusqu'à les savoir. La récompense suit donc la **révision régulière** et la **mémorisation** ;
@@ -216,9 +220,10 @@ Ces seuils sont des constantes, à recaler après quelques semaines d'usage rée
 
 ### Où cela se voit
 
-- **Corrigé d'une tentative** : un encadré « Questions à retenir » liste les questions échouées, chacune avec une
-  case à cocher (aucune cochée d'avance), et un bouton « Ranger la sélection dans ma boîte ». Le bouton « Ma
-  boîte » de chaque question reste disponible, y compris pour une question réussie.
+- **Résultat d'une tentative** : un encadré « Questions à retenir » liste les questions échouées, chacune avec
+  une case à cocher (aucune cochée d'avance ; celles déjà dans la boîte sont signalées), et un bouton « Ranger
+  N questions dans ma boîte ». Le bouton « Ma boîte » de chaque question reste disponible pendant le QCM et dans
+  le corrigé, y compris pour une question réussie (le point de collecte ne vaut que pour une question échouée).
 - **Accueil** : nombre de cartes dues aujourd'hui en tête, avec le bonus à gagner (« 7 révisions pour être à
   jour : +10 »), la ceinture (petit dessin et nom en toutes lettres), les points et ce qu'il reste avant la
   suivante.
@@ -240,7 +245,7 @@ Ces seuils sont des constantes, à recaler après quelques semaines d'usage rée
 - **Contournements** (cartes trop faciles, erreurs volontaires) : pour une application personnelle hors ligne, on
   ne tricherait que contre soi-même ; aucune protection n'est prévue.
 
-### Réalisation
+### Réalisation (faite)
 
 - Migration `0008` : table `reward` (`kind`, `ref`, `points`, `at`), clé primaire (`kind`, `ref`) pour qu'un
   événement ne compte qu'une fois (`ref` : la question, le QCM, le module, ou la date pour « journée à jour ») ;
@@ -253,7 +258,13 @@ Ces seuils sont des constantes, à recaler après quelques semaines d'usage rée
   module est désinstallé.
 - Interface : encadré du corrigé, accueil, écran Révision, réglage, textes français et anglais ; audit
   d'accessibilité.
-- Taille : un lot moyen, comparable à celui de la boîte de révision.
+- **Vérifié** : tests du barème, des ceintures, de l'acquisition, des deux dépôts et de la sauvegarde ; la
+  simulation, rejouée sur le code réel, donne la ceinture noire au 158e jour pour une question ajoutée par jour
+  (8 révisions par jour en régime établi). Parcours complet dans Chrome avec une horloge avancée jour après jour :
+  collecte depuis le résultat, séance et « journée à jour », acquisition au 30e jour, remise en révision,
+  annonce du passage à la ceinture jaune, réglage masquant ; clair à 1100 px et sombre à 390 px, axe sans
+  violation.
+- Restent possibles : un badge visible par module terminé (les points sont comptés), un objectif hebdomadaire.
 
 ## Décisions prises
 

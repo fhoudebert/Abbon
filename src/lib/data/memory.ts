@@ -1,4 +1,5 @@
 import type { LeitnerCard } from '$lib/domain/leitner';
+import { rewardKey, type Reward } from '$lib/domain/rewards';
 import type { Answer, Attempt, Category, InstalledModule, Quiz, QuizSummary } from '$lib/domain/types';
 import type { AnswerRow, FullData, Media, ModuleInstall, Repository } from './repository';
 
@@ -18,6 +19,7 @@ export class MemoryRepository implements Repository {
   private media = new Map<string, Media>();
   private modules = new Map<string, InstalledModule>();
   private cards = new Map<string, LeitnerCard>();
+  private rewards = new Map<string, Reward>();
   /** Historique mis de côté : identifiant de module → tentatives et réponses. */
   private archive = new Map<string, { attempt: Attempt; answers: Answer[] }[]>();
 
@@ -94,6 +96,19 @@ export class MemoryRepository implements Repository {
   }
   async deleteCard(questionId: string) {
     this.cards.delete(questionId);
+  }
+
+  async listRewards() {
+    return [...this.rewards.values()].map(clone).sort((a, b) => a.at.localeCompare(b.at) || rewardKey(a).localeCompare(rewardKey(b)));
+  }
+  async addRewards(rewards: Reward[]) {
+    const fresh: Reward[] = [];
+    for (const r of rewards) {
+      if (this.rewards.has(rewardKey(r))) continue;
+      this.rewards.set(rewardKey(r), clone(r));
+      fresh.push(clone(r));
+    }
+    return fresh;
   }
 
   async listModules() {
@@ -187,6 +202,7 @@ export class MemoryRepository implements Repository {
     this.modules = new Map((data.modules ?? []).map((m) => [m.manifest.id, clone(m)]));
     this.archive = new Map();
     this.cards = new Map((data.cards ?? []).map((c) => [c.questionId, clone(c)]));
+    this.rewards = new Map((data.rewards ?? []).map((r) => [rewardKey(r), clone(r)]));
     this.settings = new Map(Object.entries(data.settings).filter(([k]) => k !== 'admin_pin'));
     if (pin) this.settings.set('admin_pin', pin);
   }

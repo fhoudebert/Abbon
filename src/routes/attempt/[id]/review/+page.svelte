@@ -72,7 +72,7 @@
       <header>
         <span class="muted">{t('play.questionOf', { n: i + 1, total: session.questions.length })}</span>
         <span class="badge {outcome}">{t(`outcome.${outcome}`)}</span>
-        <span class="tool"><BoxToggle {quiz} question={q} /></span>
+        <span class="tool"><BoxToggle {quiz} question={q} failed={outcome !== 'correct'} /></span>
       </header>
       <div class="prompt" lang={q.prompt[lang] ? lang : fallback}><RichContent value={pick(q.prompt, lang, fallback)} /></div>
       {#if q.type === 'cloze'}

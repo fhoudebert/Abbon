@@ -11,7 +11,17 @@ import type { ResolvedImport } from '$lib/interchange/plan';
 import type { ModulePlan } from '$lib/interchange/module';
 import { buildPackage, cardMedia, quizMedia, sheetMedia, type ContentBundle, type MediaFile, type ParsedPackage } from '$lib/interchange/qcmPackage';
 import { startAttempt } from '$lib/domain/session';
-import { dueCards, newCard, reviewCard, type LeitnerCard } from '$lib/domain/leitner';
+import { dueCards, newCard, restoreCard, reviewCard, type LeitnerCard } from '$lib/domain/leitner';
+import {
+  attemptRewards,
+  collectRewards,
+  localDay,
+  promotion,
+  reviewRewards,
+  totalPoints,
+  type Rank,
+  type Reward,
+} from '$lib/domain/rewards';
 import type { Attempt, AttemptMode, Category, I18nRich, InstalledModule, Question, Quiz, QuizSummary } from '$lib/domain/types';
 import { i18n, setLang } from '$lib/i18n/index.svelte';
 
@@ -22,6 +32,8 @@ export interface QuizEntry {
 }
 
 const PIN_KEY = 'admin_pin';
+/** Réglage « Afficher les ceintures et les points » : 'off' pour les masquer (les points restent comptés). */
+const REWARDS_KEY = 'rewards';
 
 /** État global de l'application (Svelte 5). */
 class AppState {
@@ -35,6 +47,16 @@ class AppState {
   modules = $state<InstalledModule[]>([]);
   /** Boîte de révision (Leitner) : une seule pour tous les QCM. */
   cards = $state<LeitnerCard[]>([]);
+  /** Total des points (ceintures). */
+  points = $state(0);
+  /** Dernier jour (AAAA-MM-JJ) où le bonus « journée à jour » a été gagné. */
+  lastDayDone = $state<string | null>(null);
+  /** Afficher les ceintures et les points ? */
+  showRewards = $state(true);
+  /** Points gagnés par la dernière tentative terminée (affichés sur son résultat). */
+  attemptPoints = $state<{ attemptId: string; points: number } | null>(null);
+  /** Nouveau rang à annoncer (passage de ceinture ou de dan), jusqu'à ce qu'il soit lu. */
+  promotion = $state<Rank | null>(null);
   /** Un code PIN protège-t-il l'administration ? */
   pinSet = $state(false);
   /** Administration déverrouillée pour cette session (toujours vrai sans PIN). */
@@ -65,6 +87,7 @@ class AppState {
       if (lang) setLang(lang);
       else setLang(i18n.lang);
       this.pinSet = !!(await repo.getSetting(PIN_KEY));
+      this.showRewards = (await repo.getSetting(REWARDS_KEY)) !== 'off';
       await seedDemo(repo);
       await this.reload();
       this.ready = true;
@@ -75,13 +98,15 @@ class AppState {
 
   async reload() {
     if (!this.#repo) return;
-    const [categories, quizzes, attempts, modules, cards] = await Promise.all([
+    const [categories, quizzes, attempts, modules, cards, rewards] = await Promise.all([
       this.#repo.listCategories(),
       this.#repo.listQuizzes(),
       this.#repo.listAttempts(),
       this.#repo.listModules(),
       this.#repo.listCards(),
+      this.#repo.listRewards(),
     ]);
+    this.#setRewards(rewards);
     this.modules = modules;
     this.cards = cards;
     this.categories = categories;
@@ -156,6 +181,52 @@ class AppState {
     await this.reload();
   }
 
+  // ---- Points et ceintures ---------------------------------------------------
+
+  #setRewards(rewards: Reward[]) {
+    this.points = totalPoints(rewards);
+    this.lastDayDone = rewards.filter((r) => r.kind === 'day').reduce<string | null>((m, r) => (!m || r.ref > m ? r.ref : m), null);
+  }
+
+  /** Enregistre des récompenses (les déjà acquises sont ignorées) ; renvoie les points gagnés. */
+  async #grant(rewards: Reward[]): Promise<number> {
+    if (!rewards.length) return 0;
+    const fresh = await (await this.repo()).addRewards(rewards);
+    const gained = totalPoints(fresh);
+    if (!gained) return 0;
+    const before = this.points;
+    this.points += gained;
+    for (const r of fresh) if (r.kind === 'day' && (!this.lastDayDone || r.ref > this.lastDayDone)) this.lastDayDone = r.ref;
+    const rank = promotion(before, this.points);
+    if (rank && this.showRewards) this.promotion = rank;
+    return gained;
+  }
+
+  /** Le bonus « journée à jour » est-il déjà gagné aujourd'hui ? */
+  dayDone(now = new Date()): boolean {
+    return this.lastDayDone === localDay(now);
+  }
+
+  async setShowRewards(on: boolean) {
+    this.showRewards = on;
+    if (!on) this.promotion = null;
+    await (await this.repo()).setSetting(REWARDS_KEY, on ? 'on' : 'off');
+  }
+
+  /** Récompenses d'une tentative qui vient de se terminer (QCM réussi, module terminé). */
+  async rewardAttempt(quiz: Pick<Quiz, 'id' | 'moduleId' | 'questions'>, attempt: Attempt, passed: boolean): Promise<number> {
+    const complete = attempt.questionOrder.length >= quiz.questions.length;
+    if (!passed || !complete) return 0;
+    const passedIds = new Set((await (await this.repo()).listRewards()).filter((r) => r.kind === 'quiz').map((r) => r.ref));
+    const moduleId = this.quizzes.find((q) => q.id === quiz.id)?.moduleId ?? quiz.moduleId ?? null;
+    const moduleQuizIds = moduleId
+      ? this.quizzes.filter((q) => q.moduleId === moduleId && q.status === 'published').map((q) => q.id)
+      : [];
+    const points = await this.#grant(attemptRewards({ id: quiz.id, moduleId }, passed, complete, moduleQuizIds, passedIds));
+    if (points) this.attemptPoints = { attemptId: attempt.id, points };
+    return points;
+  }
+
   // ---- Boîte de révision (Leitner) -----------------------------------------
 
   inBox(questionId: string): boolean {
@@ -167,18 +238,42 @@ class AppState {
     return dueCards(this.cards, now).length;
   }
 
-  /** Met une question dans la boîte, ou l'en retire. Renvoie vrai si elle y est après l'appel. */
-  async toggleCard(quiz: Pick<Quiz, 'id' | 'title' | 'languages'>, question: Question): Promise<boolean> {
-    const repo = await this.repo();
+  /**
+   * Met une question dans la boîte, ou l'en retire. Renvoie vrai si elle y est après l'appel.
+   * `failed` : la question vient d'être échouée dans une tentative terminée (1 point à la collecte).
+   */
+  async toggleCard(quiz: Pick<Quiz, 'id' | 'title' | 'languages'>, question: Question, failed = false): Promise<boolean> {
     if (this.inBox(question.id)) {
-      await repo.deleteCard(question.id);
+      await (await this.repo()).deleteCard(question.id);
       this.cards = this.cards.filter((c) => c.questionId !== question.id);
       return false;
     }
-    const card = newCard(quiz, $state.snapshot(question) as Question);
-    await repo.saveCard(card);
-    this.cards = [...this.cards, card];
+    await this.addCards(quiz, [question], failed);
     return true;
+  }
+
+  /** Range des questions choisies dans la boîte (celles qui y sont déjà sont ignorées) ; renvoie les points gagnés. */
+  async addCards(quiz: Pick<Quiz, 'id' | 'title' | 'languages'>, questions: Question[], failed: boolean): Promise<number> {
+    const repo = await this.repo();
+    const now = new Date();
+    const added: LeitnerCard[] = [];
+    for (const q of questions) {
+      if (this.inBox(q.id) || added.some((c) => c.questionId === q.id)) continue;
+      const card = newCard(quiz, $state.snapshot(q) as Question, now);
+      await repo.saveCard(card);
+      added.push(card);
+    }
+    this.cards = [...this.cards, ...added];
+    return this.#grant(added.flatMap((c) => collectRewards(c.questionId, failed, now)));
+  }
+
+  /** Remet une carte acquise dans le planning, au premier compartiment. */
+  async restoreCard(questionId: string) {
+    const card = this.cards.find((c) => c.questionId === questionId);
+    if (!card) return;
+    const next = restoreCard($state.snapshot(card) as LeitnerCard);
+    await (await this.repo()).saveCard(next);
+    this.cards = this.cards.map((c) => (c.questionId === questionId ? next : c));
   }
 
   async removeCard(questionId: string) {
@@ -186,12 +281,14 @@ class AppState {
     this.cards = this.cards.filter((c) => c.questionId !== questionId);
   }
 
-  /** Enregistre le résultat d'une révision : la carte change de compartiment. */
-  async recordReview(card: LeitnerCard, correct: boolean): Promise<LeitnerCard> {
-    const next = reviewCard($state.snapshot(card) as LeitnerCard, correct);
+  /** Enregistre le résultat d'une révision : la carte change de compartiment ; renvoie aussi les points gagnés. */
+  async recordReview(card: LeitnerCard, correct: boolean, now = new Date()): Promise<{ card: LeitnerCard; points: number }> {
+    const before = $state.snapshot(card) as LeitnerCard;
+    const next = reviewCard(before, correct, now);
     await (await this.repo()).saveCard(next);
     this.cards = this.cards.map((c) => (c.questionId === next.questionId ? next : c));
-    return next;
+    const points = await this.#grant(reviewRewards(before, next, correct, dueCards(this.cards, now).length, now));
+    return { card: next, points };
   }
 
   // ---- Modules -------------------------------------------------------------
@@ -278,12 +375,13 @@ class AppState {
     const snapshots = history.attempts.map((a) => a.quizSnapshot).filter((q): q is Quiz => !!q);
     const modules = await repo.listModules();
     const cards = await repo.listCards();
+    const rewards = await repo.listRewards();
     const media = await this.#media([
       ...new Set([...quizMedia([...content.quizzes, ...snapshots]), ...sheetMedia(modules.map((m) => m.manifest)), ...cardMedia(cards)]),
     ]);
     const { admin_pin: _pin, ...settings } = await repo.listSettings();
     return buildPackage(
-      { ...content, media, ...history, settings, modules, cards },
+      { ...content, media, ...history, settings, modules, cards, rewards },
       { kind: 'backup', solutions: true, appVersion: __APP_VERSION__ },
     );
   }
@@ -324,10 +422,12 @@ class AppState {
       settings: p.settings ?? {},
       modules: p.modules ?? [],
       cards: p.cards ?? [],
+      rewards: p.rewards ?? [],
       media: [...p.media].map(([hash, m]) => ({ hash, mime: m.mime, sizeBytes: m.bytes.length, data: bytesToB64(m.bytes) })),
     });
     const lang = await repo.getSetting('lang');
     if (lang) setLang(lang);
+    this.showRewards = (await repo.getSetting(REWARDS_KEY)) !== 'off';
     await this.reload();
   }
 

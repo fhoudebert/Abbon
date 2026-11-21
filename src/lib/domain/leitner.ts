@@ -3,7 +3,8 @@
  *
  * L'apprenant y met les questions qu'il veut retenir. Chaque question (« carte ») est rangée dans un
  * compartiment : une bonne réponse la fait avancer d'un compartiment, une erreur la renvoie dans le
- * premier ; plus le compartiment est élevé, plus la révision est espacée. Fonctions pures.
+ * premier ; plus le compartiment est élevé, plus la révision est espacée. Une bonne réponse dans le dernier
+ * compartiment rend la carte « acquise » : elle sort du planning (on peut l'y remettre). Fonctions pures.
  */
 import { scoreQuestion, type Given } from './scoring';
 import type { I18nText, Lang, Question, Quiz } from './types';
@@ -27,6 +28,8 @@ export interface LeitnerCard {
   /** Nombre de révisions, et nombre d'erreurs. */
   reviews: number;
   lapses: number;
+  /** Date d'acquisition : la carte est sortie du planning. Absente ou nulle tant qu'elle y est. */
+  acquiredAt?: string | null;
   /** Copie de la question au moment de l'ajout, avec ce qu'il faut pour l'afficher. */
   snapshot: { question: Question; quizTitle: I18nText; languages: Lang[] };
 }
@@ -40,7 +43,12 @@ export function dueAfter(now: Date, days: number): string {
   return d.toISOString();
 }
 
-export const isDue = (card: Pick<LeitnerCard, 'dueAt'>, now = new Date()) => card.dueAt <= now.toISOString();
+/** La carte est-elle sortie du planning ? */
+export const isAcquired = (card: Pick<LeitnerCard, 'acquiredAt'>) => !!card.acquiredAt;
+
+/** À revoir maintenant : dans le planning, et sa date est arrivée. */
+export const isDue = (card: Pick<LeitnerCard, 'dueAt' | 'acquiredAt'>, now = new Date()) =>
+  !isAcquired(card) && card.dueAt <= now.toISOString();
 
 /** Nouvelle carte : compartiment 1, à revoir tout de suite. */
 export function newCard(quiz: Pick<Quiz, 'id' | 'title' | 'languages'>, question: Question, now = new Date()): LeitnerCard {
@@ -53,20 +61,26 @@ export function newCard(quiz: Pick<Quiz, 'id' | 'title' | 'languages'>, question
     lastAt: null,
     reviews: 0,
     lapses: 0,
+    acquiredAt: null,
     snapshot: { question: structuredClone(question), quizTitle: { ...quiz.title }, languages: [...quiz.languages] },
   };
 }
 
 /**
  * Carte après une révision : avance d'un compartiment si la réponse est juste, retour au premier sinon.
- * Révisée avant sa date (« Réviser quand même »), une carte juste ne bouge pas — sinon on la ferait
- * monter en la répétant le même jour ; une erreur, elle, compte toujours.
+ * Juste dans le dernier compartiment, elle est acquise et sort du planning.
+ * Révisée avant sa date (« Réviser quand même »), ou déjà acquise, une carte juste ne bouge pas — sinon on
+ * la ferait monter en la répétant le même jour ; une erreur, elle, compte toujours (une carte acquise
+ * revient alors dans le planning, au premier compartiment).
  */
 export function reviewCard(card: LeitnerCard, correct: boolean, now = new Date()): LeitnerCard {
   if (correct && !isDue(card, now)) return { ...card, lastAt: now.toISOString(), reviews: card.reviews + 1 };
+  if (correct && card.box >= LEITNER_BOXES)
+    return { ...card, box: LEITNER_BOXES, acquiredAt: now.toISOString(), lastAt: now.toISOString(), reviews: card.reviews + 1 };
   const box = correct ? Math.min(LEITNER_BOXES, card.box + 1) : 1;
   return {
     ...card,
+    acquiredAt: null,
     box,
     dueAt: dueAfter(now, LEITNER_INTERVALS[box - 1]),
     lastAt: now.toISOString(),
@@ -81,10 +95,15 @@ export function dueCards(cards: readonly LeitnerCard[], now = new Date()): Leitn
   return cards.filter((c) => isDue(c, now)).sort((a, b) => a.box - b.box || a.dueAt.localeCompare(b.dueAt));
 }
 
-/** Nombre de cartes par compartiment (indice 0 = compartiment 1). */
-export function boxCounts(cards: readonly Pick<LeitnerCard, 'box'>[]): number[] {
+/** Remet une carte acquise dans le planning, au premier compartiment, à revoir tout de suite. */
+export function restoreCard(card: LeitnerCard, now = new Date()): LeitnerCard {
+  return { ...card, acquiredAt: null, box: 1, dueAt: now.toISOString() };
+}
+
+/** Nombre de cartes du planning par compartiment (indice 0 = compartiment 1) ; les acquises n'y sont pas. */
+export function boxCounts(cards: readonly Pick<LeitnerCard, 'box' | 'acquiredAt'>[]): number[] {
   const out = Array.from({ length: LEITNER_BOXES }, () => 0);
-  for (const c of cards) out[Math.min(LEITNER_BOXES, Math.max(1, c.box)) - 1]++;
+  for (const c of cards) if (!isAcquired(c)) out[Math.min(LEITNER_BOXES, Math.max(1, c.box)) - 1]++;
   return out;
 }
 

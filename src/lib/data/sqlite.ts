@@ -1,4 +1,5 @@
 import type { LeitnerCard } from '$lib/domain/leitner';
+import { rewardKey, type Reward, type RewardKind } from '$lib/domain/rewards';
 import type { Answer, Attempt, Category, Choice, InstalledModule, ModuleManifest, Question, Quiz, QuizSummary } from '$lib/domain/types';
 import type { AnswerRow, FullData, Media, ModuleInstall, Repository } from './repository';
 
@@ -314,6 +315,7 @@ export class SqliteRepository implements Repository {
       lastAt: (r.last_at as string) ?? null,
       reviews: Number(r.reviews),
       lapses: Number(r.lapses),
+      acquiredAt: (r.acquired_at as string) ?? null,
       snapshot: parse<LeitnerCard['snapshot']>(r.snapshot, null as never),
     }));
   }
@@ -325,6 +327,21 @@ export class SqliteRepository implements Repository {
 
   async deleteCard(questionId: string): Promise<void> {
     await this.db.execute('DELETE FROM leitner_card WHERE question_id = $1', [questionId]);
+  }
+
+  // ---- Points et ceintures --------------------------------------------------
+
+  async listRewards(): Promise<Reward[]> {
+    const rows = await this.db.select<Row>('SELECT * FROM reward ORDER BY at, kind, ref');
+    return rows.map((r) => ({ kind: String(r.kind) as RewardKind, ref: String(r.ref), points: Number(r.points), at: String(r.at) }));
+  }
+
+  async addRewards(rewards: Reward[]): Promise<Reward[]> {
+    if (!rewards.length) return [];
+    const known = new Set((await this.listRewards()).map(rewardKey));
+    const fresh = rewards.filter((r, i) => !known.has(rewardKey(r)) && rewards.findIndex((o) => rewardKey(o) === rewardKey(r)) === i);
+    if (fresh.length) await this.db.batch(fresh.map(rewardStatement));
+    return fresh;
   }
 
   // ---- Sauvegarde complète --------------------------------------------------
@@ -373,6 +390,7 @@ export class SqliteRepository implements Repository {
       { sql: 'DELETE FROM attempt_archive', params: [] },
       { sql: 'DELETE FROM module', params: [] },
       { sql: 'DELETE FROM leitner_card', params: [] },
+      { sql: 'DELETE FROM reward', params: [] },
       // Le code PIN de l'appareil est conservé.
       { sql: "DELETE FROM setting WHERE key <> 'admin_pin'", params: [] },
     ];
@@ -385,6 +403,7 @@ export class SqliteRepository implements Repository {
         params: [m.manifest.id, m.manifest.version, JSON.stringify(m.manifest), m.installedAt, m.updatedAt],
       });
     for (const c of data.cards ?? []) st.push(cardStatement(c));
+    for (const r of data.rewards ?? []) st.push(rewardStatement(r));
     for (const q of data.quizzes) st.push(...quizStatements(q));
     for (const m of data.media)
       st.push({
@@ -452,11 +471,18 @@ function orderCategories(categories: readonly Category[]): Category[] {
 
 function cardStatement(c: LeitnerCard): Statement {
   return {
-    sql: `INSERT INTO leitner_card (question_id, quiz_id, box, due_at, added_at, last_at, reviews, lapses, snapshot)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    sql: `INSERT INTO leitner_card (question_id, quiz_id, box, due_at, added_at, last_at, reviews, lapses, snapshot, acquired_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        ON CONFLICT(question_id) DO UPDATE SET quiz_id = $2, box = $3, due_at = $4, added_at = $5, last_at = $6,
-         reviews = $7, lapses = $8, snapshot = $9`,
-    params: [c.questionId, c.quizId, c.box, c.dueAt, c.addedAt, c.lastAt, c.reviews, c.lapses, JSON.stringify(c.snapshot)],
+         reviews = $7, lapses = $8, snapshot = $9, acquired_at = $10`,
+    params: [c.questionId, c.quizId, c.box, c.dueAt, c.addedAt, c.lastAt, c.reviews, c.lapses, JSON.stringify(c.snapshot), c.acquiredAt ?? null],
+  };
+}
+
+function rewardStatement(r: Reward): Statement {
+  return {
+    sql: 'INSERT OR IGNORE INTO reward (kind, ref, points, at) VALUES ($1, $2, $3, $4)',
+    params: [r.kind, r.ref, r.points, r.at],
   };
 }
 

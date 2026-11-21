@@ -111,6 +111,10 @@
       {#each TEXT_SIZES as sz (sz)}<option value={sz}>{t(`settings.textSize.${sz}`)}</option>{/each}
     </select>
   </label>
+  <label class="check">
+    <input type="checkbox" checked={app.showRewards} onchange={(e) => app.setShowRewards(e.currentTarget.checked)} />
+    <span>{t('settings.rewards')} <span class="muted small">— {t('settings.rewardsHint')}</span></span>
+  </label>
 </section>
 
 <section class="panel">
@@ -238,5 +242,11 @@
     box-shadow: none;
     border: 0;
     padding: 0;
+  }
+  .check {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin-block-start: 0.75rem;
   }
 </style>

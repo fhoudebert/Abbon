@@ -2,10 +2,12 @@
   import { app } from '$lib/app.svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import QuestionPlayer from '$lib/components/QuestionPlayer.svelte';
+  import RankCard from '$lib/components/RankCard.svelte';
   import {
     boxCounts,
     cardQuestion,
     dueCards,
+    isAcquired,
     isDue,
     LEITNER_INTERVALS,
     LEITNER_SESSION_SIZE,
@@ -24,6 +26,8 @@
   const lang = $derived(i18n.lang);
   const counts = $derived(boxCounts(app.cards));
   const due = $derived(dueCards(app.cards));
+  const planned = $derived(app.cards.filter((c) => !isAcquired(c)));
+  const acquired = $derived(app.cards.filter(isAcquired).sort((a, b) => (b.acquiredAt ?? '').localeCompare(a.acquiredAt ?? '')));
   const fmtDate = (iso: string) => new Intl.DateTimeFormat(lang, { dateStyle: 'medium' }).format(new Date(iso));
 
   // ---- Session ---------------------------------------------------------------
@@ -31,6 +35,9 @@
   let index = $state(0);
   let good = $state(0);
   let reviewed = $state(0);
+  /** Points gagnés pendant la séance, et bonus « journée à jour » gagné pendant la séance. */
+  let gained = $state(0);
+  let dayDoneNow = $state(false);
   let answeredCurrent = $state(false);
   let running = $state(false);
   let finished = $state(false);
@@ -50,6 +57,8 @@
     index = 0;
     good = 0;
     reviewed = 0;
+    gained = 0;
+    dayDoneNow = false;
     answeredCurrent = false;
     finished = false;
     running = picked.length > 0;
@@ -60,7 +69,10 @@
     answeredCurrent = true;
     reviewed++;
     if (correct) good++;
-    await app.recordReview(card, correct);
+    const hadDay = app.dayDone();
+    const { points } = await app.recordReview(card, correct);
+    gained += points;
+    if (!hadDay && app.dayDone()) dayDoneNow = true;
   }
 
   function next() {
@@ -111,8 +123,12 @@
     <section class="panel done" role="status">
       <h2>{t('leitner.done')}</h2>
       <p>{t('leitner.doneScore', { n: good, good, total: reviewed })}</p>
+      {#if app.showRewards && gained}<p class="gain">{t('leitner.points', { n: gained })}</p>{/if}
+      {#if dayDoneNow}<p>{t('leitner.dayDone')}</p>{/if}
     </section>
   {/if}
+
+  {#if app.showRewards}<RankCard explain />{/if}
 
   <p class="muted intro">{t('leitner.intro')}</p>
 
@@ -135,16 +151,16 @@
         {#if due.length > LEITNER_SESSION_SIZE}<span class="muted">{t('leitner.dueTotal', { n: due.length })}</span>{/if}
       {:else}
         <p>{t('leitner.nothingDue')}</p>
-        <button class="secondary" onclick={() => start([...app.cards].sort((a, b) => a.box - b.box || a.dueAt.localeCompare(b.dueAt)))}>
+        <button class="secondary" disabled={!planned.length} onclick={() => start([...planned].sort((a, b) => a.box - b.box || a.dueAt.localeCompare(b.dueAt)))}>
           {t('leitner.reviewAnyway')}
         </button>
         <span class="muted small">{t('leitner.anywayHint')}</span>
       {/if}
     </div>
 
-    <h2>{t('leitner.list', { n: app.cards.length })}</h2>
+    <h2>{t('leitner.list', { n: planned.length })}</h2>
     <ul class="cards">
-      {#each [...app.cards].sort((a, b) => a.dueAt.localeCompare(b.dueAt)) as c (c.questionId)}
+      {#each [...planned].sort((a, b) => a.dueAt.localeCompare(b.dueAt)) as c (c.questionId)}
         <li class="panel">
           <div class="info">
             <span class="q">{promptOf(c)}</span>
@@ -157,6 +173,25 @@
         </li>
       {/each}
     </ul>
+
+    {#if acquired.length}
+      <h2>{t('leitner.acquired', { n: acquired.length })}</h2>
+      <p class="muted small intro">{t('leitner.acquiredHint')}</p>
+      <ul class="cards">
+        {#each acquired as c (c.questionId)}
+          <li class="panel">
+            <div class="info">
+              <span class="q">{promptOf(c)}</span>
+              <span class="muted small">
+                {localize(c.snapshot.quizTitle, lang, c.snapshot.languages[0])} · {t('leitner.acquiredOn', { date: fmtDate(c.acquiredAt ?? c.dueAt) })}
+              </span>
+            </div>
+            <button class="ghost" onclick={() => app.restoreCard(c.questionId)}>{t('leitner.restore')}</button>
+            <button class="ghost danger" onclick={() => askRemove(c)}>{t('leitner.remove')}</button>
+          </li>
+        {/each}
+      </ul>
+    {/if}
   {/if}
 {/if}
 
@@ -247,5 +282,15 @@
   }
   .done h2 {
     margin-block-start: 0;
+  }
+  .gain {
+    font-weight: 600;
+    color: var(--accent);
+  }
+  .cards li {
+    flex-wrap: wrap;
+  }
+  .cards .info {
+    flex: 1 1 14rem;
   }
 </style>
