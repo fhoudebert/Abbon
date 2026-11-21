@@ -17,6 +17,7 @@ Ordre de travail de la branche `qcm`, après le socle (lots 0 à 5). Le cadrage 
 | Technique B | **Version macOS en CI** : application universelle (Apple silicon et Intel), `.dmg`, mises à jour automatiques | fait, à valider sur GitHub |
 | Lot 13 | **MathLive** : saisie visuelle des formules dans l'éditeur, puis réponses sous forme d'expression | à étudier, puis à faire |
 | Lot 14 | **Molécules** : formules topologiques générées en SVG à la construction des modules ; Ketcher plus tard, si besoin | à étudier |
+| Lot 15 | **Ceintures et points** : récompenser la mémorisation (questions échouées rangées dans la boîte puis acquises), et accessoirement les QCM et modules terminés | étudié, à valider |
 
 ## Lot 6 ter — textes à trous
 
@@ -140,6 +141,83 @@ Ordre de travail de la branche `qcm`, après le socle (lots 0 à 5). Le cadrage 
   en SVG avec sa source (molfile) pour pouvoir le modifier.
 - **Opportunité** : la génération au build oui, dès que la chimie organique entre dans le module ; Ketcher dans
   l'application, non pour l'instant.
+
+## Lot 15 — ceintures et points (étude)
+
+**But** : inciter à ranger dans la boîte de révision les questions échouées, puis à les réviser jusqu'à les
+savoir. La récompense doit donc suivre la **mémorisation**, pas le volume d'activité : des points pour chaque
+réponse pousseraient à enchaîner des QCM faciles, ce qui est l'inverse de l'objectif.
+
+### Ce qui rapporte des points
+
+| Événement | Points | Condition |
+|---|---|---|
+| Erreur rangée | 1 | La question a été échouée dans une tentative terminée, puis mise dans la boîte |
+| Question en progrès | 2 | Elle atteint le compartiment 3 (deux bonnes réponses, sur au moins 2 jours) |
+| Question acquise | 5, ou 10 si c'était une erreur rangée | Bonne réponse à une révision due, depuis le compartiment 5 (au moins 28 jours après le premier passage) |
+| QCM réussi | 2 | Première tentative complète au-dessus du seuil de réussite du QCM |
+| Module terminé | 10 | Tous les QCM du module réussis au moins une fois ; un badge à son nom |
+
+- Une erreur rangée puis acquise rapporte ainsi 13 points, contre 2 pour un QCM réussi : la boîte est le
+  chemin le plus payant, ce qui est voulu.
+- Le point « erreur rangée », gagné tout de suite, récompense la collecte ; les deux autres, gagnés au fil des
+  révisions, récompensent la répétition. L'étape du compartiment 3 évite d'attendre un mois la première
+  récompense.
+- **Chaque événement ne rapporte qu'une fois** (par question, par QCM, par module) : retirer puis remettre une
+  carte, ou refaire un QCM réussi, ne rapporte rien. « Réviser quand même » ne fait déjà pas avancer une carte ;
+  il ne rapporte donc rien non plus.
+- **Les points ne se perdent jamais**, comme une ceinture de judo ne se retire pas : une carte qui retombe au
+  compartiment 1 ne coûte rien, elle pourra seulement être acquise plus tard. Perdre des points ferait redouter
+  les erreurs, qui sont précisément la matière de la boîte.
+
+### Ceintures
+
+Ordre des ceintures du judo en France, d'après le total des points :
+
+| Ceinture | Blanche | Jaune | Orange | Verte | Bleue | Marron | Noire |
+|---|---|---|---|---|---|---|---|
+| Points | 0 | 20 | 60 | 120 | 250 | 450 | 750 |
+
+Puis un **dan** de plus tous les 500 points, pour ne pas plafonner. La ceinture jaune vient dans la première
+semaine d'usage régulier ; la noire demande de l'ordre de 50 questions échouées puis acquises, en plus des QCM,
+donc plusieurs mois. Ces seuils sont des constantes, à recaler après quelques semaines d'usage : les points
+étant enregistrés événement par événement, les changer ne perd rien.
+
+### Où cela se voit
+
+- **Corrigé d'une tentative** : un bouton « Ranger mes N erreurs dans ma boîte (+N points) », en plus du bouton
+  « Ma boîte » de chaque question. C'est le geste à encourager, il doit tenir en un clic. (L'ajout groupé était
+  déjà noté comme évolution possible de la boîte.)
+- **Accueil et écran Révision** : la ceinture (petit dessin et nom en toutes lettres), les points, ce qu'il
+  reste avant la suivante, le nombre de questions acquises et de questions à revoir aujourd'hui.
+- **Passage de ceinture** : un message annoncé aux lecteurs d'écran, animation désactivée si l'appareil demande
+  moins de mouvement.
+- **Réglages** : « Afficher les ceintures et les points », activé par défaut. Désactivé, rien ne s'affiche, mais
+  les points continuent d'être comptés.
+- Le nom de la ceinture est toujours écrit : la couleur seule ne suffit pas (daltonisme, lecteurs d'écran), et
+  les ceintures blanche et noire ont un contour pour rester visibles en thème clair comme sombre.
+
+### Écarté
+
+- **Séries de jours consécutifs** : elles poussent à revenir chaque jour, mais une série perdue décourage ; la
+  boîte fixe déjà le rythme par ses dates de révision. À reconsidérer sous forme d'objectif hebdomadaire.
+- **Classements** : Abbon fonctionne hors ligne, pour une seule personne.
+- **Points pour chaque bonne réponse** : récompense le volume, pas la mémorisation.
+- **Contournements** : on pourrait gagner des points avec un QCM personnel trop facile. Pour une application
+  personnelle hors ligne, on ne tricherait que contre soi-même ; aucune protection n'est prévue.
+
+### Réalisation
+
+- Migration `0008` : table `reward` (`kind`, `ref`, `points`, `at`), clé primaire (`kind`, `ref`) pour qu'un
+  événement ne compte qu'une fois ; colonne `origin` (`error` ou `choice`) sur `leitner_card`, renseignée à
+  l'ajout selon que la question a été échouée ou non.
+- `domain/rewards.ts`, fonctions pures et testées : barème, événements produits par une révision, une fin de
+  tentative ou un ajout de carte, ceinture et dan d'après un total.
+- Branchements dans le dépôt de données (ajout de carte, révision, fin de tentative) ; table comprise dans la
+  sauvegarde complète ; les points restent si un module est désinstallé.
+- Interface : bouton groupé du corrigé, ceinture à l'accueil et dans l'écran Révision, réglage, textes français
+  et anglais ; audit d'accessibilité.
+- Taille : un lot moyen, comparable à celui de la boîte de révision.
 
 ## Décisions prises
 
