@@ -1,0 +1,30 @@
+# Module « Maths spécialité, terminale » — programme 2019 (bac 2027), puis 2026 (bac 2028).
+# Chaque QCM porte l'étiquette du programme (prog-2019 ; prog-2026 quand il sera repris).
+# Questions reprises des ébauches (modules/_ebauches/math/01-bases.md), reformulées et vérifiées.
+
+id: org.abbon.maths-specialite
+version: 0.1.0
+date: 2026-11-21
+title:
+  fr: "Maths spécialité, terminale"
+description:
+  fr: "Révisions du bac. Version pilote : suites, fonctions, calcul intégral, probabilités, 36 questions."
+level: terminale
+license: CC-BY-NC-SA-4.0
+authors: [Abbon]
+homepage: https://github.com/fhoudebert/Abbon
+languages: [fr]
+requires:
+  app: ">=0.2.0"
+defaults:
+  passThreshold: 0.6
+
+categories:
+  - id: suites
+    name: { fr: "Suites" }
+  - id: fonctions
+    name: { fr: "Dérivation, logarithme, exponentielle" }
+  - id: calcul-integral
+    name: { fr: "Primitives et intégrales" }
+  - id: probabilites
+    name: { fr: "Dénombrement et probabilités" }

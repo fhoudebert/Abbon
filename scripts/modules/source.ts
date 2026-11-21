@@ -177,6 +177,26 @@ const i18nText = (v: unknown, what: string): I18nText => {
   return Object.fromEntries(Object.entries(v as Record<string, unknown>).map(([k, x]) => [k, String(x)]));
 };
 
+/**
+ * En français, une virgule entre deux chiffres est décimale ; LaTeX y mettrait une espace : elle est
+ * protégée par des accolades (« 9{,}81 »). Sauf dans \pu{…} et \ce{…}, que mhchem met déjà en forme
+ * (il y écrirait sinon « 9 ,81 »).
+ */
+export function frenchDecimals(latex: string): string {
+  let out = '';
+  let i = 0;
+  const re = /\\(?:pu|ce)\s*\{/g;
+  for (let m = re.exec(latex); m; m = re.exec(latex)) {
+    out += latex.slice(i, m.index).replace(/(\d),(?=\d)/g, '$1{,}');
+    let depth = 1;
+    let k = m.index + m[0].length;
+    for (; k < latex.length && depth; k++) depth += latex[k] === '{' ? 1 : latex[k] === '}' ? -1 : 0;
+    out += latex.slice(m.index, k);
+    i = re.lastIndex = k;
+  }
+  return out + latex.slice(i).replace(/(\d),(?=\d)/g, '$1{,}');
+}
+
 /** Compile un module. Les erreurs sont rassemblées dans `issues` : rien n'est écrit s'il y en a. */
 export function compileModule(files: readonly SourceFile[], assets: readonly Asset[] = []): Compiled {
   const issues: Issue[] = [];
@@ -202,8 +222,7 @@ export function compileModule(files: readonly SourceFile[], assets: readonly Ass
       return { type: 'image', attrs: { hash: asset.hash, alt } };
     },
     math(latex) {
-      // En français, la virgule entre deux chiffres est décimale : sans accolades, LaTeX y met une espace.
-      const tex = lang === 'fr' ? latex.replace(/(\d),(?=\d)/g, '$1{,}') : latex;
+      const tex = lang === 'fr' ? frenchDecimals(latex) : latex;
       const problem = mathError(tex);
       if (problem) throw new Error(`formule « ${latex} » : ${problem}`);
       features.add('math');

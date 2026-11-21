@@ -1,9 +1,9 @@
-# Paquets d'Abbon, dans l'ordre de priorité : Linux, Android, Windows.
+# Paquets d'Abbon, dans l'ordre de priorité : Linux, Android, Windows, macOS.
 #
 # Déclenchement :
 # - À la demande (onglet Actions → Build → Run workflow) : branche, tag ou commit en paramètre,
 #   choix des plateformes. Les paquets sont disponibles dans les « artifacts » de l'exécution.
-# - Sur un tag vX.Y.Z : les trois plateformes, puis un brouillon de release GitHub avec
+# - Sur un tag vX.Y.Z : les quatre plateformes, puis un brouillon de release GitHub avec
 #   tous les fichiers et leurs empreintes SHA-256. Le tag doit correspondre à la version de package.json.
 #
 # Configuration (Settings › Secrets and variables › Actions), tout est facultatif :
@@ -38,8 +38,12 @@ on:
         description: 'Windows : MSI, NSIS'
         type: boolean
         default: true
+      macos:
+        description: 'macOS : application universelle (.dmg)'
+        type: boolean
+        default: true
       smoke:
-        description: 'Tests d’installation (Debian, Ubuntu, Fedora, Windows, émulateur Android)'
+        description: 'Tests d’installation (Debian, Ubuntu, Fedora, Windows, macOS, émulateur Android)'
         type: boolean
         default: true
   push:
@@ -59,7 +63,7 @@ jobs:
       version: ${{ steps.v.outputs.version }}
       sha: ${{ steps.v.outputs.sha }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.BUILD_REF }}
       - id: v
@@ -85,11 +89,11 @@ jobs:
     # Ubuntu 22.04 : glibc plus ancienne, donc AppImage compatible avec plus de distributions.
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.BUILD_REF }}
-      - uses: actions/setup-node@v4
-        with: { node-version: 22, cache: npm }
+      - uses: actions/setup-node@v7
+        with: { node-version: 26, cache: npm }
       - name: Dépendances système
         run: |
           sudo apt-get update
@@ -122,7 +126,7 @@ jobs:
             n=$(echo "$f" | sed -E 's/^Abbon_(.+)_amd64\.AppImage/Abbon-\1-x86_64.AppImage/')
             mv -v "$f" "$n"
           done
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: abbon-linux-${{ needs.prepare.outputs.version }}-${{ needs.prepare.outputs.sha }}
           path: |
@@ -143,12 +147,12 @@ jobs:
       # Serveur de mises à jour par défaut, intégré à la compilation.
       ABBON_UPDATE_URL: ${{ vars.ABBON_SITE_URL }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.BUILD_REF }}
-      - uses: actions/setup-node@v4
-        with: { node-version: 22, cache: npm }
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-node@v7
+        with: { node-version: 26, cache: npm }
+      - uses: actions/setup-java@v6
         with: { distribution: temurin, java-version: 21 }
       # Comme le workflow Android de mogichex (opérationnel) : setup-android v4, paquets explicites.
       # En v3, la valeur par défaut « tools platform-tools » réclamait le paquet « tools », retiré
@@ -208,7 +212,7 @@ jobs:
           npx tauri android build --apk --debug --ci
           cp "$(find src-tauri/gen/android/app/build/outputs/apk -name '*debug.apk' | head -1)" "abbon-${VERSION}-debug.apk"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: abbon-android-${{ needs.prepare.outputs.version }}-${{ needs.prepare.outputs.sha }}
           path: abbon-*.apk
@@ -218,11 +222,11 @@ jobs:
     if: github.event_name == 'push' || inputs.windows
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.BUILD_REF }}
-      - uses: actions/setup-node@v4
-        with: { node-version: 22, cache: npm }
+      - uses: actions/setup-node@v7
+        with: { node-version: 26, cache: npm }
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with: { workspaces: src-tauri }
@@ -242,12 +246,79 @@ jobs:
             EXTRA=(--config "$(node -p 'JSON.stringify({bundle:{createUpdaterArtifacts:true},plugins:{updater:{pubkey:process.env.ABBON_UPDATER_PUBKEY}}})')")
           fi
           npx tauri build --bundles msi,nsis "${EXTRA[@]}"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: abbon-windows-${{ needs.prepare.outputs.version }}-${{ needs.prepare.outputs.sha }}
           path: |
             src-tauri/target/release/bundle/msi/*.msi*
             src-tauri/target/release/bundle/nsis/*.exe*
+
+  macos:
+    # Une seule application pour Apple silicon et Intel (binaire universel), en .dmg.
+    # Signature ad hoc (« - ») : sans elle, macOS refuse le binaire Apple silicon ; sans compte
+    # développeur Apple, on ne peut pas faire mieux (pas de notarisation, voir docs/distribution.md).
+    # Modèle : le workflow de publication de tabulon, même pile Tauri 2.
+    needs: prepare
+    if: github.event_name == 'push' || inputs.macos
+    runs-on: macos-latest
+    env:
+      BUNDLE: src-tauri/target/universal-apple-darwin/release/bundle
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.BUILD_REF }}
+      - uses: actions/setup-node@v7
+        with: { node-version: 26, cache: npm }
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+      - uses: Swatinem/rust-cache@v2
+        with: { workspaces: src-tauri }
+      - run: npm ci
+      - name: Application macOS universelle (mises à jour signées si la clé est configurée)
+        env:
+          ABBON_UPDATE_URL: ${{ vars.ABBON_SITE_URL }}
+          ABBON_UPDATER_PUBKEY: ${{ vars.TAURI_UPDATER_PUBKEY }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        shell: bash
+        run: |
+          if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            [ -n "$ABBON_UPDATER_PUBKEY" ] || { echo "::error::variable TAURI_UPDATER_PUBKEY manquante"; exit 1; }
+          fi
+          # Une seule configuration fusionnée : signature ad hoc, et artefacts de mise à jour si la clé existe.
+          CONFIG=$(node -p '
+            const c = { bundle: { macOS: { signingIdentity: "-" } } };
+            if (process.env.TAURI_SIGNING_PRIVATE_KEY) {
+              c.bundle.createUpdaterArtifacts = true;
+              c.plugins = { updater: { pubkey: process.env.ABBON_UPDATER_PUBKEY } };
+            }
+            JSON.stringify(c)')
+          npx tauri build --target universal-apple-darwin --bundles app,dmg --config "$CONFIG"
+      - name: Vérification et noms publiés
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          set -e
+          apps=("$BUNDLE"/macos/*.app)
+          app="${apps[0]}"
+          codesign --verify --deep --verbose=2 "$app"
+          archs="$(lipo -archs "$app/Contents/MacOS/Abbon")"
+          echo "Architectures : $archs"
+          case "$archs" in *x86_64*arm64*|*arm64*x86_64*) ;; *) echo "::error::binaire non universel ($archs)"; exit 1 ;; esac
+          mkdir -p out
+          cp "$BUNDLE"/dmg/*.dmg out/
+          # Archive de mise à jour (seulement si la clé de signature est configurée).
+          for f in "$BUNDLE"/macos/*.app.tar.gz "$BUNDLE"/macos/*.app.tar.gz.sig; do
+            [ -e "$f" ] || continue
+            cp "$f" "out/Abbon_${VERSION}_universal${f##*/Abbon}"
+          done
+          ls -l out
+      - uses: actions/upload-artifact@v7
+        with:
+          name: abbon-macos-${{ needs.prepare.outputs.version }}-${{ needs.prepare.outputs.sha }}
+          path: out/*
+          if-no-files-found: error
 
   # ---- Tests d'installation ----------------------------------------------------
   # Installent les paquets produits ci-dessus et lancent l'application : elle doit tourner
@@ -272,10 +343,10 @@ jobs:
     name: smoke-linux
     steps:
       # Pas de git dans les images de base : récupération du dépôt par l'API (archive).
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.BUILD_REF }}
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: abbon-linux-${{ needs.prepare.outputs.version }}-${{ needs.prepare.outputs.sha }}
           path: dist
@@ -303,11 +374,11 @@ jobs:
     if: github.event_name == 'push' || inputs.smoke
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.BUILD_REF }}
           sparse-checkout: scripts/smoke
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: abbon-windows-${{ needs.prepare.outputs.version }}-${{ needs.prepare.outputs.sha }}
           path: dist
@@ -321,11 +392,11 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.BUILD_REF }}
           sparse-checkout: scripts/smoke
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: abbon-android-${{ needs.prepare.outputs.version }}-${{ needs.prepare.outputs.sha }}
           path: dist
@@ -342,26 +413,42 @@ jobs:
           target: google_apis
           disable-animations: true
           script: bash scripts/smoke/android.sh "$(ls dist/*.apk | head -1)"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: abbon-android-capture
           path: android-smoke.png
           if-no-files-found: ignore
 
+  smoke-macos:
+    needs: [prepare, macos]
+    if: github.event_name == 'push' || inputs.smoke
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.BUILD_REF }}
+          sparse-checkout: scripts/smoke
+      - uses: actions/download-artifact@v8
+        with:
+          name: abbon-macos-${{ needs.prepare.outputs.version }}-${{ needs.prepare.outputs.sha }}
+          path: dist
+      - name: Installation depuis le .dmg et lancement
+        run: bash scripts/smoke/macos.sh dist/*.dmg
+
   release:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-    needs: [prepare, linux, android, windows]
+    needs: [prepare, linux, android, windows, macos]
     runs-on: ubuntu-24.04
     env:
       VERSION: ${{ needs.prepare.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.BUILD_REF }}
-      - uses: actions/setup-node@v4
-        with: { node-version: 22 }
-      - uses: actions/download-artifact@v4
+      - uses: actions/setup-node@v7
+        with: { node-version: 26 }
+      - uses: actions/download-artifact@v8
         with: { path: dist, merge-multiple: true }
       - name: Modules de contenu (.qcm joints à la release)
         run: |
@@ -373,15 +460,15 @@ jobs:
         env:
           SITE_URL: ${{ vars.ABBON_SITE_URL }}
         run: |
-          node --experimental-strip-types scripts/release/build-site.ts \
+          node scripts/release/build-site.ts \
             --dist dist --out site --version "$VERSION" --base-url "$SITE_URL"
           cp site/releases/SHA256SUMS.txt dist/
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: abbon-site-${{ needs.prepare.outputs.version }}
           path: site
           include-hidden-files: true # .htaccess
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           name: Abbon ${{ needs.prepare.outputs.version }}
           draft: true
@@ -394,7 +481,7 @@ jobs:
     env:
       HAS_FTP: ${{ secrets.FTP_URL != '' }}
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         if: env.HAS_FTP == 'true'
         with:
           name: abbon-site-${{ needs.prepare.outputs.version }}

@@ -43,7 +43,7 @@ Dans l'éditeur : `Ctrl+S` enregistre ; dans une réponse, `Entrée` crée la r�
 
 | Outil | Version |
 |---|---|
-| Node.js | 22.13 ou plus récent |
+| Node.js | 24 ou plus récent (la CI construit en Node 26) |
 | Rust | 1.90 ou plus récent (`rustup`) |
 | Linux | `libwebkit2gtk-4.1-dev`, `libxdo-dev`, `libssl-dev`, `libayatana-appindicator3-dev`, `librsvg2-dev` |
 | Android | Android Studio (SDK + NDK), Java 17+, cibles Rust Android — voir [la doc Tauri](https://v2.tauri.app/start/prerequisites/#android) |
@@ -99,23 +99,25 @@ Tests d'installation (lancent l'application 30 s et vérifient la création de l
 npm run tauri build -- --bundles deb,rpm,appimage    # Linux
 npm run tauri android build -- --apk                 # Android
 npm run tauri build -- --bundles msi,nsis            # Windows (sur Windows)
+npm run tauri build -- --target universal-apple-darwin --bundles app,dmg   # macOS (sur un Mac, avec les
+                                                     # cibles Rust aarch64-apple-darwin et x86_64-apple-darwin)
 ```
 
 ### Intégration continue
 
 - [`ci.yml`](.github/workflows/ci.yml) : types, tests TS et Rust, lint, audit d'accessibilité, à chaque push sur
   n'importe quelle branche et à chaque pull request.
-- [`build.yml`](.github/workflows/build.yml) : paquets Linux, Android et Windows.
+- [`build.yml`](.github/workflows/build.yml) : paquets Linux, Android, Windows et macOS.
   - **À la demande** : onglet *Actions* → *Build* → *Run workflow*, puis saisir la branche (ou un tag, un commit) et
     cocher les plateformes. Les paquets se téléchargent depuis les *artifacts* de l'exécution.
     Avec `gh` : `gh workflow run build.yml --ref main -f ref=main -f windows=false`.
     Attention : GitHub exécute le fichier de workflow de la branche choisie dans « Use workflow from »
     (option `--ref`), le champ `ref` ne choisit que le code compilé. Pour tester une modification du
     workflow lui-même, choisir la même branche aux deux endroits.
-  - **Sur un tag `vX.Y.Z`** : les trois plateformes, puis un brouillon de release avec les empreintes SHA-256.
+  - **Sur un tag `vX.Y.Z`** : les quatre plateformes, puis un brouillon de release avec les empreintes SHA-256.
     Le tag doit correspondre à la version de `package.json`, sinon le build s'arrête.
   - **Tests d'installation** (case *smoke*, toujours sur un tag) : `.deb` sur Debian 12, Debian 13 et Ubuntu 24.04,
-    `.rpm` sur Fedora, AppImage, installateur NSIS sous Windows, APK sur un émulateur Android 14 (capture d'écran
+    `.rpm` sur Fedora, AppImage, installateur NSIS sous Windows, application macOS installée depuis le `.dmg`, APK sur un émulateur Android 14 (capture d'écran
     en *artifact*). Ils sont informatifs : la release ne les attend pas.
 
 GitHub n'affiche le bouton *Run workflow* que si le workflow est présent sur la branche par défaut du dépôt.

@@ -7,7 +7,9 @@ set -euo pipefail
 
 # Conteneur lancé en root, sans GPU : pas de bac à sable WebKit, rendu logiciel.
 export WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1 WEBKIT_DISABLE_COMPOSITING_MODE=1 LIBGL_ALWAYS_SOFTWARE=1
-export XDG_CONFIG_HOME="$(mktemp -d)" XDG_DATA_HOME="$(mktemp -d)"
+XDG_CONFIG_HOME="$(mktemp -d)"
+XDG_DATA_HOME="$(mktemp -d)"
+export XDG_CONFIG_HOME XDG_DATA_HOME
 log="$(mktemp)"
 
 set +e

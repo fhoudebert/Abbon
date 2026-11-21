@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseRelease } from '../../src/lib/domain/release';
+import { downloadFor, parseRelease } from '../../src/lib/domain/release';
 import { buildLatestJson, buildVersionJson, classify, notesFromChangelog, sha256sums } from './manifest';
 
 const h = (c: string) => c.repeat(64);
@@ -33,6 +33,9 @@ describe('manifestes de release', () => {
     expect(classify('x.AppImage')).toEqual({ platform: 'linux', kind: 'appimage' });
     expect(classify('x-setup.exe')).toEqual({ platform: 'windows', kind: 'nsis' });
     expect(classify('x.apk')).toEqual({ platform: 'android', kind: 'apk' });
+    expect(classify('Abbon_0.2.0_universal.dmg')).toEqual({ platform: 'macos', kind: 'dmg' });
+    expect(classify('Abbon_0.2.0_universal.app.tar.gz')).toEqual({ platform: 'macos', kind: 'app' });
+    expect(classify('Abbon_0.2.0_universal.app.tar.gz.sig')).toBeNull();
     expect(classify('SHA256SUMS.txt')).toBeNull();
     expect(classify('x.AppImage.sig')).toBeNull();
   });
@@ -68,5 +71,25 @@ describe('manifestes de release', () => {
 
   it('SHA256SUMS au format sha256sum', () => {
     expect(sha256sums(artifacts.slice(0, 1))).toBe(`${h('a')}  Abbon_0.2.0_amd64.AppImage\n`);
+  });
+});
+
+describe('macOS', () => {
+  const mac = [
+    { name: 'Abbon_0.2.0_universal.dmg', size: 1, sha256: h('e') },
+    { name: 'Abbon_0.2.0_universal.app.tar.gz', size: 1, sha256: h('f'), signature: 'sigM' },
+  ];
+
+  it('latest.json : la même archive universelle pour Apple silicon et Intel', () => {
+    const l = buildLatestJson('0.2.0', 'd', 'notes', 'https://exemple.fr', mac);
+    expect(Object.keys(l.platforms).sort()).toEqual(['darwin-aarch64', 'darwin-aarch64-app', 'darwin-x86_64', 'darwin-x86_64-app']);
+    expect(l.platforms['darwin-aarch64']).toEqual({ signature: 'sigM', url: 'https://exemple.fr/releases/Abbon_0.2.0_universal.app.tar.gz' });
+    expect(l.platforms['darwin-x86_64']).toEqual(l.platforms['darwin-aarch64']);
+  });
+
+  it('version.json : l’application propose le .dmg à télécharger', () => {
+    const v = parseRelease(buildVersionJson('0.2.0', 'd', {}, [...mac].reverse()))!;
+    expect(v.files.map((f) => [f.platform, f.kind])).toEqual([['macos', 'app'], ['macos', 'dmg']]);
+    expect(downloadFor(v, 'macos')?.name).toBe('Abbon_0.2.0_universal.dmg');
   });
 });

@@ -9,9 +9,10 @@ https://votre-domaine/chemin/
   .htaccess                    types de fichiers, HTTPS, cache (Apache)
   abbon.png
   releases/
-    Abbon-X.Y.Z-x86_64.AppImage, .deb, .rpm, -setup.exe, .msi, abbon-X.Y.Z.apk
+    Abbon-X.Y.Z-x86_64.AppImage, .deb, .rpm, -setup.exe, .msi, abbon-X.Y.Z.apk,
+    Abbon_X.Y.Z_universal.dmg, Abbon_X.Y.Z_universal.app.tar.gz (mises à jour macOS)
     version.json               description de la version (page, application Android)
-    latest.json                mises à jour automatiques Linux / Windows (fichiers signés)
+    latest.json                mises à jour automatiques Linux / Windows / macOS (fichiers signés)
     SHA256SUMS.txt
 ```
 
@@ -19,6 +20,7 @@ https://votre-domaine/chemin/
 |---|---|
 | Linux (AppImage, .deb, .rpm) | Automatique : téléchargement, vérification de la signature, installation, redémarrage. Pour .deb / .rpm, le mot de passe administrateur est demandé. |
 | Windows (.exe, .msi) | Automatique, comme Linux. |
+| macOS (.dmg) | Automatique, comme Linux : l'archive `.app.tar.gz` signée remplace l'application. Une seule application pour Apple silicon et Intel. |
 | Android (APK) | L'application signale la nouvelle version et ouvre l'APK dans le navigateur ; Android l'installe par-dessus l'ancienne (même clé de signature obligatoire). |
 
 L'application vérifie au plus une fois par jour, au démarrage (désactivable dans *Paramètres › Mises à jour*,
@@ -84,15 +86,30 @@ qu'une fois tous ses fichiers en ligne. Les anciennes versions restent sur le se
    - …
    ```
 3. Committer, puis créer et pousser le tag : `git tag v0.2.0 && git push origin v0.2.0`.
-4. Le workflow *Build* compile les trois plateformes, signe les paquets, prépare le site
+4. Le workflow *Build* compile les quatre plateformes, signe les paquets, prépare le site
    (artifact `abbon-site-0.2.0`), crée un brouillon de release GitHub et, si configuré, dépose le site.
 5. Sans dépôt automatique : télécharger l'artifact `abbon-site-0.2.0` et envoyer son contenu sur
    l'hébergement (garder `.htaccess`, fichier caché) — paquets d'abord, `releases/*.json` en dernier.
 6. Publier le brouillon de release GitHub.
 
+## macOS : application non notarisée
+
+L'application macOS est **universelle** (un binaire Apple silicon et Intel) et **signée ad hoc** : sans cette
+signature, macOS refuse le binaire Apple silicon. Sans compte développeur Apple (payant), elle n'est ni signée
+par un certificat Apple ni notarisée. Au premier lancement, macOS refuse donc de l'ouvrir avec un message ;
+l'utilisateur l'autorise une fois pour toutes :
+
+- clic droit (ou Ctrl-clic) sur Abbon dans le dossier Applications, puis **Ouvrir** ;
+- ou, après le refus : **Réglages › Confidentialité et sécurité › Ouvrir quand même**.
+
+La page de téléchargement le rappelle sous le lien du `.dmg`. Les mises à jour automatiques, téléchargées par
+l'application elle-même et vérifiées par sa signature minisign, ne redemandent rien. Avec un certificat
+« Developer ID » et la notarisation, ce passage disparaîtrait : il suffirait de remplacer `"signingIdentity": "-"`
+par l'identité du certificat et d'ajouter les secrets correspondants (voir la documentation de Tauri).
+
 ## Sécurité
 
-- Chaque paquet Linux / Windows est signé (minisign) ; l'application vérifie la signature avec la clé publique
+- Chaque paquet Linux / Windows / macOS est signé (minisign) ; l'application vérifie la signature avec la clé publique
   intégrée avant d'installer.
 - `requireSignedVersion` : la version est incluse dans la signature. Un serveur compromis ne peut pas faire
   installer une ancienne version signée en annonçant un numéro plus récent (vérifié : l'installation est
@@ -109,7 +126,7 @@ export ABBON_UPDATER_PUBKEY="$(cat /tmp/test.key.pub)" ABBON_UPDATE_URL=http://1
 # HTTP autorisé pour ce test seulement :
 CFG=$(node -p 'JSON.stringify({bundle:{createUpdaterArtifacts:true},plugins:{updater:{pubkey:process.env.ABBON_UPDATER_PUBKEY,dangerousInsecureTransportProtocol:true}}})')
 npx tauri build --bundles appimage --config "$CFG"     # version A ; puis changer la version et recommencer
-node --experimental-strip-types scripts/release/build-site.ts --dist <paquets de la version B> \
+node scripts/release/build-site.ts --dist <paquets de la version B> \
      --out /tmp/site --version <B> --base-url http://127.0.0.1:8080
 php -S 127.0.0.1:8080 -t /tmp/site
 ```

@@ -8,8 +8,8 @@
  *     releases/latest.json                 mises à jour Linux / Windows (si signés)
  *     releases/SHA256SUMS.txt
  *
- * Usage (Node 22.6+) :
- *   node --experimental-strip-types scripts/release/build-site.ts \
+ * Usage (Node 22.18+, qui exécute directement le TypeScript) :
+ *   node scripts/release/build-site.ts \
  *     --dist dist --out site --version 0.2.0 [--base-url https://exemple.fr] [--changelog CHANGELOG.md]
  *
  * Sans --base-url, latest.json n'est pas produit (le plugin updater exige des adresses complètes).

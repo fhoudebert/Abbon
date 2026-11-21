@@ -30,7 +30,9 @@ $texts = [
         'apk' => 'Application Android (APK)',
         'nsis' => 'Installateur (.exe)',
         'msi' => 'Installateur MSI',
-        'dmg' => 'Image disque',
+        'dmg' => 'Image disque (.dmg, Apple silicon et Intel)',
+        'app' => 'Archive de l’application (mises à jour)',
+        'macHelp' => 'Pour Mac à processeur Apple ou Intel. L’application n’est pas notarisée par Apple : au premier lancement, clic droit sur Abbon › Ouvrir, ou Réglages › Confidentialité et sécurité › Ouvrir quand même.',
         'apkHelp' => 'Android demandera d’autoriser l’installation depuis votre navigateur. Les mises à jour suivantes se font depuis l’application (Paramètres › Mises à jour).',
         'winHelp' => 'Windows 10 ou plus récent.',
         'checksums' => 'Empreintes SHA-256',
@@ -53,7 +55,9 @@ $texts = [
         'apk' => 'Android app (APK)',
         'nsis' => 'Installer (.exe)',
         'msi' => 'MSI installer',
-        'dmg' => 'Disk image',
+        'dmg' => 'Disk image (.dmg, Apple silicon and Intel)',
+        'app' => 'Application archive (updates)',
+        'macHelp' => 'For Macs with Apple or Intel processors. The app is not notarised by Apple: on first launch, right-click Abbon › Open, or System Settings › Privacy & Security › Open Anyway.',
         'apkHelp' => 'Android will ask you to allow installs from your browser. Later updates are offered in the app (Settings › Updates).',
         'winHelp' => 'Windows 10 or later.',
         'checksums' => 'SHA-256 checksums',
@@ -175,6 +179,7 @@ $date = $release ? substr((string) ($release['date'] ?? ''), 0, 10) : '';
     </ul>
     <?php if ($platform === 'android'): ?><p class="muted"><?= h($t['apkHelp']) ?></p><?php endif; ?>
     <?php if ($platform === 'windows'): ?><p class="muted"><?= h($t['winHelp']) ?></p><?php endif; ?>
+    <?php if ($platform === 'macos'): ?><p class="muted"><?= h($t['macHelp']) ?></p><?php endif; ?>
   </section>
   <?php endforeach; ?>
 
