@@ -70,6 +70,9 @@ servent le perfectionnement des QCM de bac (niveaux « approfondissement » et �
   ($y = f'(a)(x - a) + f(a)$) et le résultat du titrage (0,075 mol·L⁻¹).
 - Les questions qui attendent une formule en réponse (« dérivée de $u/v$ ? ») sont devenues des choix entre
   formules, en attendant un type « expression » (lot 13).
+- Physique-chimie 0.3.0 : question d'oxydoréduction sur l'argenterie noircie (rôle de l'aluminium, du sel, de
+  la chaleur et du bicarbonate ; d'après Médiachimie), exemple repris dans la fiche ; équations longues des
+  explications écrites sur deux lignes pour tenir à 390 px.
 - Étiquette `prog-2019` sur chaque QCM de maths, pour la bascule vers le programme 2026 (bac 2028).
 - Version 0.2.0 : une fiche de révision par catégorie (10 fiches) — l'essentiel du cours, les formules et les
   pièges classiques, en cohérence avec les questions. Vérifiées à 390 px (aucun tableau ni formule coupés).

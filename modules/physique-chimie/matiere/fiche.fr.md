@@ -21,6 +21,7 @@ $$\frac{n_A}{a} = \frac{n_B}{b} \quad\text{soit}\quad C_A = \frac{a\,C_B\,V_E}{b
 - L'**oxydant** capte des électrons (il est réduit) ; le **réducteur** en cède (il est oxydé). Couple $\mathrm{Ox}/\mathrm{Red}$ : $\mathrm{Ox} + n\,e^- = \mathrm{Red}$.
 - Équation d'oxydoréduction : combiner deux demi-équations pour que les électrons s'éliminent. Exemple : $\ce{Cu^2+ + Fe -> Cu + Fe^2+}$, le fer est oxydé.
 - Pile : l'oxydation a lieu à l'anode (borne −), la réduction à la cathode (borne +).
+- Exemple : un objet en argent noirci par du sulfure d'argent retrouve son éclat au contact d'une feuille d'aluminium, dans de l'eau salée chaude. L'aluminium, réducteur, s'oxyde en ions $\ce{Al^3+}$ et réduit $\ce{Ag2S}$ en argent.
 
 ## Évolution et équilibre
 

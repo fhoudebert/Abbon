@@ -83,6 +83,20 @@ Dans la réaction $\ce{Cu^2+ + Fe -> Cu + Fe^2+}$, quelle espèce est oxydée ?
 
 > Le fer perd deux électrons, $\ce{Fe -> Fe^2+ + 2e-}$ : il est oxydé, c'est le réducteur. L'ion cuivre(II) les gagne, $\ce{Cu^2+ + 2e- -> Cu}$ : il est réduit, c'est l'oxydant. $\ce{Cu}$ et $\ce{Fe^2+}$ sont des produits.
 
+## argent-noirci · single
+Un objet en argent noircit : à sa surface s'est formé du sulfure d'argent $\ce{Ag2S}$, par réaction avec des composés soufrés de l'air. Pour lui rendre son éclat, on le pose au contact d'une feuille d'aluminium, dans une cuvette en plastique remplie d'eau salée très chaude. Quel est le rôle de l'aluminium ?
+
+- [x] Réducteur : il cède des électrons qui réduisent $\ce{Ag2S}$ en argent métallique
+- [ ] Oxydant : il capte des électrons de l'argent
+- [ ] Catalyseur : il accélère la réaction sans être consommé
+- [ ] Abrasif : il détache le dépôt noir par frottement
+
+> L'aluminium, métal très réducteur, s'oxyde : $\ce{Al -> Al^3+ + 3e-}$. Ses électrons réduisent le sulfure d'argent, $\ce{Ag2S + 2e- -> 2Ag + S^2-}$ : l'argent est régénéré sur l'objet, au lieu d'être arraché comme avec un produit abrasif. Les ions $\ce{Al^3+}$ précipitent en hydroxyde d'aluminium, qui ternit la feuille. Bilan :
+>
+> $$\begin{gathered}\ce{3Ag2S + 2Al + 6H2O}\\ \ce{-> 6Ag + 2Al(OH)3 + 3H2S}\end{gathered}$$
+>
+> Les deux métaux en contact forment une pile : envelopper l'objet dans la feuille améliore l'échange d'électrons (d'où la cuvette en plastique, pour éviter un autre métal). Le sel dissous rend l'eau conductrice sans intervenir dans le bilan ; la chaleur accélère la réaction. L'odeur d'œuf pourri vient du sulfure d'hydrogène $\ce{H2S}$ formé ; une pincée de bicarbonate maintient le pH vers 8,3 et limite son dégagement. D'après Médiachimie, « Nettoyer l'argenterie par une recette de grand-mère ».
+
 ## equilibre · single
 Que peut-on dire d'un système chimique à l'équilibre dynamique ?
 
@@ -103,6 +117,6 @@ Que produit la réaction d'estérification entre un acide carboxylique et un alc
 
 > Par exemple, l'acide éthanoïque et l'éthanol donnent l'éthanoate d'éthyle et de l'eau :
 >
-> $$\ce{CH3COOH + C2H5OH <=> CH3COOC2H5 + H2O}$$
+> $$\begin{gathered}\ce{CH3COOH + C2H5OH}\\ \ce{<=> CH3COOC2H5 + H2O}\end{gathered}$$
 >
 > La réaction est lente et limitée ; un catalyseur acide l'accélère, et retirer l'eau formée déplace l'équilibre vers l'ester.

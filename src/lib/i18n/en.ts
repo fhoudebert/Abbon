@@ -31,6 +31,8 @@ export const en: Messages = {
   'about.storage.sqlite': 'SQLite (data kept on this device)',
   'about.storage.memory': 'Memory (browser preview, nothing is kept)',
   'about.platform': 'Platform',
+  'about.source': 'Source code',
+  'about.sourceHint': 'on GitHub: releases, modules, issue reports',
   'about.license': 'Free software under the MIT licence.',
   'about.demo': 'The quizzes shown are demo data.',
 

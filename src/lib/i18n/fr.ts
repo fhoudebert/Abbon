@@ -34,6 +34,8 @@ export const fr = {
   'about.storage.sqlite': 'SQLite (données conservées sur l’appareil)',
   'about.storage.memory': 'Mémoire (aperçu navigateur, rien n’est conservé)',
   'about.platform': 'Plateforme',
+  'about.source': 'Code source',
+  'about.sourceHint': 'sur GitHub : versions, modules, signalement d’un problème',
   'about.license': 'Logiciel libre sous licence MIT.',
   'about.demo': 'Les QCM affichés sont des données de démonstration.',
 
