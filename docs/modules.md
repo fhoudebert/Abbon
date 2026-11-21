@@ -150,6 +150,34 @@ What is the past simple of *to go*?
   déroulante : la bonne réponse d'abord, puis les autres propositions après `~`. Une langue sans ligne `=`
   reprend le texte de la langue principale ; sinon elle donne son propre texte, avec les mêmes trous. `\{` écrit
   une accolade. `scoring: partial` dans l'en-tête du QCM compte chaque trou juste.
+- **Expressions** : `· expression`, avec la formule attendue sur une ligne `=`, entre dollars (facultatifs).
+  L'élève l'écrit dans un champ de formule (clavier mathématique sur écran tactile) ; toute écriture
+  équivalente est acceptée. Pour une primitive, terminer par `+ C` : l'égalité est alors jugée à une constante
+  près, et « + C » est accepté dans la réponse.
+
+  ```markdown
+  ## derivee-cube · expression
+  Dérivée de $x^3 + \dfrac{1}{x}$ ?
+
+  = $3x^2 - \frac{1}{x^2}$
+
+  > On dérive terme à terme.
+
+  ## primitive · expression
+  Une primitive de $2x\,e^{x^2}$ ?
+
+  = $e^{x^2} + C$
+
+  > Forme $u'e^u$.
+  ```
+
+  La comparaison calcule les deux formules en 24 points tirés au hasard (valeurs positives puis de signe
+  quelconque ; entiers de 1 à 12 pour `n`, `k`, `p`, `m`) et exige qu'elles coïncident partout où l'attendue
+  est définie. Elle ne juge donc pas la *forme* : une consigne « factorisez » accepterait aussi la forme
+  développée. Reconnu : `+ - \cdot \times / \frac \sqrt ^`, multiplication implicite, `\pi`, `e`,
+  `\sin \cos \tan \ln \log \exp` et leurs réciproques, valeur absolue, variables d'une lettre (avec indice) ;
+  pas de factorielle, de somme, de limite ni de dérivée notée `f'`. `module:check` signale une formule
+  attendue illisible.
 - Autres réglages possibles dans l'en-tête : `description`, `timeLimitSec`, `passThreshold`, `scoring`,
   `solutionVisibility`, `shuffle`.
 

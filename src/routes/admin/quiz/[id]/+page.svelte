@@ -177,7 +177,7 @@
   const minutes = $derived(draft?.timeLimitSec ? Math.round(draft.timeLimitSec / 60) : '');
 
   function issueText(i: Issue): string {
-    const params = { n: i.questionNumber ?? 0, lang: i.lang ? languageName(i.lang) : '' };
+    const params = { n: i.questionNumber ?? 0, lang: i.lang ? languageName(i.lang) : '', detail: i.detail ?? '' };
     if (i.code === 'translation_missing' && i.questionNumber) return t('issue.translation_missing_q', params);
     return t(`issue.${i.code}`, params);
   }
@@ -359,6 +359,7 @@
           <button class="secondary" onclick={() => addQuestion('short')}>{t('qe.addShort')}</button>
           <button class="secondary" onclick={() => addQuestion('numeric')}>{t('qe.addNumeric')}</button>
           <button class="secondary" onclick={() => addQuestion('cloze')}>{t('qe.addCloze')}</button>
+          <button class="secondary" onclick={() => addQuestion('expression')}>{t('qe.addExpression')}</button>
         </div>
       </nav>
 

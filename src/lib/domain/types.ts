@@ -33,8 +33,9 @@ export type I18nRich = Record<Lang, RichValue>;
  * single, multiple : réponses à cocher (`choices`).
  * short, numeric : réponse à saisir, comparée à `expected` (pas de `choices`).
  * cloze : texte à trous (`expected.text` et `expected.gaps`).
+ * expression : formule à écrire (LaTeX), comparée à `expected.latex` par évaluation (voir `domain/expr.ts`).
  */
-export type QuestionType = 'single' | 'multiple' | 'short' | 'numeric' | 'cloze';
+export type QuestionType = 'single' | 'multiple' | 'short' | 'numeric' | 'cloze' | 'expression';
 
 /** Un trou d'un texte à trous. */
 export interface ClozeGap {
@@ -64,6 +65,10 @@ export interface ExpectedAnswer {
   text?: I18nText;
   /** Texte à trous : les trous, dans l'ordre de leur numéro. */
   gaps?: ClozeGap[];
+  /** Expression : formule attendue, en LaTeX. */
+  latex?: string;
+  /** Expression : égale à une constante près (primitives) ; « + C » est alors accepté dans la réponse. */
+  constant?: boolean;
 }
 export type ScoringRule = 'all_or_nothing' | 'partial';
 export type SolutionVisibility = 'never' | 'after_submit' | 'after_pass';

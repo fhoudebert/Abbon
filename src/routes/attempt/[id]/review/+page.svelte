@@ -9,6 +9,7 @@
   import { pick } from '$lib/domain/rich';
   import { expectedText, isTyped } from '$lib/domain/typed';
   import { localize } from '$lib/domain/text';
+  import { renderMath } from '$lib/rich/math';
   import RichContent from '$lib/rich/RichContent.svelte';
   import { i18n, t } from '$lib/i18n/index.svelte';
   import { app } from '$lib/app.svelte';
@@ -82,9 +83,15 @@
         {@const given = session.answers[q.id]?.text?.trim()}
         <dl class="typed">
           <dt>{t('review.yourAnswer')}</dt>
-          <dd class:wrong={outcome !== 'correct' && !!given}>{given || t('review.noAnswer')}</dd>
-          <dt>{t('review.expected')}</dt>
-          <dd class="right">{expectedText(q, lang)}</dd>
+          {#if q.type === 'expression'}
+            <dd class:wrong={outcome !== 'correct' && !!given}>{#if given}{@html renderMath(given)}{:else}{t('review.noAnswer')}{/if}</dd>
+            <dt>{t('review.expected')}</dt>
+            <dd class="right">{@html renderMath(expectedText(q, lang))}</dd>
+          {:else}
+            <dd class:wrong={outcome !== 'correct' && !!given}>{given || t('review.noAnswer')}</dd>
+            <dt>{t('review.expected')}</dt>
+            <dd class="right">{expectedText(q, lang)}</dd>
+          {/if}
         </dl>
       {:else}
       <ul class="choices">

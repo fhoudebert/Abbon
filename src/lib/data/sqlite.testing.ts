@@ -6,7 +6,7 @@ import { DatabaseSync } from 'node:sqlite';
 import type { SqlDriver } from './sqlite';
 
 const migrationsDir = new URL('../../../src-tauri/migrations/', import.meta.url);
-export const MIGRATIONS = ['0001_init.sql', '0002_attempt_snapshot.sql', '0003_media.sql', '0004_modules.sql', '0005_typed_answers.sql', '0006_cloze.sql', '0007_leitner.sql', '0008_rewards.sql'];
+export const MIGRATIONS = ['0001_init.sql', '0002_attempt_snapshot.sql', '0003_media.sql', '0004_modules.sql', '0005_typed_answers.sql', '0006_cloze.sql', '0007_leitner.sql', '0008_rewards.sql', '0009_question_types.sql'];
 
 /** Convertit `$1` (syntaxe du plugin Tauri / sqlx) en `?1` (SQLite natif). */
 const toNative = (sql: string) => sql.replace(/\$(\d+)/g, '?$1');

@@ -15,11 +15,11 @@ Ordre de travail de la branche `qcm`, après le socle (lots 0 à 5). Le cadrage 
 | Lot 12 | Anglais : verbes irréguliers, version complète (environ 150 verbes) | à faire |
 | Technique A | **Actions GitHub et Node.js** : actions en Node 24, construction en Node 26 | fait, validé sur GitHub |
 | Technique B | **Version macOS en CI** : application universelle (Apple silicon et Intel), `.dmg`, mises à jour automatiques | fait, validé sur GitHub |
-| Lot 13 | **MathLive** : saisie visuelle des formules dans l'éditeur, puis réponses sous forme d'expression | éditeur fait (à valider sous Linux et Android) ; type « expression » à faire |
+| Lot 13 | **MathLive** : saisie visuelle des formules dans l'éditeur, puis réponses sous forme d'expression | fait (à valider sous Linux et Android) |
 | Lot 14 | **Molécules** : formules topologiques générées en SVG à la construction des modules ; Ketcher plus tard, si besoin | à étudier |
 | Lot 15 | **Ceintures et points** : récompenser surtout la révision régulière, selon le planning de la boîte, et la mémorisation ; la collecte des questions échouées un peu ; les QCM et modules terminés accessoirement | fait (avant le perfectionnement des QCM) |
 
-Ordre retenu ensuite : lot 15 (fait), puis le type « expression » (lot 13) et les molécules (lot 14), qui
+Ordre retenu ensuite : lot 15 (fait), le type « expression » (lot 13, fait), puis les molécules (lot 14), qui
 servent le perfectionnement des QCM de bac (niveaux « approfondissement » et « expert ») qui les suit.
 
 ## Lot 6 ter — textes à trous
@@ -136,8 +136,20 @@ servent le perfectionnement des QCM de bac (niveaux « approfondissement » et �
   gardent leur source exacte ; saisie au clavier et au clavier virtuel reportées dans la question.
 - **Reste à vérifier** sur l'application construite : WebKitGTK (Linux), WebView Android (clavier virtuel de
   MathLive et clavier du téléphone), macOS ; puis lecteur d'écran (Orca, TalkBack).
-- **Ensuite — type « expression »** : prototyper la comparaison de deux expressions (évaluation en points tirés
-  au hasard d'abord ; Compute Engine si nécessaire).
+- **Fait — type « expression »** : l'élève écrit une formule dans un champ MathLive (clavier mathématique sur
+  écran tactile) ; elle est comparée à la formule attendue en calculant les deux en 24 points tirés au hasard
+  (`domain/expr.ts`, sans dépendance : Compute Engine n'a pas été nécessaire). Option « à une constante près »
+  pour les primitives (`+ C` dans les sources). Éditeur (LaTeX, aperçu, éditeur visuel), corrigé, aperçu,
+  boîte de révision, sources de modules (`· expression`), format d'échange ; GIFT : non exporté.
+  Migration 9 : reconstruction des tables de questions, sans contrainte sur le type, données conservées.
+- **Vérifié** : 75 tests de l'analyseur (écritures de MathLive, équivalences, refus), compilation des sources,
+  migration 9 sur des données ; dans Chrome, bureau et téléphone tactile, clair et sombre : réponses
+  équivalentes acceptées (`3x^2-x^{-2}` pour $3x^2 - \frac{1}{x^2}$), « + C » accepté pour une primitive,
+  réponse fausse refusée dans la boîte, formule illisible signalée dans l'éditeur, axe sans violation.
+- **Limites** : la forme n'est pas jugée (factorisé ou développé), pas de factorielle, somme, limite, ni de
+  dérivée notée `f'` ; les messages de l'analyseur ne sont qu'en français.
+- **Ensuite** : utiliser ce type dans les modules de maths lors du perfectionnement (dérivées, primitives,
+  termes généraux de suites) ; les questions des ébauches devenues des choix entre formules peuvent y revenir.
 
 ## Lot 14 — molécules (Ketcher ou génération au build)
 

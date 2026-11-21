@@ -10,6 +10,7 @@
 import { parse as parseYaml } from 'yaml';
 import { isEmptyRich } from '$lib/domain/rich';
 import { quizVersionOf } from '$lib/domain/semver';
+import { expressionProblem, stripConstant } from '$lib/domain/expr';
 import { parseNumber } from '$lib/domain/typed';
 import type { Category, ClozeGap, ExpectedAnswer, I18nRich, I18nText, ModuleManifest, Question, QuestionType, Quiz } from '$lib/domain/types';
 import { CategorySchema, QuizSchema } from '$lib/interchange/format';
@@ -71,7 +72,7 @@ interface RawQuestion {
   langs: Map<string, { prompt: string; choices: { correct: boolean; text: string }[]; answers: string[]; explanation: string }>;
 }
 
-const TYPES: readonly string[] = ['single', 'multiple', 'short', 'numeric', 'cloze'];
+const TYPES: readonly string[] = ['single', 'multiple', 'short', 'numeric', 'cloze', 'expression'];
 
 /**
  * Texte à trous d'une source : les trous sont entre accolades.
@@ -107,6 +108,17 @@ export function parseNumericAnswer(line: string): ExpectedAnswer | null {
   if (value === null || tolerance === null) return null;
   const unit = m[3].trim();
   return { value, tolerance: Math.abs(tolerance), ...(unit ? { unit } : {}) };
+}
+
+/**
+ * Expression attendue d'une source : « $3x^2$ », ou « $\frac{x^3}{3} + C$ » pour une primitive (égalité à une
+ * constante près). Les dollars sont facultatifs. Renvoie l'erreur de lecture s'il y en a une.
+ */
+export function parseExpressionAnswer(line: string): { expected: ExpectedAnswer; problem: string | null } {
+  let latex = line.trim().replace(/^\$+|\$+$/g, '').trim();
+  const constant = /\+\s*C\s*$/.test(latex);
+  if (constant) latex = stripConstant(latex).trim();
+  return { expected: { latex, ...(constant ? { constant: true } : {}) }, problem: expressionProblem(latex) };
 }
 
 /** Découpe le corps d'un fichier de QCM en questions (`## identifiant · type`). */
@@ -344,7 +356,7 @@ export function compileModule(files: readonly SourceFile[], assets: readonly Ass
         const flags = first.choices.map((c) => c.correct);
         const right = flags.filter(Boolean).length;
         const type: QuestionType = raw.type ?? (first.answers.length && !flags.length ? 'short' : right > 1 ? 'multiple' : 'single');
-        const typed = type === 'short' || type === 'numeric' || type === 'cloze';
+        const typed = type === 'short' || type === 'numeric' || type === 'cloze' || type === 'expression';
 
         // Questions à saisie : lignes « = réponse ». Les formes acceptées de toutes les langues s'additionnent.
         let expected: ExpectedAnswer | null = null;
@@ -373,13 +385,20 @@ export function compileModule(files: readonly SourceFile[], assets: readonly Ass
           if (flags.length) err(f.path, `question « ${type} » : pas de réponses à cocher (« - [ ] »), seulement des lignes « = réponse »`, ref);
           if (!all.length) err(f.path, 'réponse attendue manquante (ligne « = réponse »)', ref);
           if (type === 'short') expected = { accepted: all, ...(raw.caseSensitive ? { caseSensitive: true } : {}) };
-          else if (all.length > 1) err(f.path, 'réponse numérique : une seule valeur attendue (la même dans chaque langue)', ref);
+          else if (type === 'expression') {
+            if (all.length > 1) err(f.path, 'expression : une seule formule attendue (la même dans chaque langue)', ref);
+            else if (all.length) {
+              const r = parseExpressionAnswer(all[0]);
+              if (r.problem) err(f.path, `expression attendue illisible : « ${all[0]} » (${r.problem})`, ref);
+              else expected = r.expected;
+            }
+          } else if (all.length > 1) err(f.path, 'réponse numérique : une seule valeur attendue (la même dans chaque langue)', ref);
           else if (all.length) {
             expected = parseNumericAnswer(all[0]);
             if (!expected) err(f.path, `réponse numérique illisible : « ${all[0]} » (ex. « = 9,81 ± 0,01 m/s² »)`, ref);
           }
         } else if (first.answers.length) {
-          err(f.path, `ligne « = réponse » dans une question « ${type} » (types à saisie : short, numeric)`, ref);
+          err(f.path, `ligne « = réponse » dans une question « ${type} » (types à saisie : short, numeric, expression)`, ref);
         }
 
         if (typed) {

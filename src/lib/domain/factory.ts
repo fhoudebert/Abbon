@@ -31,9 +31,9 @@ export function newChoice(position: number): Choice {
   return { id: newId(), content: {}, correct: false, position, feedback: null };
 }
 
-const typed = (type: QuestionType) => type === 'short' || type === 'numeric' || type === 'cloze';
+const typed = (type: QuestionType) => type === 'short' || type === 'numeric' || type === 'cloze' || type === 'expression';
 const emptyExpected = (type: QuestionType) =>
-  type === 'short' ? { accepted: [''] } : type === 'numeric' ? { tolerance: 0 } : type === 'cloze' ? { text: {}, gaps: [] } : null;
+  type === 'short' ? { accepted: [''] } : type === 'numeric' ? { tolerance: 0 } : type === 'cloze' ? { text: {}, gaps: [] } : type === 'expression' ? { latex: '' } : null;
 
 /**
  * Nouvelle question : deux réponses vides à cocher (la première marquée juste en choix unique),

@@ -7,11 +7,11 @@
    * sa source exacte (MathLive normalise parfois l'écriture).
    */
   import { onDestroy, tick } from 'svelte';
-  import { i18n, t } from '$lib/i18n/index.svelte';
+  import { t } from '$lib/i18n/index.svelte';
+  import { loadMathLive, mathKeyboard } from './mathlive';
   import { renderMath } from './math';
 
-  type MathField = HTMLElement & { value: string; mathVirtualKeyboardPolicy: string; smartFence: boolean };
-  type Keyboard = { container: HTMLElement | null; hide: () => void };
+  type MathField = HTMLElement & { value: string };
 
   let dialog: HTMLDialogElement;
   let field = $state<MathField | null>(null);
@@ -23,21 +23,8 @@
   let source = '';
   let onsave: ((latex: string) => void) | null = null;
 
-  let loading: Promise<void> | null = null;
-  /** Charge MathLive une fois. Les polices sont celles de KaTeX, déjà chargées par l'application. */
-  function load() {
-    loading ??= import('mathlive').then(({ MathfieldElement }) => {
-      MathfieldElement.fontsDirectory = null;
-      MathfieldElement.soundsDirectory = null;
-      MathfieldElement.plonkSound = null;
-      MathfieldElement.keypressSound = null;
-      MathfieldElement.locale = i18n.lang;
-      MathfieldElement.decimalSeparator = i18n.lang === 'fr' ? ',' : '.';
-    });
-    return loading;
-  }
-
-  const keyboard = () => (window as unknown as { mathVirtualKeyboard?: Keyboard }).mathVirtualKeyboard;
+  const load = loadMathLive;
+  const keyboard = mathKeyboard;
 
   /** Ouvre la saisie sur `src` ; `save` reçoit le LaTeX validé. */
   export async function open(src: string, block: boolean, save: (latex: string) => void) {

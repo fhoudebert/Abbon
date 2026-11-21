@@ -1,5 +1,6 @@
 import { imagesWithoutAlt, isEmptyRich } from './rich';
 import { gapOptions, markersMatch } from './cloze';
+import { expressionProblem } from './expr';
 import { isTyped } from './typed';
 import type { Quiz } from './types';
 
@@ -13,6 +14,8 @@ export type IssueCode =
   | 'multiple_needs_correct'
   | 'short_needs_answer'
   | 'numeric_needs_value'
+  | 'expression_needs_answer'
+  | 'expression_invalid'
   | 'cloze_needs_gap'
   | 'cloze_markers'
   | 'cloze_gap_empty'
@@ -29,6 +32,8 @@ export interface Issue {
   /** Rang de la question, à partir de 1. */
   questionNumber?: number;
   lang?: string;
+  /** Précision (message de l'analyseur d'expressions). */
+  detail?: string;
 }
 
 /**
@@ -52,6 +57,14 @@ export function validateQuiz(quiz: Quiz): Issue[] {
         issues.push({ level: 'error', code: 'short_needs_answer', ...at });
       if (q.type === 'numeric' && !(typeof q.expected?.value === 'number' && Number.isFinite(q.expected.value) && (q.expected.tolerance ?? 0) >= 0))
         issues.push({ level: 'error', code: 'numeric_needs_value', ...at });
+      if (q.type === 'expression') {
+        const latex = q.expected?.latex?.trim() ?? '';
+        if (!latex) issues.push({ level: 'error', code: 'expression_needs_answer', ...at });
+        else {
+          const problem = expressionProblem(latex, { constant: q.expected?.constant });
+          if (problem) issues.push({ level: 'error', code: 'expression_invalid', detail: problem, ...at });
+        }
+      }
       if (q.type === 'cloze') {
         const gaps = q.expected?.gaps ?? [];
         const text = q.expected?.text ?? {};

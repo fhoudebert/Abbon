@@ -167,6 +167,21 @@ Voir [modules.md](modules.md) pour l'usage et le format des sources.
   des cartes encore dues) ; ceux d'une tentative, après son enregistrement, dans `AttemptSession.finish`.
 - Sauvegarde complète : `rewards.json`.
 
+## Questions « expression » (lot 13)
+
+- `domain/expr.ts` (fonctions pures, sans dépendance) : lecture du LaTeX en arbre (`parseExpr`), évaluation,
+  comparaison par évaluation en points tirés au hasard (`sameExpression`, tirage reproductible d'après la
+  formule attendue), option « à une constante près ». Sert au passage (`typed.ts`), à la validation et à
+  l'outillage des modules. Pas de calcul formel : léger et synchrone, mais ne juge pas la forme.
+- `rich/MathInput.svelte` : champ de réponse MathLive (chargé à la première question de ce type, champ texte
+  LaTeX si le chargement échoue) ; `rich/mathlive.ts` règle MathLive une fois pour ce champ et pour l'éditeur
+  visuel. La réponse enregistrée (`answer.text`) est la source LaTeX ; corrigé et aperçu la rendent par KaTeX.
+- Migration 9 : reconstruction des tables `question` et `choice`, sans la contrainte CHECK sur le type (SQLite
+  ne sait pas la modifier ; les types sont contrôlés par le schéma d'échange et la validation). L'ordre des
+  opérations évite les suppressions en cascade ; un test applique les migrations 1 à 8, remplit les tables,
+  applique la 9 et vérifie données, clés étrangères et index.
+- GIFT : non exporté (pas d'équivalent).
+
 ## Formules et figures (lot 7)
 
 - **Formules** : nœuds `math` et `mathBlock`, la source LaTeX étant le texte du nœud (repli lisible partout où le

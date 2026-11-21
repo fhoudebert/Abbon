@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { checkRequirements } from '$lib/interchange/module';
 import { buildPackage, parsePackage } from '$lib/interchange/qcmPackage';
-import { compileModule, frenchDecimals, parseClozeSource, parseNumericAnswer, splitQuestions, type SourceFile } from './source';
+import { compileModule, frenchDecimals, parseClozeSource, parseExpressionAnswer, parseNumericAnswer, splitQuestions, type SourceFile } from './source';
 
 const MODULE = `id: org.abbon.test
 version: 1.2.3
@@ -226,6 +226,49 @@ Value of *g*?
     expect(parseNumericAnswer('-1,5e3 +/- 10')).toEqual({ value: -1500, tolerance: 10 });
     expect(parseNumericAnswer('6 faces')).toEqual({ value: 6, tolerance: 0, unit: 'faces' });
     expect(parseNumericAnswer('environ 4')).toBeNull();
+  });
+
+  it('lit les expressions attendues (primitive : « + C »)', () => {
+    expect(parseExpressionAnswer('$3x^2$')).toEqual({ expected: { latex: '3x^2' }, problem: null });
+    expect(parseExpressionAnswer('$\\frac{x^3}{3} + C$')).toEqual({ expected: { latex: '\\frac{x^3}{3}', constant: true }, problem: null });
+    expect(parseExpressionAnswer('x+').problem).toMatch(/incomplète/);
+    const quiz = `---
+id: expr-01
+title: { fr: Dérivées, en: Derivatives }
+level: bases
+---
+
+## carre · expression
+Dérivée de $x^3$ ?
+
+= $3x^2$
+
+> $(x^n)' = n x^{n-1}$.
+
+### en
+Derivative of $x^3$?
+
+> $(x^n)' = n x^{n-1}$.
+
+## primitive · expression
+Une primitive de $x^2$ ?
+
+= $\\frac{x^3}{3} + C$
+
+> Toute fonction $\\frac{x^3}{3} + C$ convient.
+
+### en
+An antiderivative of $x^2$?
+
+> Any function $\\frac{x^3}{3} + C$ works.
+`;
+    const c = compileModule(files(quiz));
+    expect(c.issues.filter((i) => i.level === 'error')).toEqual([]);
+    expect(c.quizzes[0].questions.map((q) => [q.type, q.expected])).toEqual([
+      ['expression', { latex: '3x^2' }],
+      ['expression', { latex: '\\frac{x^3}{3}', constant: true }],
+    ]);
+    expect(errors(files(quiz.replace('= $3x^2$', '= $3x^$')))).toEqual([expect.stringContaining('expression attendue illisible')]);
   });
 
   it('signale les incohérences', () => {

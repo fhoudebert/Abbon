@@ -3,6 +3,8 @@
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
   import { formatDuration, isAnswered, showsInstantFeedback } from '$lib/domain/session';
+  import MathInput from '$lib/rich/MathInput.svelte';
+  import { renderMath } from '$lib/rich/math';
   import { expectedText, isTyped } from '$lib/domain/typed';
   import BoxToggle from '$lib/components/BoxToggle.svelte';
   import ClozeText from '$lib/components/ClozeText.svelte';
@@ -168,6 +170,22 @@
           onchange={(i, v) => session.typeGap(i, v)}
           oncommit={() => session.persist()}
         />
+      {:else if question.type === 'expression'}
+        {#key question.id}
+          <div class="typed expr" class:is-correct={checked && answer?.correct} class:is-wrong={checked && !answer?.correct}>
+            <MathInput
+              value={answer?.text ?? ''}
+              readonly={session.locked}
+              label={t('play.yourAnswer')}
+              describedby="prompt-{question.id}"
+              autofocus={!answer?.text}
+              oninput={(v) => session.typeText(v)}
+              onblur={() => session.persist()}
+              onenter={() => (dialog?.open ? undefined : primary())}
+            />
+            {#if question.expected?.constant}<p class="muted hint">{t('play.constant')}</p>{/if}
+          </div>
+        {/key}
       {:else if isTyped(question)}
         <!-- {#key} : un champ neuf par question, qui reçoit le focus. -->
         {#key question.id}
@@ -219,7 +237,9 @@
         <strong>
           {answer.correct ? t('play.correct') : (answer.points ?? 0) > 0 ? t('play.partial') : t('play.wrong')}
         </strong>
-        {#if isTyped(question) && question.type !== 'cloze' && !answer.correct}<p class="expected">{t('play.expected', { answer: expectedText(question, lang) })}</p>{/if}
+        {#if question.type === 'expression' && !answer.correct}
+          <p class="expected">{@html t('play.expected', { answer: renderMath(expectedText(question, lang)) })}</p>
+        {:else if isTyped(question) && question.type !== 'cloze' && !answer.correct}<p class="expected">{t('play.expected', { answer: expectedText(question, lang) })}</p>{/if}
         {#if question.explanation}
           <div class="expl"><span class="muted">{t('play.explanation')} :</span> <RichContent value={pick(question.explanation, lang, fallback)} /></div>
         {/if}
@@ -500,5 +520,21 @@
   }
   dialog::backdrop {
     background: rgb(0 0 0 / 0.4);
+  }
+  .typed.expr {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .typed.expr.is-correct :global(.math-input) {
+    border-color: var(--ok);
+    box-shadow: 0 0 0 1px var(--ok);
+  }
+  .typed.expr.is-wrong :global(.math-input) {
+    border-color: var(--bad);
+    box-shadow: 0 0 0 1px var(--bad);
+  }
+  .typed.expr .hint {
+    margin: 0;
+    font-size: 0.9rem;
   }
 </style>

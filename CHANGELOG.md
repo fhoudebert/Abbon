@@ -20,6 +20,7 @@ Leur contenu est repris tel quel dans les notes de version (page de télécharge
 - Version macOS : une application pour Mac Apple silicon et Intel, avec mises à jour automatiques.
 - Boîte de révision (Leitner) : rangez les questions à retenir avec « Ma boîte », révisez-les à intervalles croissants.
 - Éditeur visuel de formules (MathLive) : saisie sans LaTeX, avec un clavier mathématique sur écran tactile.
+- Nouveau type de question « expression » : l'élève écrit une formule ; toute écriture équivalente est acceptée (option « à une constante près » pour les primitives).
 - Ceintures et points : la révision régulière de la boîte est récompensée (points par révision, bonus quand la journée est à jour, questions acquises), de la ceinture blanche à la noire, puis des dans ; désactivable dans les paramètres.
 - Boîte de révision : délais de 1, 2, 4, 8 et 16 jours ; une question juste au dernier compartiment est acquise et sort du planning ; à la fin d'un QCM, les questions échouées se rangent dans la boîte en les cochant.
 
@@ -38,6 +39,7 @@ Leur contenu est repris tel quel dans les notes de version (page de télécharge
 - macOS version: one app for Apple silicon and Intel Macs, with automatic updates.
 - Review box (Leitner): put the questions to remember in it with “My box”, review them at growing intervals.
 - Visual formula editor (MathLive): no LaTeX needed, with a math keyboard on touch screens.
+- New “expression” question type: the learner writes a formula; any equivalent form is accepted (“up to a constant” option for antiderivatives).
 - Belts and points: regular reviewing of the box is rewarded (points per review, a bonus once the day is up to date, learnt questions), from white to black belt, then dan grades; can be turned off in the settings.
 - Review box: intervals of 1, 2, 4, 8 and 16 days; a question answered right in the last compartment is learnt and leaves the schedule; at the end of a quiz, tick the missed questions to put them in the box.
 

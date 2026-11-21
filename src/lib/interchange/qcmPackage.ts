@@ -175,7 +175,9 @@ export function stripSolutions(quiz: Quiz): Quiz {
                   : { kind: g.kind, accepted: [] },
               ),
             }
-          : null,
+          : x.type === 'expression' && x.expected?.constant
+            ? { constant: true } // consigne visible (« à une constante près »), pas la réponse
+            : null,
     choices: x.choices.map(({ correct: _c, feedback: _f, ...c }) => c as Quiz['questions'][number]['choices'][number]),
   }));
   return q;
