@@ -41,6 +41,8 @@ Pour $u_n = u_0\,q^n$ avec $q > 1$, le signe de $u_0$ donne le signe de la limit
 - **Gendarmes** : si $v_n \leq u_n \leq w_n$ à partir d'un rang et $v_n$, $w_n$ tendent vers $\ell$, alors $u_n \to \ell$.
 - **Limite monotone** : une suite croissante et majorée converge ; décroissante et minorée, elle converge. La limite est au plus égale au majorant, pas forcément égale à lui. Une suite croissante non majorée tend vers $+\infty$.
 - Si $u_{n+1} = f(u_n)$, que $(u_n)$ converge vers $\ell$ et que $f$ est continue en $\ell$, alors $f(\ell) = \ell$.
+- Somme télescopique : $\displaystyle\sum_{k=1}^{n}(a_k - a_{k+1}) = a_1 - a_{n+1}$ ; par exemple $\dfrac{1}{k(k+1)} = \dfrac{1}{k} - \dfrac{1}{k+1}$.
+- Limite remarquable : $\left(1 + \dfrac{1}{n}\right)^n \to e$.
 
 ## Raisonnement par récurrence
 

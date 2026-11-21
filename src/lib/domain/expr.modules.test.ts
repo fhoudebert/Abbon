@@ -20,6 +20,17 @@ const cases: [string, boolean, string[], string[]][] = [
   ['\\left(\\frac{1}{2}\\right)^{n}', false, ['\\frac{1}{2^n}', '0{,}5^n', '2^{-n}'], ['\\frac{n}{2}', '\\frac12']],
   ['x^2 + 1', false, ['1+x^2', 'F(x)=x^2+1'], ['x^2', 'x^2+C', '2x']],
   ['n', false, ['a_n=n', '1+(n-1)'], ['n+1', '1', 'n^2']],
+  ['20 + 70e^{-\\frac{t}{10}}', false, ['70\\exp(-0{,}1t)+20', '20+\\frac{70}{e^{t/10}}', 'T(t)=20+70e^{-0.1t}'], ['90e^{-\\frac{t}{10}}', '20+70e^{-10t}', '70e^{-\\frac{t}{10}}']],
+  // Maths spécialité, niveau expert
+  ['\\frac{n}{n+1}', false, ['1-\\frac{1}{n+1}', 'S_n=\\frac{n}{n+1}'], ['\\frac{1}{n+1}', '1']],
+  ['\\ln x', false, ['\\ln(x)', "f'(x)=\\ln x"], ['x\\ln x', '\\frac{1}{x}']],
+  ['-2xe^{-x^2}', false, ['-2x\\exp(-x^2)', '\\frac{-2x}{e^{x^2}}'], ['-2xe^{-2x}', 'e^{-x^2}', '-x^2e^{-x^2}']],
+  ['ex', false, ['e\\cdot x', 'y=ex', 'e^1x'], ['x', 'e^x', 'ex+1']],
+  ['x\\ln x - x + C', true, ['x(\\ln x-1)', 'x\\ln x-x+5'], ['x\\ln x', '\\frac{1}{x}']],
+  ['\\frac{1}{2}\\ln(x^2+1) + C', true, ['\\ln\\sqrt{x^2+1}', '\\frac{\\ln(1+x^2)}{2}'], ['\\ln(x^2+1)', '\\frac{1}{x^2+1}']],
+  ['-\\frac{1}{2}\\cos(2x) + C', true, ['\\sin^2 x', '-\\frac{\\cos 2x}{2}+1'], ['\\frac{1}{2}\\cos(2x)', '-\\cos(2x)']],
+  ['3 - 3e^{-2x}', false, ['3(1-e^{-2x})'], ['3e^{-2x}', '3-3e^{2x}']],
+  ['1 - 0{,}9^{n}', false, ['1-\\left(\\frac{9}{10}\\right)^n', '1-0.9^n'], ['0{,}9^n', '1-0{,}1^n', '0{,}1n']],
 ];
 it.each(cases)('%s', (expected, constant, ok, ko) => {
   const opts = { constant };

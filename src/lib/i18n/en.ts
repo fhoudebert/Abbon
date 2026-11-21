@@ -481,6 +481,8 @@ export const en: Messages = {
   'leitner.dueOn': 'to review from {date}',
   'leitner.remove': 'Remove',
   'leitner.remove.title': 'Remove this question from the box?',
+  'leitner.removeCurrent': 'Remove this card from the box',
+  'leitner.remove.custom': 'The question stays in the “My review cards” quiz, where the administration lets you edit or delete it.',
   'leitner.stop': 'Stop reviewing',
   'leitner.finish': 'Finish',
   'leitner.done': 'Review finished',

@@ -12,12 +12,15 @@ $$\Delta U = W + Q$$
 
 - Convention : $W$ et $Q$ sont positifs quand le système les **reçoit**.
 - Solide ou liquide de masse $m$ et de capacité thermique massique $c$ : $\Delta U = m\,c\,\Delta T$ (en J, avec $c$ en $\pu{J.kg-1.K-1}$). Eau liquide : $c = \pu{4180 J.kg-1.K-1}$.
+- Gaz parfait : son énergie interne ne dépend que de $T$ ; à température constante, $\Delta U = 0$ et $Q = -W$.
+- Mélange dans un récipient isolé : la somme des $m\,c\,\Delta T$ est nulle ; pour deux masses d'eau, la température finale est leur moyenne pondérée par les masses.
 
 ## Transferts thermiques
 
 - Spontanément, du corps chaud vers le corps froid.
 - **Conduction** : de proche en proche, sans déplacement de matière. **Convection** : par déplacement d'un fluide. **Rayonnement** : ondes électromagnétiques, y compris dans le vide.
 - Flux thermique (puissance, en W) à travers une paroi : $\Phi = \dfrac{T_{\text{chaud}} - T_{\text{froid}}}{R_{\text{th}}}$ ; énergie transférée $Q = \Phi\,\Delta t$.
+- Paroi plane d'épaisseur $e$, de surface $S$, de conductivité $\lambda$ : $R_{\text{th}} = \dfrac{e}{\lambda\,S}$.
 - Résistances thermiques traversées l'une après l'autre : elles s'additionnent.
 
 ## Loi de Newton du refroidissement

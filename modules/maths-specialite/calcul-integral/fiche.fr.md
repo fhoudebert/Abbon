@@ -11,8 +11,13 @@ $F$ est une primitive de $f$ si $F' = f$ ; deux primitives diffèrent d'une cons
 | $u'\,e^u$ | $e^u$ |
 | $\dfrac{u'}{u}$ ($u > 0$) | $\ln u$ |
 | $u'\,u^n$ ($n \neq -1$) | $\dfrac{u^{n+1}}{n+1}$ |
+| $\sin(ax)$ ($a \neq 0$) | $-\dfrac{1}{a}\cos(ax)$ |
+| $\cos(ax)$ ($a \neq 0$) | $\dfrac{1}{a}\sin(ax)$ |
+| $\ln x$ | $x\ln x - x$ |
 
 Toujours vérifier une primitive en la dérivant.
+
+**Encadrer une intégrale** : si $g \leq f \leq h$ sur $[a\,;b]$ ($a \leq b$), alors $\displaystyle\int_a^b g \leq \int_a^b f \leq \int_a^b h$ ; utile pour trouver la limite d'une suite d'intégrales.
 
 ## Intégrale
 
