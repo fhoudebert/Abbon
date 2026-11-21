@@ -164,7 +164,8 @@
               "short",
               "numeric",
               "cloze",
-              "expression"
+              "expression",
+              "flashcard"
             ]
           },
           "prompt": {

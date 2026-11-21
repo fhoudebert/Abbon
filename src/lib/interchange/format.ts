@@ -97,9 +97,9 @@ export const QuestionSchema = z.object({
   id,
   /**
    * single, multiple : réponses à cocher ; short, numeric : réponse à saisir ; cloze : texte à trous ;
-   * expression : formule à écrire (`expected`).
+   * expression : formule à écrire (`expected`) ; flashcard : carte recto-verso, verso dans `explanation`.
    */
-  type: z.enum(['single', 'multiple', 'short', 'numeric', 'cloze', 'expression']),
+  type: z.enum(['single', 'multiple', 'short', 'numeric', 'cloze', 'expression', 'flashcard']),
   prompt: I18nRichSchema,
   points: z.number().positive().max(1000),
   position: z.number().int().min(0),

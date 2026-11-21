@@ -228,6 +228,19 @@ Value of *g*?
     expect(parseNumericAnswer('environ 4')).toBeNull();
   });
 
+  it('lit les catégories parentes (regroupements sans QCM)', () => {
+    const withParents = (cats: string) => files(TYPED).map((f) => (f.path === 'module.yaml' ? { ...f, text: f.text.replace(/categories:[\s\S]*$/, cats) } : f));
+    const ok = compileModule(withParents('categories:\n  - id: groupe\n    name: { fr: Groupe, en: Group }\n  - id: rust\n    parent: groupe\n    name: { fr: Rust, en: Rust }\n'));
+    expect(ok.issues.filter((i) => i.level === 'error')).toEqual([]);
+    expect(ok.issues.some((i) => /sans QCM/.test(i.message))).toBe(false);
+    const cats = Object.fromEntries(ok.categories.map((c) => [c.id.replace(/^.*_/, ''), c.parentId?.replace(/^.*_/, '') ?? null]));
+    expect(cats).toEqual({ groupe: null, rust: 'groupe' });
+    const unknown = compileModule(withParents('categories:\n  - id: rust\n    parent: absent\n    name: { fr: Rust, en: Rust }\n'));
+    expect(unknown.issues.some((i) => /parent « absent » non déclaré/.test(i.message))).toBe(true);
+    const loop = compileModule(withParents('categories:\n  - id: a\n    parent: rust\n    name: { fr: A, en: A }\n  - id: rust\n    parent: a\n    name: { fr: Rust, en: Rust }\n'));
+    expect(loop.issues.some((i) => /boucle de parents/.test(i.message))).toBe(true);
+  });
+
   it('résout les molécules « smiles: » dessinées avant la compilation', () => {
     const quiz = `---
 id: mol-01

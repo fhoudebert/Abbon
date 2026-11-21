@@ -1,5 +1,5 @@
 import { gapResults } from './cloze';
-import { isTyped, matchesExpected } from './typed';
+import { FLASH_KNOWN, isTyped, matchesExpected } from './typed';
 import type { Question, ScoringRule } from './types';
 
 /** Réponse donnée à une question : cases cochées, ou texte saisi. */
@@ -28,6 +28,7 @@ export interface QuestionScore {
  *   attendue (voir typed.ts), sinon 0.
  * - Texte à trous : tous les points si chaque trou est juste ; en notation « partielle », la part
  *   des trous justes.
+ * - Recto-verso : tous les points si l'élève déclare qu'il savait.
  */
 export function scoreQuestion(
   question: Question,
@@ -42,6 +43,10 @@ export function scoreQuestion(
     const all = results.length > 0 && good === results.length;
     if (rule === 'all_or_nothing' || results.length === 0) return { points: all ? question.points : 0, correct: all };
     return { points: round2((good / results.length) * question.points), correct: all };
+  }
+  if (question.type === 'flashcard') {
+    const ok = text === FLASH_KNOWN;
+    return { points: ok ? question.points : 0, correct: ok };
   }
   if (isTyped(question)) {
     const ok = matchesExpected(question, text);

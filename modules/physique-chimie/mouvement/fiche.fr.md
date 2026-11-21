@@ -11,6 +11,8 @@
 2. $\sum \vec F = m\,\vec a$ (deuxième loi), ou $\sum \vec F = \dfrac{\mathrm{d}\vec p}{\mathrm{d}t}$ avec $\vec p = m\,\vec v$.
 3. Action et réaction : $\vec F_{A/B} = -\vec F_{B/A}$.
 
+Système isolé ou pseudo-isolé : sa quantité de mouvement $\vec p$ se conserve (recul, propulsion par réaction).
+
 ## Mouvement dans un champ uniforme
 
 **Pesanteur**, frottements négligés : $\vec a = \vec g$. Pour un lancer avec $\vec v_0$ faisant l'angle $\alpha$ avec l'horizontale, axe $(Oy)$ vers le haut :
@@ -19,7 +21,7 @@ $$x(t) = v_0\cos\alpha\;t$$
 
 $$y(t) = -\frac{1}{2}g\,t^2 + v_0\sin\alpha\;t + y_0$$
 
-La trajectoire est une parabole (un segment de droite si le lancer est vertical).
+La trajectoire est une parabole (un segment de droite si le lancer est vertical). Portée sur sol horizontal : $\dfrac{v_0^2\sin(2\alpha)}{g}$, maximale pour 45° ; hauteur atteinte par un lancer vertical : $\dfrac{v_0^2}{2g}$.
 
 **Champ électrique** : $\vec F = q\,\vec E$, donc $\vec a = \dfrac{q\,\vec E}{m}$ ; même calcul que dans le champ de pesanteur (accélérateur de particules, déviation).
 

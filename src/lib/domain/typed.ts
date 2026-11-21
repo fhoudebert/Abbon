@@ -5,7 +5,14 @@
 import { sameExpression } from './expr';
 import type { ExpectedAnswer, Question } from './types';
 
-/** Question à saisie : pas de réponses à cocher (`choices` vide). */
+/** Questions à réponses à cocher (les autres ont `choices` vide). */
+export const hasChoices = (q: Pick<Question, 'type'>) => q.type === 'single' || q.type === 'multiple';
+
+/** Carte recto-verso : réponse déclarée par l'élève après avoir retourné la carte. */
+export const FLASH_KNOWN = 'known';
+export const FLASH_UNKNOWN = 'unknown';
+
+/** Question à saisie (le recto-verso n'en est pas une : rien n'y est saisi). */
 export const isTyped = (q: Pick<Question, 'type'>) =>
   q.type === 'short' || q.type === 'numeric' || q.type === 'cloze' || q.type === 'expression';
 

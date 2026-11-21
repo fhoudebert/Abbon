@@ -11,13 +11,15 @@ Ordre de travail de la branche `qcm`, après le socle (lots 0 à 5). Le cadrage 
 | Lot 6 quater | **Révision espacée (boîtes de Leitner)** : entraînement par répétitions sur des questions choisies | fait |
 | Lot 7 | Formules (LaTeX, rendu KaTeX), équations chimiques, unités, figures SVG incrustées après nettoyage | fait |
 | Lot 8 | Module Informatique : 13 rubriques, environ 450 questions ; version pilote 0.1.0 (un QCM de bases par rubrique, 130 questions) | en cours |
-| Lots 9 à 11 | Modules de bac : Physique-chimie, Maths spécialité, Maths expertes ; bases et fiches faites, approfondissement fait en maths spécialité (0.3.0, 80 questions) et en maths expertes (0.3.0, 60 questions) | en cours |
+| Lots 9 à 11 | Modules de bac : Physique-chimie, Maths spécialité, Maths expertes ; bases et fiches faites, approfondissement fait en maths spécialité (0.3.0, 80 questions), maths expertes (0.3.0, 60 questions) et physique-chimie (0.5.0, 72 questions, catégorie énergie créée) | en cours |
 | Lot 12 | Anglais : verbes irréguliers, version complète (environ 150 verbes) | à faire |
 | Technique A | **Actions GitHub et Node.js** : actions en Node 24, construction en Node 26 | fait, validé sur GitHub |
 | Technique B | **Version macOS en CI** : application universelle (Apple silicon et Intel), `.dmg`, mises à jour automatiques | fait, validé sur GitHub |
 | Lot 13 | **MathLive** : saisie visuelle des formules dans l'éditeur, puis réponses sous forme d'expression | fait (à valider sous Linux et Android) |
 | Lot 14 | **Molécules** : formules topologiques générées en SVG à la construction des modules ; Ketcher plus tard, si besoin | fait (génération au build) |
 | Lot 15 | **Ceintures et points** : récompenser surtout la révision régulière, selon le planning de la boîte, et la mémorisation ; la collecte des questions échouées un peu ; les QCM et modules terminés accessoirement | fait (avant le perfectionnement des QCM) |
+| Lot 16 | **Boîte de révision** : cartes personnelles (hors QCM), type recto-verso, récapitulatif imprimable de toutes les cartes | fait (impression à vérifier sur l'application construite) |
+| Lot 17 | **Catégories regroupées** : Physique, Chimie… au-dessus des catégories des modules, filtre de l'accueil en arbre | fait (recherche par nom de catégorie : non retenue) |
 
 Ordre retenu ensuite : lot 15, le type « expression » (lot 13) et les molécules (lot 14) sont faits ; vient le
 perfectionnement des QCM de bac (niveaux « approfondissement » et « expert »), qui peut s'en servir.
@@ -78,6 +80,14 @@ perfectionnement des QCM de bac (niveaux « approfondissement » et « expert »
   probabilités passent à 10 questions. Toutes les valeurs ont été recalculées (SymPy) ; pour chaque expression,
   un test vérifie que les écritures équivalentes sont acceptées et les erreurs classiques refusées
   (`domain/expr.modules.test.ts`). Fiches complétées (suites arithmético-géométriques, anagrammes).
+- **Physique-chimie 0.5.0 — approfondissement et énergie** : un QCM « approfondissement » de 10 questions pour
+  la matière (pH et $\mathrm{p}K_A$, tampon, demi-équivalence, cinétique d'ordre 1, quotient de réaction,
+  rendement, Beer-Lambert, pile, cétone dessinée), le mouvement (portée, hauteur, satellite, champ électrique,
+  quantité de mouvement, freinage, énergie) et les ondes (interfrange, diffraction, niveaux sonores, Doppler,
+  photon, effet photoélectrique, lunette, conjugaison, circuit RC). Nouvelle catégorie « L'énergie :
+  conversions et transferts » : QCM de bases (gaz parfait, kelvin, premier principe, capacité thermique,
+  transferts, flux et résistance thermiques, loi de Newton, albédo) et fiche. Valeurs recalculées ; fiches
+  complétées. L'énergie sera rangée sous « Physique » si le lot 17 est retenu.
 - **Maths expertes 0.3.0 — approfondissement** : un QCM de 10 questions par catégorie (puissances et forme
   exponentielle, second degré dans $\mathbb{C}$, racines de l'unité, médiatrice, rotation, Moivre, linéarisation ;
   Fermat, restes de puissances, Bézout, équations diophantiennes, congruences, Euclide ; inverse et système,
@@ -91,7 +101,7 @@ perfectionnement des QCM de bac (niveaux « approfondissement » et « expert »
 - Étiquette `prog-2019` sur chaque QCM de maths, pour la bascule vers le programme 2026 (bac 2028).
 - Version 0.2.0 : une fiche de révision par catégorie (10 fiches) — l'essentiel du cours, les formules et les
   pièges classiques, en cohérence avec les questions. Vérifiées à 390 px (aucun tableau ni formule coupés).
-- Suite : approfondissement en physique-chimie, puis niveau « expert » ; relecture par un
+- Suite : approfondissement de l'énergie, puis niveau « expert » ; relecture par un
   enseignant (questions et fiches) ; physique-chimie : catégorie « L'énergie : conversions et transferts ».
 - Un dossier de `modules/` sans `module.yaml` (ébauches, notes) est désormais ignoré par l'outillage, avec un
   message, au lieu de faire échouer la vérification.
@@ -306,6 +316,122 @@ Ces seuils sont des constantes, à recaler après quelques semaines d'usage rée
   annonce du passage à la ceinture jaune, réglage masquant ; clair à 1100 px et sombre à 390 px, axe sans
   violation.
 - Restent possibles : un badge visible par module terminé (les points sont comptés), un objectif hebdomadaire.
+
+## Lot 16 — boîte de révision : cartes personnelles et récapitulatif
+
+**Fait** (décision : avec le recto-verso ; cartes personnelles au compartiment 1, dans l'ordre de saisie) :
+
+- Écran Révision : boutons « Nouvelle carte » et « Récapitulatif ».
+- **Nouvelle carte** (`/leitner/new`) : éditeur de question limité aux types utiles (recto-verso par défaut,
+  réponse courte, numérique, expression, choix unique), sans barème ; « Enregistrer la carte » ou « Enregistrer
+  et en saisir une autre ». La question rejoint le QCM brouillon « Mes cartes de révision » (`mes-cartes`, créé
+  à la première carte, modifiable dans l'administration, absent de l'accueil) et sa carte entre au
+  compartiment 1. À compartiment et date égaux, les cartes sont proposées dans l'ordre d'ajout.
+- **Recto-verso** (`flashcard`) : énoncé au recto, verso dans `explanation` ; on retourne la carte, puis « Je
+  savais » ou « À revoir » (`answer.text` = `known` / `unknown`). Dans la boîte comme dans un QCM, dans le
+  corrigé et l'aperçu ; éditeur (libellés Recto / Verso, bouton « + Recto-verso ») ; sources de modules
+  (`· flashcard`, verso dans le bloc `>`) ; format d'échange ; GIFT : non exporté. Un export sans corrigé retire
+  le verso, comme toute explication.
+- **Récapitulatif** (`/leitner/recap`) : cartes par compartiment puis acquises, avec ou sans réponses ;
+  « Imprimer ou enregistrer en PDF » (`window.print()`, styles d'impression en clair, sans en-tête ni
+  boutons) ; « Enregistrer en HTML » : fichier autonome (styles et polices des formules inclus, environ
+  400 Ko) qui s'ouvre hors ligne dans un navigateur ; sous Android, seul ce bouton est proposé.
+- Au passage, correction d'un défaut de l'éditeur riche : à la perte du focus quand l'éditeur est retiré de la
+  page, il modifiait un état pendant le rendu (`state_unsafe_mutation`), ce qui pouvait aussi arriver dans
+  l'administration en changeant de question pendant la saisie.
+- **Vérifié** : tests (notation déclarée, validation du verso, sources, format, ordre de saisie) ; dans Chrome,
+  clair à 1100 px et sombre à 390 px, axe sans violation : saisie de deux cartes enregistrées sans pause
+  (la carte suivante reste vierge), révision dans l'ordre de saisie, carte retournée puis notée, recto-verso
+  dans une tentative, récapitulatif avec et sans réponses, impression émulée (PDF produit), fichier HTML ouvert
+  seul. **Reste** : l'impression dans WebKitGTK, WebView2 et WKWebView, et l'enregistrement du fichier sous
+  Android, sur l'application construite.
+
+### Étude
+
+### Cartes personnelles
+
+Ajouter à la boîte, depuis l'écran Révision, une carte qui ne vient d'aucun QCM (une formule, une date, un
+mot de vocabulaire…).
+
+- **Saisie** : bouton « Nouvelle carte » ; formulaire court avec l'énoncé (éditeur riche : texte, formule,
+  image), la réponse et, si l'on veut, une explication. Réponses possibles : réponse courte (variantes
+  acceptées), réponse numérique, expression, ou **recto-verso** (voir ci-dessous). La carte entre au
+  compartiment 1, à revoir tout de suite.
+- **Stockage** : les cartes personnelles sont les questions d'un QCM personnel « Mes cartes », créé à la
+  première carte. La carte de la boîte y renvoie comme les autres (`leitner_card.quiz_id` n'est pas une clé
+  étrangère : aucun changement de schéma). On profite ainsi de l'existant : modification dans l'éditeur,
+  sauvegarde complète, export `.qcm` pour partager ses cartes, et même passage en QCM ordinaire.
+- **Recto-verso** : nouveau type de question `flashcard`, sans réponse à saisir. On lit le recto, on retourne
+  la carte, puis on dit soi-même « Je savais » ou « À revoir ». Il convient à ce qui ne se vérifie pas
+  automatiquement (une définition, un énoncé de théorème). Sans ce type, le lot est plus petit (réponse
+  courte, numérique ou expression seulement) ; il peut venir dans un second temps.
+- **Points** : ceux de la révision, comme toute carte ; pas de point de collecte (ce n'est pas une erreur
+  rangée).
+- Taille : petite sans le type recto-verso, moyenne avec.
+
+### Récapitulatif imprimable
+
+- Page « Récapitulatif », ouverte depuis l'écran Révision : toutes les cartes, groupées par compartiment
+  (1 à 5, puis acquises), avec pour chacune l'énoncé, la bonne réponse, l'explication, le QCM d'origine et la
+  prochaine date de révision. Formules, figures et molécules rendues comme dans l'application. Choix « avec ou
+  sans les réponses » (la version sans réponses sert de feuille d'entraînement).
+- Feuille de style d'impression : une colonne, sans menus ni boutons, thème clair forcé, pas de coupure au
+  milieu d'une carte.
+- Bouton « Imprimer ou enregistrer en PDF » : `window.print()`, que Tauri relaie à la WebView sur ordinateur.
+  Sous Linux, la boîte d'impression GTK propose « Imprimer dans un fichier » (PDF) ; sous Windows, « Microsoft
+  Print to PDF » ; sous macOS, le bouton PDF. À vérifier sur l'application construite, WebKitGTK en tête.
+- **Android** : la WebView n'imprime pas par `window.print()` (le service d'impression d'Android n'est pas
+  relié). Deux possibilités : exporter le récapitulatif en fichier HTML autonome (styles et polices des
+  formules inclus, environ 400 Ko), à ouvrir dans le navigateur pour l'imprimer ou le partager ; ou un petit
+  greffon Kotlin qui appelle le service d'impression (plus propre, plus long). Le fichier HTML d'abord.
+- **Écarté** : fabriquer le PDF dans l'application (pdf-lib, jsPDF) ; les formules et les figures SVG
+  seraient très difficiles à reproduire fidèlement.
+- Taille : petite à moyenne (page, impression ; export HTML pour Android).
+
+## Lot 17 — catégories regroupées
+
+**Fait** (décision : regroupements Physique et Chimie, filtre en arbre ; la recherche par nom de catégorie n'est
+pas retenue pour l'instant) :
+
+- `module.yaml` : `parent:` sur une catégorie ; regroupements sans QCM permis (ni avertissement « sans QCM », ni
+  fiche attendue) ; parent inconnu ou boucle de parents : erreur.
+- Physique-chimie 0.6.0 : *Chimie* au-dessus de Constitution et transformations de la matière ; *Physique*
+  au-dessus de Mouvement et interactions, Ondes et signaux, L'énergie. Mettre à jour depuis 0.5.0 rattache les
+  catégories existantes à leur regroupement.
+- Accueil : filtre en arbre (`domain/categories.ts`) : filles en retrait sous leur parent, seulement les
+  catégories qui contiennent des QCM ; choisir un regroupement montre les QCM de toutes ses descendantes.
+  Ordre : catégories personnelles d'abord, puis module par module (chaque module numérote ses positions à
+  partir de 0, ce qui les entremêlait auparavant).
+- **Vérifié** : tests (descendantes, arbre, ordre, boucle, compilateur) ; dans Chrome, clair et sombre :
+  installation de 0.5.0 puis mise à jour en 0.6.0, « Physique » montre 5 QCM, « Chimie » 2, « Ondes et signaux »
+  2 ; axe sans violation.
+
+### Étude
+
+**Besoin** : filtrer « Physique » (Mouvement et interactions, Ondes et signaux, L'énergie) et « Chimie »
+(Constitution et transformations de la matière) depuis l'accueil.
+
+**Constat** : le modèle est déjà hiérarchique (`category.parentId`, choix du parent dans l'administration des
+catégories, parents gardés à l'export), mais rien ne s'en sert vraiment : les catégories des modules sont
+toujours de premier niveau, et le filtre de l'accueil compare la catégorie exacte, dans une liste à plat.
+
+**Proposition** :
+
+1. **Modules** : `parent:` sur une catégorie de `module.yaml`, et des catégories de regroupement sans QCM.
+   Physique-chimie : *Physique* au-dessus de Mouvement et interactions, Ondes et signaux, L'énergie ; *Chimie*
+   au-dessus de Constitution et transformations de la matière. Le compilateur vérifie que le parent existe et
+   qu'il n'y a pas de boucle.
+2. **Filtre de l'accueil** : liste en arbre (catégories filles en retrait sous leur parent) ; choisir un parent
+   montre les QCM de toutes ses descendantes. Un regroupement n'apparaît que s'il contient des QCM.
+3. **Recherche** : le texte cherché porte aussi sur le nom de la catégorie et de ses parents. Taper
+   « physique » trouve tous les QCM de physique, « chim » ceux de chimie : c'est le « commençant par »
+   demandé, sans convention de nommage.
+
+- **Écarté** : un préfixe dans les noms (« Physique — Ondes et signaux ») : fragile, noms à rallonge, et ce
+  n'est pas un vrai regroupement.
+- Les catégories personnelles se regroupent déjà dans l'administration ; elles profiteront du même filtre.
+  Les fiches de révision restent attachées aux catégories qui portent des QCM.
+- Taille : petite (compilateur, filtre et recherche de l'accueil, tests).
 
 ## Décisions prises
 

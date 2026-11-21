@@ -4,7 +4,7 @@
   import { isCorrect } from '$lib/domain/leitner';
   import { mathLabel, pick } from '$lib/domain/rich';
   import { isAnswered, shuffled } from '$lib/domain/session';
-  import { expectedText, isTyped } from '$lib/domain/typed';
+  import { expectedText, FLASH_KNOWN, FLASH_UNKNOWN, isTyped } from '$lib/domain/typed';
   import type { Question } from '$lib/domain/types';
   import { t } from '$lib/i18n/index.svelte';
   import RichContent from '$lib/rich/RichContent.svelte';
@@ -41,6 +41,20 @@
   let texts = $state<string[]>([]);
   let correct = $state<boolean | null>(null);
   let nextButton = $state<HTMLButtonElement | null>(null);
+  /** Recto-verso : la carte est-elle retournée ? */
+  let flipped = $state(false);
+  let knewButton = $state<HTMLButtonElement | null>(null);
+
+  function flip() {
+    flipped = true;
+    queueMicrotask(() => knewButton?.focus());
+  }
+
+  /** Recto-verso : l'élève dit s'il savait. */
+  function grade(knew: boolean) {
+    text = knew ? FLASH_KNOWN : FLASH_UNKNOWN;
+    validate();
+  }
 
   const checked = $derived(correct !== null);
   const choices = $derived(shuffled([...question.choices].sort((a, b) => a.position - b.position), seed));
@@ -70,6 +84,7 @@
     if ((e.target as HTMLElement | null)?.closest('button, a, select, textarea')) return;
     e.preventDefault();
     if (checked) onnext();
+    else if (question.type === 'flashcard' && !flipped) flip();
     else validate();
   }
 
@@ -101,6 +116,13 @@
       texts = next;
     }}
   />
+{:else if question.type === 'flashcard'}
+  {#if flipped}
+    <section class="back" aria-labelledby="lp-back-{question.id}" lang={question.explanation?.[lang] ? lang : fallback}>
+      <h3 id="lp-back-{question.id}" class="muted">{t('play.back')}</h3>
+      <RichContent value={pick(question.explanation ?? {}, lang, fallback)} />
+    </section>
+  {/if}
 {:else if question.type === 'expression'}
   <div class="typed expr" class:is-correct={correct === true} class:is-wrong={correct === false}>
     <MathInput
@@ -151,6 +173,9 @@
 
 {#if checked}
   <div class="feedback {correct ? 'ok' : 'ko'}" role="status">
+    {#if question.type === 'flashcard'}
+      <strong>{correct ? t('play.knewDone') : t('play.toReviewDone')}</strong>
+    {:else}
     <strong>{correct ? t('play.correct') : t('play.wrong')}</strong>
     {#if question.type === 'expression' && !correct}
       <p class="expected">{@html t('play.expected', { answer: renderMath(expectedText(question, lang)) })}</p>
@@ -158,12 +183,20 @@
     {#if question.explanation}
       <div class="expl"><span class="muted">{t('play.explanation')} :</span> <RichContent value={pick(question.explanation, lang, fallback)} /></div>
     {/if}
+    {/if}
   </div>
 {/if}
 
 <div class="nav">
   {#if checked}
     <button bind:this={nextButton} onclick={onnext}>{nextLabel}</button>
+  {:else if question.type === 'flashcard'}
+    {#if flipped}
+      <button class="secondary" onclick={() => grade(false)}>{t('play.toReview')}</button>
+      <button bind:this={knewButton} onclick={() => grade(true)}>{t('play.knew')}</button>
+    {:else}
+      <button onclick={flip}>{t('play.flip')}</button>
+    {/if}
   {:else}
     <button disabled={!answered} onclick={validate}>{t('play.validate')}</button>
   {/if}
@@ -267,6 +300,7 @@
   .nav {
     display: flex;
     justify-content: flex-end;
+    gap: 0.5rem;
     margin-block-start: 1rem;
   }
   .typed.expr {
@@ -284,5 +318,19 @@
   .typed.expr .hint {
     margin: 0;
     font-size: 0.9rem;
+  }
+  .back {
+    border: 1px solid var(--border);
+    border-inline-start: 4px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 0.5rem 1rem;
+    margin-block: 0.75rem;
+  }
+  .back h3 {
+    margin: 0 0 0.25rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
   }
 </style>

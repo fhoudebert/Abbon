@@ -72,7 +72,7 @@ interface RawQuestion {
   langs: Map<string, { prompt: string; choices: { correct: boolean; text: string }[]; answers: string[]; explanation: string }>;
 }
 
-const TYPES: readonly string[] = ['single', 'multiple', 'short', 'numeric', 'cloze', 'expression'];
+const TYPES: readonly string[] = ['single', 'multiple', 'short', 'numeric', 'cloze', 'expression', 'flashcard'];
 
 /**
  * Texte à trous d'une source : les trous sont entre accolades.
@@ -285,6 +285,8 @@ export function compileModule(files: readonly SourceFile[], assets: readonly Ass
 
   const cats = Array.isArray(y.categories) ? (y.categories as Record<string, unknown>[]) : [];
   if (!cats.length) err('module.yaml', 'categories : au moins une catégorie est attendue');
+  // Regroupements : catégories citées comme `parent:` d'une autre (elles peuvent n'avoir aucun QCM).
+  const groups = new Set(cats.map((c) => (c?.parent == null ? '' : String(c.parent))).filter(Boolean));
   cats.forEach((c, position) => {
     const local = String(c?.id ?? '');
     if (!LOCAL_ID.test(local)) return err('module.yaml', `catégorie « ${local} » : identifiant en minuscules, chiffres et tirets`);
@@ -319,7 +321,7 @@ export function compileModule(files: readonly SourceFile[], assets: readonly Ass
     const quizFiles = files
       .filter((f) => f.path.startsWith(`${local}/`) && f.path.endsWith('.md') && !/\/fiche\.[a-z]{2,3}\.md$/.test(f.path))
       .sort((a, b) => a.path.localeCompare(b.path, 'en'));
-    if (!quizFiles.length) warn('module.yaml', `catégorie « ${local} » sans QCM`);
+    if (!quizFiles.length && !groups.has(local)) warn('module.yaml', `catégorie « ${local} » sans QCM`);
     for (const f of quizFiles) {
       usedFiles.add(f.path);
       try {
@@ -366,6 +368,7 @@ export function compileModule(files: readonly SourceFile[], assets: readonly Ass
         const right = flags.filter(Boolean).length;
         const type: QuestionType = raw.type ?? (first.answers.length && !flags.length ? 'short' : right > 1 ? 'multiple' : 'single');
         const typed = type === 'short' || type === 'numeric' || type === 'cloze' || type === 'expression';
+        const flashcard = type === 'flashcard';
 
         // Questions à saisie : lignes « = réponse ». Les formes acceptées de toutes les langues s'additionnent.
         let expected: ExpectedAnswer | null = null;
@@ -406,6 +409,10 @@ export function compileModule(files: readonly SourceFile[], assets: readonly Ass
             expected = parseNumericAnswer(all[0]);
             if (!expected) err(f.path, `réponse numérique illisible : « ${all[0]} » (ex. « = 9,81 ± 0,01 m/s² »)`, ref);
           }
+        } else if (flashcard) {
+          // Recto-verso : l'énoncé est le recto, le bloc « > » le verso ; ni réponses à cocher ni ligne « = ».
+          if (flags.length || first.answers.length)
+            err(f.path, 'recto-verso : ni réponses à cocher ni ligne « = » ; le verso s’écrit dans le bloc « > »', ref);
         } else if (first.answers.length) {
           err(f.path, `ligne « = réponse » dans une question « ${type} » (types à saisie : short, numeric, expression)`, ref);
         }
@@ -414,7 +421,7 @@ export function compileModule(files: readonly SourceFile[], assets: readonly Ass
           // rien à vérifier sur les réponses à cocher
         } else if (type === 'single' && right !== 1) err(f.path, `choix unique : exactement une bonne réponse attendue (${right} cochée(s))`, ref);
         if (type === 'multiple' && right < 1) err(f.path, 'choix multiple : au moins une bonne réponse attendue', ref);
-        if (typed) {
+        if (typed || flashcard) {
           // pas de réponses à cocher
         } else if (flags.length < 2) err(f.path, 'au moins deux réponses attendues', ref);
         else if (flags.length < 3 || flags.length > 5) warn(f.path, `${flags.length} réponses (3 à 5 conseillées)`, ref);
@@ -511,6 +518,29 @@ export function compileModule(files: readonly SourceFile[], assets: readonly Ass
     quizzes: quizzes.map((q) => q.id),
     sheets: Object.keys(sheets).length ? sheets : null,
   };
+
+  // Catégories parentes (`parent:` : identifiant local d'une autre catégorie du module).
+  for (const c of cats) {
+    if (c?.parent == null) continue;
+    const local = String(c.id ?? '');
+    const parent = String(c.parent);
+    const child = categories.find((o) => o.id === prefix + local);
+    if (!child) continue;
+    if (parent === local) err('module.yaml', `catégorie « ${local} » : elle ne peut pas être son propre parent`);
+    else if (!categories.some((o) => o.id === prefix + parent)) err('module.yaml', `catégorie « ${local} » : parent « ${parent} » non déclaré`);
+    else child.parentId = prefix + parent;
+  }
+  for (const c of categories) {
+    const seen = new Set<string>();
+    for (let cur: Category | undefined = c; cur?.parentId; cur = categories.find((o) => o.id === cur!.parentId)) {
+      if (seen.has(cur.id)) {
+        err('module.yaml', `catégories : boucle de parents autour de « ${c.id.slice(prefix.length)} »`);
+        c.parentId = null;
+        break;
+      }
+      seen.add(cur.id);
+    }
+  }
 
   // Validation par les schémas du format d'échange (les mêmes qu'à l'import).
   const zerr = (file: string, e: { issues: { path: PropertyKey[]; message: string }[] }) =>

@@ -92,7 +92,10 @@ export function reviewCard(card: LeitnerCard, correct: boolean, now = new Date()
 
 /** Cartes à revoir, les compartiments les plus bas (les moins sues) d'abord, puis les plus en retard. */
 export function dueCards(cards: readonly LeitnerCard[], now = new Date()): LeitnerCard[] {
-  return cards.filter((c) => isDue(c, now)).sort((a, b) => a.box - b.box || a.dueAt.localeCompare(b.dueAt));
+  // À compartiment et date égaux, dans l'ordre d'ajout (cartes personnelles : ordre de saisie).
+  return cards
+    .filter((c) => isDue(c, now))
+    .sort((a, b) => a.box - b.box || a.dueAt.localeCompare(b.dueAt) || a.addedAt.localeCompare(b.addedAt));
 }
 
 /** Remet une carte acquise dans le planning, au premier compartiment, à revoir tout de suite. */

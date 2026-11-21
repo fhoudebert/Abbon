@@ -22,8 +22,8 @@ import {
   type Rank,
   type Reward,
 } from '$lib/domain/rewards';
-import type { Attempt, AttemptMode, Category, I18nRich, InstalledModule, Question, Quiz, QuizSummary } from '$lib/domain/types';
-import { i18n, setLang } from '$lib/i18n/index.svelte';
+import type { Attempt, AttemptMode, Category, I18nRich, InstalledModule, Lang, Question, Quiz, QuizSummary } from '$lib/domain/types';
+import { i18n, setLang, t } from '$lib/i18n/index.svelte';
 
 export interface QuizEntry {
   quiz: QuizSummary;
@@ -31,6 +31,8 @@ export interface QuizEntry {
   info: ProgressInfo;
 }
 
+/** QCM personnel qui garde les cartes saisies depuis l'écran Révision. */
+export const MY_CARDS_ID = 'mes-cartes';
 const PIN_KEY = 'admin_pin';
 /** Réglage « Afficher les ceintures et les points » : 'off' pour les masquer (les points restent comptés). */
 const REWARDS_KEY = 'rewards';
@@ -265,6 +267,29 @@ class AppState {
     }
     this.cards = [...this.cards, ...added];
     return this.#grant(added.flatMap((c) => collectRewards(c.questionId, failed, now)));
+  }
+
+  /**
+   * Carte personnelle (écran Révision) : la question rejoint le QCM « Mes cartes de révision », créé au
+   * besoin (brouillon, absent de l'accueil), puis entre au compartiment 1, après les cartes déjà saisies.
+   */
+  async addCustomCard(question: Question): Promise<void> {
+    const repo = await this.repo();
+    const lang = i18n.lang as Lang;
+    const existing = await repo.getQuiz(MY_CARDS_ID);
+    const quiz: Quiz = existing ?? {
+      ...newQuiz(lang),
+      id: MY_CARDS_ID,
+      title: { [lang]: t('custom.quizTitle') },
+      description: { [lang]: t('custom.quizDescription') },
+      shuffle: false,
+      passThreshold: 0.5,
+    };
+    const q = { ...($state.snapshot(question) as Question), position: quiz.questions.length };
+    const next: Quiz = { ...quiz, questions: [...quiz.questions, q], updatedAt: new Date().toISOString() };
+    await repo.saveQuiz(next);
+    await this.reload();
+    await this.addCards(next, [q], false);
   }
 
   /** Remet une carte acquise dans le planning, au premier compartiment. */

@@ -136,7 +136,9 @@
       },
       onUpdate: schedule,
       onBlur: flush,
-      onTransaction: () => version++,
+      // Différé : une transaction peut survenir pendant une mise à jour de l'affichage (perte du focus quand
+      // l'éditeur est retiré de la page), où Svelte interdit de modifier un état.
+      onTransaction: () => queueMicrotask(() => version++),
     });
   });
 
