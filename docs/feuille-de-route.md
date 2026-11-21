@@ -11,7 +11,7 @@ Ordre de travail de la branche `qcm`, après le socle (lots 0 à 5). Le cadrage 
 | Lot 6 quater | **Révision espacée (boîtes de Leitner)** : entraînement par répétitions sur des questions choisies | fait |
 | Lot 7 | Formules (LaTeX, rendu KaTeX), équations chimiques, unités, figures SVG incrustées après nettoyage | fait |
 | Lot 8 | Module Informatique : 13 rubriques, environ 450 questions ; version pilote 0.1.0 (un QCM de bases par rubrique, 130 questions) | en cours |
-| Lots 9 à 11 | Modules de bac : Physique-chimie, Maths spécialité, Maths expertes ; bases et fiches faites, approfondissement fait en maths spécialité (0.3.0, 80 questions), maths expertes (0.3.0, 60 questions) et physique-chimie (0.7.0, 82 questions, énergie comprise) ; niveau expert à faire | en cours |
+| Lots 9 à 11 | Modules de bac : Physique-chimie, Maths spécialité, Maths expertes ; bases et fiches faites, approfondissement fait en maths spécialité, qui a aussi son niveau expert (0.4.0, 120 questions), maths expertes (0.3.0, 60 questions) et physique-chimie (0.7.0, 82 questions, énergie comprise) ; niveau expert à faire en maths expertes et physique-chimie | en cours |
 | Lot 12 | Anglais : verbes irréguliers, version complète (environ 150 verbes) | à faire |
 | Technique A | **Actions GitHub et Node.js** : actions en Node 24, construction en Node 26 | fait, validé sur GitHub |
 | Technique B | **Version macOS en CI** : application universelle (Apple silicon et Intel), `.dmg`, mises à jour automatiques | fait, validé sur GitHub |
@@ -92,6 +92,12 @@ perfectionnement des QCM de bac (niveaux « approfondissement » et « expert »
   conversions et transferts » : QCM de bases (gaz parfait, kelvin, premier principe, capacité thermique,
   transferts, flux et résistance thermiques, loi de Newton, albédo) et fiche. Valeurs recalculées ; fiches
   complétées. L'énergie sera rangée sous « Physique » si le lot 17 est retenu.
+- **Maths spécialité 0.4.0 — expert** : un QCM de 10 questions par catégorie (point fixe, méthode de Héron,
+  sommes télescopiques, $(1 + 1/n)^n$, suites d'intégrales ; dérivées à écrire, extremums, inégalités de
+  convexité, taux d'accroissement, nombre de solutions ; primitives de $\ln$ et de $\sin(ax)$, double intégration
+  par parties, valeur absolue, encadrement, équation différentielle avec condition initiale ; seuil binomial,
+  test de dépistage, jeu équitable, Bienaymé-Tchebychev sur une moyenne, chemins, anniversaires). Neuf questions
+  « expression », toutes couvertes par le test des réponses. Valeurs recalculées avec SymPy ; fiches complétées.
 - **Maths expertes 0.3.0 — approfondissement** : un QCM de 10 questions par catégorie (puissances et forme
   exponentielle, second degré dans $\mathbb{C}$, racines de l'unité, médiatrice, rotation, Moivre, linéarisation ;
   Fermat, restes de puissances, Bézout, équations diophantiennes, congruences, Euclide ; inverse et système,
@@ -105,7 +111,7 @@ perfectionnement des QCM de bac (niveaux « approfondissement » et « expert »
 - Étiquette `prog-2019` sur chaque QCM de maths, pour la bascule vers le programme 2026 (bac 2028).
 - Version 0.2.0 : une fiche de révision par catégorie (10 fiches) — l'essentiel du cours, les formules et les
   pièges classiques, en cohérence avec les questions. Vérifiées à 390 px (aucun tableau ni formule coupés).
-- Suite : niveau « expert » des trois modules ; relecture par un
+- Suite : niveau « expert » de maths expertes et de physique-chimie ; relecture par un
   enseignant (questions et fiches) ; physique-chimie : catégorie « L'énergie : conversions et transferts ».
 - Un dossier de `modules/` sans `module.yaml` (ébauches, notes) est désormais ignoré par l'outillage, avec un
   message, au lieu de faire échouer la vérification.

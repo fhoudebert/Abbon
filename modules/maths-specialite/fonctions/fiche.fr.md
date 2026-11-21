@@ -23,6 +23,8 @@ Composée : $\big(f(ax + b)\big)' = a\,f'(ax + b)$ et plus généralement $(g \c
 - Tangente au point d'abscisse $a$ : $y = f'(a)\,(x - a) + f(a)$.
 - $f$ est **convexe** sur $I$ si $f'$ y est croissante, soit $f'' \geq 0$ : la courbe est au-dessus de ses tangentes. **Concave** si $f'' \leq 0$.
 - **Point d'inflexion** : la courbe traverse sa tangente ; $f''$ s'y annule en changeant de signe.
+- Inégalités de convexité : $e^x \geq 1 + x$ pour tout $x$ ; $\ln x \leq x - 1$ pour tout $x > 0$.
+- Limite d'un taux d'accroissement : $\dfrac{f(x) - f(a)}{x - a} \to f'(a)$ ; par exemple $\dfrac{e^x - 1}{x} \to 1$ et $\dfrac{\ln(1 + x)}{x} \to 1$ quand $x \to 0$.
 
 ## Exponentielle
 
