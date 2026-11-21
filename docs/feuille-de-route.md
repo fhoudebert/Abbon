@@ -11,7 +11,7 @@ Ordre de travail de la branche `qcm`, après le socle (lots 0 à 5). Le cadrage 
 | Lot 6 quater | **Révision espacée (boîtes de Leitner)** : entraînement par répétitions sur des questions choisies | fait |
 | Lot 7 | Formules (LaTeX, rendu KaTeX), équations chimiques, unités, figures SVG incrustées après nettoyage | fait |
 | Lot 8 | Module Informatique : 13 rubriques, environ 450 questions ; version pilote 0.1.0 (un QCM de bases par rubrique, 130 questions) | en cours |
-| Lots 9 à 11 | Modules de bac : Physique-chimie, Maths spécialité, Maths expertes ; bases et fiches faites, approfondissement fait en maths spécialité (0.3.0, 80 questions) | en cours |
+| Lots 9 à 11 | Modules de bac : Physique-chimie, Maths spécialité, Maths expertes ; bases et fiches faites, approfondissement fait en maths spécialité (0.3.0, 80 questions) et en maths expertes (0.3.0, 60 questions) | en cours |
 | Lot 12 | Anglais : verbes irréguliers, version complète (environ 150 verbes) | à faire |
 | Technique A | **Actions GitHub et Node.js** : actions en Node 24, construction en Node 26 | fait, validé sur GitHub |
 | Technique B | **Version macOS en CI** : application universelle (Apple silicon et Intel), `.dmg`, mises à jour automatiques | fait, validé sur GitHub |
@@ -78,6 +78,12 @@ perfectionnement des QCM de bac (niveaux « approfondissement » et « expert »
   probabilités passent à 10 questions. Toutes les valeurs ont été recalculées (SymPy) ; pour chaque expression,
   un test vérifie que les écritures équivalentes sont acceptées et les erreurs classiques refusées
   (`domain/expr.modules.test.ts`). Fiches complétées (suites arithmético-géométriques, anagrammes).
+- **Maths expertes 0.3.0 — approfondissement** : un QCM de 10 questions par catégorie (puissances et forme
+  exponentielle, second degré dans $\mathbb{C}$, racines de l'unité, médiatrice, rotation, Moivre, linéarisation ;
+  Fermat, restes de puissances, Bézout, équations diophantiennes, congruences, Euclide ; inverse et système,
+  puissances de matrices, point fixe d'une suite matricielle, chaînes de Markov, chaînes dans un graphe). Les
+  QCM de bases passent à 10 questions ; fiches complétées. Pas de question « expression » sur les complexes :
+  le comparateur traite `i` comme une variable réelle.
 - Le comparateur d'expressions ignore un membre de gauche écrit par l'élève (« $y = x - 1$ », « $u_n = \dots$ »).
 - Physique-chimie 0.4.0 : première molécule dessinée (lot 14). 0.3.0 : question d'oxydoréduction sur l'argenterie noircie (rôle de l'aluminium, du sel, de
   la chaleur et du bicarbonate ; d'après Médiachimie), exemple repris dans la fiche ; équations longues des
@@ -85,7 +91,7 @@ perfectionnement des QCM de bac (niveaux « approfondissement » et « expert »
 - Étiquette `prog-2019` sur chaque QCM de maths, pour la bascule vers le programme 2026 (bac 2028).
 - Version 0.2.0 : une fiche de révision par catégorie (10 fiches) — l'essentiel du cours, les formules et les
   pièges classiques, en cohérence avec les questions. Vérifiées à 390 px (aucun tableau ni formule coupés).
-- Suite : approfondissement en maths expertes et en physique-chimie, puis niveau « expert » ; relecture par un
+- Suite : approfondissement en physique-chimie, puis niveau « expert » ; relecture par un
   enseignant (questions et fiches) ; physique-chimie : catégorie « L'énergie : conversions et transferts ».
 - Un dossier de `modules/` sans `module.yaml` (ébauches, notes) est désormais ignoré par l'outillage, avec un
   message, au lieu de faire échouer la vérification.

@@ -10,7 +10,8 @@
 - Déterminant de $A = \begin{pmatrix} a & b \\ c & d \end{pmatrix}$ : $\det A = ad - bc$.
 - $A$ est inversible si et seulement si $\det A \neq 0$, et alors $A^{-1} = \dfrac{1}{ad - bc}\begin{pmatrix} d & -b \\ -c & a \end{pmatrix}$.
 - Système $A\,X = B$ avec $A$ inversible : unique solution $X = A^{-1}B$.
-- Suites matricielles : si $U_{n+1} = A\,U_n$, alors $U_n = A^n\,U_0$.
+- Suites matricielles : si $U_{n+1} = A\,U_n$, alors $U_n = A^n\,U_0$. Si $U_{n+1} = A\,U_n + B$, on cherche $C = (I - A)^{-1}B$, puis $V_n = U_n - C$ vérifie $V_{n+1} = A\,V_n$.
+- Puissances : pour $D$ diagonale, $D^n$ s'obtient en élevant chaque coefficient diagonal à la puissance $n$ ; si $A = P\,D\,P^{-1}$, alors $A^n = P\,D^n\,P^{-1}$.
 
 ## Graphes
 

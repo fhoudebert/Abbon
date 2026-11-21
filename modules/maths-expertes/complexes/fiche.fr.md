@@ -16,6 +16,7 @@
 - Valeurs à connaître : $e^{i\pi/2} = i$, $e^{i\pi} = -1$, $e^{2i\pi} = 1$.
 - $e^{i\theta}\,e^{i\theta'} = e^{i(\theta + \theta')}$ et **formule de Moivre** : $\left(e^{i\theta}\right)^n = e^{in\theta}$.
 - **Formules d'Euler** : $\cos\theta = \dfrac{e^{i\theta} + e^{-i\theta}}{2}$, $\sin\theta = \dfrac{e^{i\theta} - e^{-i\theta}}{2i}$.
+- Linéarisation : $\cos^2 x = \dfrac{1 + \cos(2x)}{2}$ et $\sin^2 x = \dfrac{1 - \cos(2x)}{2}$ (Euler) ; $\cos(3\theta) = 4\cos^3\theta - 3\cos\theta$ (Moivre).
 
 ## Équations et polynômes
 

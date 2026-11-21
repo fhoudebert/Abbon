@@ -21,6 +21,7 @@
 - **Bézout** : $a$ et $b$ sont premiers entre eux si et seulement s'il existe des entiers $u$ et $v$ tels que $a\,u + b\,v = 1$. Plus généralement, il existe $u$, $v$ tels que $a\,u + b\,v = \mathrm{PGCD}(a, b)$.
 - **Gauss** : si $a$ divise $b\,c$ et que $a$ est premier avec $b$, alors $a$ divise $c$.
 - Corollaire : si $a$ et $b$ sont premiers entre eux et divisent tous deux $n$, alors $a\,b$ divise $n$.
+- **Équation $a\,x + b\,y = c$** : une solution particulière (Bézout, Euclide remonté), puis Gauss donne toutes les autres. Pour $3x + 5y = 1$ : $x = 2 + 5k$, $y = -1 - 3k$, $k$ entier.
 
 ## Nombres premiers
 

@@ -2,12 +2,12 @@
 # Questions reprises des ébauches (modules/_ebauches/math/02-expert.md), reformulées et vérifiées.
 
 id: org.abbon.maths-expertes
-version: 0.2.0
+version: 0.3.0
 date: 2026-11-21
 title:
   fr: "Maths expertes, terminale"
 description:
-  fr: "Révisions. Version pilote : nombres complexes, arithmétique, matrices et graphes ; 24 questions et leurs fiches de révision."
+  fr: "Révisions : nombres complexes, arithmétique, matrices et graphes ; niveaux bases et approfondissement, 60 questions et leurs fiches de révision."
 level: terminale
 license: CC-BY-NC-SA-4.0
 authors: [Abbon]
