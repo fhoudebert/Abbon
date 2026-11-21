@@ -11,7 +11,7 @@ Ordre de travail de la branche `qcm`, après le socle (lots 0 à 5). Le cadrage 
 | Lot 6 quater | **Révision espacée (boîtes de Leitner)** : entraînement par répétitions sur des questions choisies | fait |
 | Lot 7 | Formules (LaTeX, rendu KaTeX), équations chimiques, unités, figures SVG incrustées après nettoyage | fait |
 | Lot 8 | Module Informatique : 13 rubriques, environ 450 questions ; version pilote 0.1.0 (un QCM de bases par rubrique, 130 questions) | en cours |
-| Lots 9 à 11 | Modules de bac : Physique-chimie, Maths spécialité, Maths expertes ; versions pilotes 0.1.0 tirées des ébauches (90 questions) | en cours |
+| Lots 9 à 11 | Modules de bac : Physique-chimie, Maths spécialité, Maths expertes ; versions pilotes 0.2.0 tirées des ébauches (90 questions, 10 fiches) | en cours |
 | Lot 12 | Anglais : verbes irréguliers, version complète (environ 150 verbes) | à faire |
 | Technique A | **Actions GitHub et Node.js** : actions en Node 24, construction en Node 26 | fait, à valider sur GitHub |
 | Technique B | **Version macOS en CI** : application universelle (Apple silicon et Intel), `.dmg`, mises à jour automatiques | fait, à valider sur GitHub |
@@ -66,8 +66,9 @@ Ordre de travail de la branche `qcm`, après le socle (lots 0 à 5). Le cadrage 
 - Les questions qui attendent une formule en réponse (« dérivée de $u/v$ ? ») sont devenues des choix entre
   formules, en attendant un type « expression » (lot 13).
 - Étiquette `prog-2019` sur chaque QCM de maths, pour la bascule vers le programme 2026 (bac 2028).
-- Suite : fiches de révision par catégorie, niveaux « approfondissement » et « expert », relecture par un
-  enseignant ; physique-chimie : catégorie « L'énergie : conversions et transferts ».
+- Version 0.2.0 : une fiche de révision par catégorie (10 fiches) — l'essentiel du cours, les formules et les
+  pièges classiques, en cohérence avec les questions. Vérifiées à 390 px (aucun tableau ni formule coupés).
+- Suite : niveaux « approfondissement » et « expert », relecture par un enseignant (questions et fiches) ; physique-chimie : catégorie « L'énergie : conversions et transferts ».
 - Un dossier de `modules/` sans `module.yaml` (ébauches, notes) est désormais ignoré par l'outillage, avec un
   message, au lieu de faire échouer la vérification.
 

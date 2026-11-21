@@ -16,7 +16,7 @@ Leur contenu est repris tel quel dans les notes de version (page de télécharge
 - Formules mathématiques (LaTeX), équations chimiques et unités, dans les énoncés, les réponses et les explications.
 - Figures SVG, qui suivent le thème clair ou sombre.
 - Module « Informatique », version pilote : 13 rubriques, 130 questions.
-- Modules de révision du bac, versions pilotes : physique-chimie (30 questions), maths spécialité (36), maths expertes (24).
+- Modules de révision du bac, versions pilotes : physique-chimie (30 questions), maths spécialité (36), maths expertes (24), avec une fiche de révision par catégorie.
 - Version macOS : une application pour Mac Apple silicon et Intel, avec mises à jour automatiques.
 - Boîte de révision (Leitner) : rangez les questions à retenir avec « Ma boîte », révisez-les à intervalles croissants.
 
@@ -31,7 +31,7 @@ Leur contenu est repris tel quel dans les notes de version (page de télécharge
 - Mathematical formulas (LaTeX), chemical equations and units, in questions, answers and explanations.
 - SVG figures that follow the light or dark theme.
 - “Computer science” module, pilot version (French only): 13 topics, 130 questions.
-- Pilot versions of the French baccalaureate revision modules (French only): physics-chemistry, mathematics, advanced mathematics.
+- Pilot versions of the French baccalaureate revision modules (French only): physics-chemistry, mathematics, advanced mathematics, with a revision sheet for each category.
 - macOS version: one app for Apple silicon and Intel Macs, with automatic updates.
 - Review box (Leitner): put the questions to remember in it with “My box”, review them at growing intervals.
 

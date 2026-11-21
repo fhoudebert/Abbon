@@ -157,6 +157,10 @@ Markdown reconnu : `code`, `**gras**`, `*italique*`, blocs de code (```` ```rust
 tableaux à barres verticales, titres `##` et `###` (dans les fiches), formules et images (ci-dessous). Aucun HTML
 n'est interprété.
 
+Sur téléphone, la fiche ne fait qu'environ 330 px de large : préférer des tableaux de deux colonnes (au-delà,
+une liste se lit mieux), couper une longue formule en plusieurs blocs `$$…$$`, et placer ces blocs entre deux
+paragraphes plutôt qu'au milieu d'une liste, qu'ils interrompraient.
+
 ### Formules, chimie, unités
 
 Les formules s'écrivent en LaTeX et sont rendues par KaTeX, hors ligne :
