@@ -19,6 +19,7 @@ Leur contenu est repris tel quel dans les notes de version (page de télécharge
 - Modules de révision du bac, versions pilotes : physique-chimie (30 questions), maths spécialité (36), maths expertes (24), avec une fiche de révision par catégorie.
 - Version macOS : une application pour Mac Apple silicon et Intel, avec mises à jour automatiques.
 - Boîte de révision (Leitner) : rangez les questions à retenir avec « Ma boîte », révisez-les à intervalles croissants.
+- Éditeur visuel de formules (MathLive) : saisie sans LaTeX, avec un clavier mathématique sur écran tactile.
 
 ### en
 - Content modules: a `.qcm` file is installed, updated and removed as a whole; its quizzes are protected (“Duplicate to edit” makes a personal copy).
@@ -34,6 +35,7 @@ Leur contenu est repris tel quel dans les notes de version (page de télécharge
 - Pilot versions of the French baccalaureate revision modules (French only): physics-chemistry, mathematics, advanced mathematics, with a revision sheet for each category.
 - macOS version: one app for Apple silicon and Intel Macs, with automatic updates.
 - Review box (Leitner): put the questions to remember in it with “My box”, review them at growing intervals.
+- Visual formula editor (MathLive): no LaTeX needed, with a math keyboard on touch screens.
 
 ## 0.1.0
 

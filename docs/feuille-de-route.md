@@ -15,7 +15,7 @@ Ordre de travail de la branche `qcm`, après le socle (lots 0 à 5). Le cadrage 
 | Lot 12 | Anglais : verbes irréguliers, version complète (environ 150 verbes) | à faire |
 | Technique A | **Actions GitHub et Node.js** : actions en Node 24, construction en Node 26 | fait, à valider sur GitHub |
 | Technique B | **Version macOS en CI** : application universelle (Apple silicon et Intel), `.dmg`, mises à jour automatiques | fait, à valider sur GitHub |
-| Lot 13 | **MathLive** : saisie visuelle des formules dans l'éditeur, puis réponses sous forme d'expression | à étudier, puis à faire |
+| Lot 13 | **MathLive** : saisie visuelle des formules dans l'éditeur, puis réponses sous forme d'expression | éditeur fait (à valider sous Linux et Android) ; type « expression » à faire |
 | Lot 14 | **Molécules** : formules topologiques générées en SVG à la construction des modules ; Ketcher plus tard, si besoin | à étudier |
 | Lot 15 | **Ceintures et points** : récompenser la mémorisation (questions échouées rangées dans la boîte puis acquises), et accessoirement les QCM et modules terminés | étudié, à valider |
 
@@ -124,6 +124,15 @@ Ordre de travail de la branche `qcm`, après le socle (lots 0 à 5). Le cadrage 
   questions « expression ») pour ne pas alourdir le démarrage. Le rendu dans le champ (moteur de MathLive)
   différera légèrement de l'affichage (KaTeX).
 - **Opportunité** : réelle ; l'éditeur d'abord, le type « expression » ensuite.
+- **Fait — éditeur (MathLive 0.111.4)** : bouton « Éditeur visuel » dans la barre de formule. Chargé à la
+  première ouverture (morceau de 800 Ko à part), polices de KaTeX réutilisées, aucune requête réseau, sons
+  coupés. Vérifié dans Chrome (bureau et téléphone tactile, thèmes clair et sombre, axe sans violation) : les
+  7 formules de démonstration et des sources `\ce`, `\pu`, `9{,}81` rouvertes puis validées sans changement
+  gardent leur source exacte ; saisie au clavier et au clavier virtuel reportées dans la question.
+- **Reste à vérifier** sur l'application construite : WebKitGTK (Linux), WebView Android (clavier virtuel de
+  MathLive et clavier du téléphone), macOS ; puis lecteur d'écran (Orca, TalkBack).
+- **Ensuite — type « expression »** : prototyper la comparaison de deux expressions (évaluation en points tirés
+  au hasard d'abord ; Compute Engine si nécessaire).
 
 ## Lot 14 — molécules (Ketcher ou génération au build)
 

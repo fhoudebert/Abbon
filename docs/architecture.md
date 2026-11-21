@@ -158,7 +158,13 @@ Voir [modules.md](modules.md) pour l'usage et le format des sources.
   mhchem) et met le HTML en cache ; `RichNode` l'insère. KaTeX produit HTML + MathML ; ses polices sont embarquées
   en woff2 seulement (`vite.config.js`).
 - **Éditeur** : la formule s'édite sous sa forme LaTeX, dans une pastille ; l'aperçu rendu et l'erreur éventuelle
-  s'affichent sous la barre d'outils quand le curseur est dans la formule.
+  s'affichent sous la barre d'outils quand le curseur est dans la formule. Le bouton « Éditeur visuel » de cette
+  barre ouvre `rich/MathFieldDialog.svelte` : un champ MathLive (`<math-field>`) dans une fenêtre modale, avec
+  clavier virtuel sur écran tactile. MathLive (≈ 800 Ko) est importé à la première ouverture seulement ; il
+  réutilise les polices de KaTeX (`fontsDirectory = null`), sans son. Son clavier virtuel est placé dans la
+  fenêtre (sinon la couche supérieure le cacherait) et fixé au bas de l'écran. Une formule validée sans
+  modification garde sa source exacte ; modifiée, elle prend l'écriture de MathLive (`f^{\prime}` pour `f'`),
+  rendue à l'identique par KaTeX. `\ce` et `\pu` passent tels quels.
 - **SVG** : `domain/svg.ts` est un analyseur XML strict suivi d'une réécriture par liste blanche, sans DOM (il
   sert aussi à l'outillage). Le fichier d'origine est conservé (son empreinte reste valable) et nettoyé à chaque
   chargement (`rich/media.svelte.ts`), avec des identifiants préfixés par l'empreinte.
