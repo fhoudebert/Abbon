@@ -19,7 +19,7 @@ Ordre de travail de la branche `qcm`, après le socle (lots 0 à 5). Le cadrage 
 | Lot 14 | **Molécules** : formules topologiques générées en SVG à la construction des modules ; Ketcher plus tard, si besoin | fait (génération au build) |
 | Lot 15 | **Ceintures et points** : récompenser surtout la révision régulière, selon le planning de la boîte, et la mémorisation ; la collecte des questions échouées un peu ; les QCM et modules terminés accessoirement | fait (avant le perfectionnement des QCM) |
 | Lot 16 | **Boîte de révision** : cartes personnelles (hors QCM), type recto-verso, récapitulatif imprimable de toutes les cartes | fait (impression à vérifier sur l'application construite) |
-| Lot 17 | **Catégories regroupées** : Physique, Chimie… au-dessus des catégories des modules, filtre et recherche de l'accueil en tenant compte | étudié, à valider |
+| Lot 17 | **Catégories regroupées** : Physique, Chimie… au-dessus des catégories des modules, filtre de l'accueil en arbre | fait (recherche par nom de catégorie : non retenue) |
 
 Ordre retenu ensuite : lot 15, le type « expression » (lot 13) et les molécules (lot 14) sont faits ; vient le
 perfectionnement des QCM de bac (niveaux « approfondissement » et « expert »), qui peut s'en servir.
@@ -388,7 +388,25 @@ mot de vocabulaire…).
   seraient très difficiles à reproduire fidèlement.
 - Taille : petite à moyenne (page, impression ; export HTML pour Android).
 
-## Lot 17 — catégories regroupées (étude)
+## Lot 17 — catégories regroupées
+
+**Fait** (décision : regroupements Physique et Chimie, filtre en arbre ; la recherche par nom de catégorie n'est
+pas retenue pour l'instant) :
+
+- `module.yaml` : `parent:` sur une catégorie ; regroupements sans QCM permis (ni avertissement « sans QCM », ni
+  fiche attendue) ; parent inconnu ou boucle de parents : erreur.
+- Physique-chimie 0.6.0 : *Chimie* au-dessus de Constitution et transformations de la matière ; *Physique*
+  au-dessus de Mouvement et interactions, Ondes et signaux, L'énergie. Mettre à jour depuis 0.5.0 rattache les
+  catégories existantes à leur regroupement.
+- Accueil : filtre en arbre (`domain/categories.ts`) : filles en retrait sous leur parent, seulement les
+  catégories qui contiennent des QCM ; choisir un regroupement montre les QCM de toutes ses descendantes.
+  Ordre : catégories personnelles d'abord, puis module par module (chaque module numérote ses positions à
+  partir de 0, ce qui les entremêlait auparavant).
+- **Vérifié** : tests (descendantes, arbre, ordre, boucle, compilateur) ; dans Chrome, clair et sombre :
+  installation de 0.5.0 puis mise à jour en 0.6.0, « Physique » montre 5 QCM, « Chimie » 2, « Ondes et signaux »
+  2 ; axe sans violation.
+
+### Étude
 
 **Besoin** : filtrer « Physique » (Mouvement et interactions, Ondes et signaux, L'énergie) et « Chimie »
 (Constitution et transformations de la matière) depuis l'accueil.

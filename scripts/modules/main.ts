@@ -66,7 +66,9 @@ function report(name: string, c: Compiled): boolean {
   console.log(`\n${name} — ${c.manifest.id} ${c.manifest.version} : ${c.quizzes.length} QCM, ${questions} questions`);
   for (const s of c.stats) console.log(`  ${s.category.padEnd(28)} ${s.level.padEnd(18)} ${String(s.quizzes).padStart(3)} QCM ${String(s.questions).padStart(5)} questions`);
   const sheets = Object.keys(c.manifest.sheets ?? {}).length;
-  console.log(`  fiches de révision : ${sheets} / ${c.categories.length} catégorie(s)`);
+  // Les regroupements sans QCM n'ont pas de fiche.
+  const withQuizzes = new Set(c.quizzes.map((q) => q.categoryId)).size;
+  console.log(`  fiches de révision : ${sheets} / ${withQuizzes} catégorie(s) avec des QCM`);
   if (c.assets.length || c.manifest.requires?.features?.length)
     console.log(`  images : ${c.assets.length} ; fonctions requises : ${c.manifest.requires?.features?.join(', ') || 'aucune'}`);
   for (const i of [...errors, ...warnings])

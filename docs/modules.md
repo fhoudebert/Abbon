@@ -65,6 +65,18 @@ categories:
     name: { fr: "…", en: "…" }
 ```
 
+**Regroupements** : `parent:` range une catégorie sous une autre du même module. Un regroupement peut n'avoir
+aucun QCM (ni fiche) ; dans le filtre de l'accueil, le choisir montre les QCM de toutes ses catégories filles.
+
+```yaml
+categories:
+  - id: physique
+    name: { fr: "Physique" }
+  - id: mouvement
+    parent: physique
+    name: { fr: "Mouvement et interactions" }
+```
+
 **Version** : un correctif (coquille, explication) incrémente le dernier chiffre ; des questions ajoutées, le
 deuxième ; une refonte, le premier. Penser à mettre `date` à jour.
 

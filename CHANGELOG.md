@@ -23,6 +23,7 @@ Leur contenu est repris tel quel dans les notes de version (page de télécharge
 - « À propos » : lien vers le code source sur GitHub.
 - Modules : molécules dessinées à partir de leur notation SMILES (formules topologiques qui suivent le thème clair ou sombre).
 - Nouveau type de question « expression » : l'élève écrit une formule ; toute écriture équivalente est acceptée (option « à une constante près » pour les primitives).
+- Accueil : le filtre des catégories est un arbre ; choisir un regroupement (Physique, Chimie…) montre tous ses QCM. Les modules peuvent regrouper leurs catégories (`parent:`).
 - Boîte de révision : nouvelles cartes saisies directement (recto-verso, réponse courte, numérique, formule…), révisées dans l'ordre de saisie ; récapitulatif de toutes les cartes, à imprimer, enregistrer en PDF ou en HTML.
 - Nouveau type de question « recto-verso » : on retourne la carte, puis on dit si l'on savait.
 - Ceintures et points : la révision régulière de la boîte est récompensée (points par révision, bonus quand la journée est à jour, questions acquises), de la ceinture blanche à la noire, puis des dans ; désactivable dans les paramètres.
@@ -46,6 +47,7 @@ Leur contenu est repris tel quel dans les notes de version (page de télécharge
 - “About”: link to the source code on GitHub.
 - Modules: molecules drawn from their SMILES notation (skeletal formulas that follow the light or dark theme).
 - New “expression” question type: the learner writes a formula; any equivalent form is accepted (“up to a constant” option for antiderivatives).
+- Home: the category filter is a tree; choosing a group (Physics, Chemistry…) shows all its quizzes. Modules can group their categories (`parent:`).
 - Review box: new cards entered directly (flashcard, short answer, number, formula…), reviewed in the order entered; a summary of all cards, to print, save as PDF or as HTML.
 - New “flashcard” question type: flip the card, then say whether you knew it.
 - Belts and points: regular reviewing of the box is rewarded (points per review, a bonus once the day is up to date, learnt questions), from white to black belt, then dan grades; can be turned off in the settings.

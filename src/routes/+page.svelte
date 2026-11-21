@@ -1,5 +1,6 @@
 <script lang="ts">
   import { app, type QuizEntry } from '$lib/app.svelte';
+  import { categoryTree, withDescendants } from '$lib/domain/categories';
   import QuizCard from '$lib/components/QuizCard.svelte';
   import RankCard from '$lib/components/RankCard.svelte';
   import { POINTS } from '$lib/domain/rewards';
@@ -14,9 +15,17 @@
   const normalize = (s: string) =>
     s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
 
+  /** Filtre : la catégorie choisie et ses descendantes (« Physique » montre tous les QCM de physique). */
+  const allowed = $derived(categoryId ? withDescendants(categoryId, app.categories) : null);
+  /** Catégories proposées : en arbre, seulement celles qui contiennent des QCM. */
+  const tree = $derived(
+    categoryTree(app.categories, new Set(app.entries.map((e) => e.quiz.categoryId).filter((id): id is string => !!id))),
+  );
+  const indent = (depth: number) => '\u00a0\u00a0\u00a0'.repeat(depth);
+
   const visible = $derived(
     app.entries.filter((e) => {
-      if (categoryId && e.quiz.categoryId !== categoryId) return false;
+      if (allowed && !(e.quiz.categoryId && allowed.has(e.quiz.categoryId))) return false;
       if (!search.trim()) return true;
       const hay = normalize(
         [...Object.values(e.quiz.title), ...Object.values(e.quiz.description ?? {}), ...e.quiz.tags].join(' '),
@@ -72,8 +81,8 @@
       <span class="visually-hidden">{t('home.allCategories')}</span>
       <select bind:value={categoryId}>
         <option value="">{t('home.allCategories')}</option>
-        {#each app.categories as c (c.id)}
-          <option value={c.id}>{localize(c.name, i18n.lang)}</option>
+        {#each tree as n (n.category.id)}
+          <option value={n.category.id}>{indent(n.depth)}{localize(n.category.name, i18n.lang)}</option>
         {/each}
       </select>
     </label>
