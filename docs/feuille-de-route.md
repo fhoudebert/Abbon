@@ -18,7 +18,7 @@ Ordre de travail de la branche `qcm`, après le socle (lots 0 à 5). Le cadrage 
 | Lot 13 | **MathLive** : saisie visuelle des formules dans l'éditeur, puis réponses sous forme d'expression | fait (à valider sous Linux et Android) |
 | Lot 14 | **Molécules** : formules topologiques générées en SVG à la construction des modules ; Ketcher plus tard, si besoin | fait (génération au build) |
 | Lot 15 | **Ceintures et points** : récompenser surtout la révision régulière, selon le planning de la boîte, et la mémorisation ; la collecte des questions échouées un peu ; les QCM et modules terminés accessoirement | fait (avant le perfectionnement des QCM) |
-| Lot 16 | **Boîte de révision** : cartes personnelles (hors QCM) et récapitulatif imprimable de toutes les cartes | étudié, à valider |
+| Lot 16 | **Boîte de révision** : cartes personnelles (hors QCM), type recto-verso, récapitulatif imprimable de toutes les cartes | fait (impression à vérifier sur l'application construite) |
 | Lot 17 | **Catégories regroupées** : Physique, Chimie… au-dessus des catégories des modules, filtre et recherche de l'accueil en tenant compte | étudié, à valider |
 
 Ordre retenu ensuite : lot 15, le type « expression » (lot 13) et les molécules (lot 14) sont faits ; vient le
@@ -317,7 +317,36 @@ Ces seuils sont des constantes, à recaler après quelques semaines d'usage rée
   violation.
 - Restent possibles : un badge visible par module terminé (les points sont comptés), un objectif hebdomadaire.
 
-## Lot 16 — boîte de révision : cartes personnelles et récapitulatif (étude)
+## Lot 16 — boîte de révision : cartes personnelles et récapitulatif
+
+**Fait** (décision : avec le recto-verso ; cartes personnelles au compartiment 1, dans l'ordre de saisie) :
+
+- Écran Révision : boutons « Nouvelle carte » et « Récapitulatif ».
+- **Nouvelle carte** (`/leitner/new`) : éditeur de question limité aux types utiles (recto-verso par défaut,
+  réponse courte, numérique, expression, choix unique), sans barème ; « Enregistrer la carte » ou « Enregistrer
+  et en saisir une autre ». La question rejoint le QCM brouillon « Mes cartes de révision » (`mes-cartes`, créé
+  à la première carte, modifiable dans l'administration, absent de l'accueil) et sa carte entre au
+  compartiment 1. À compartiment et date égaux, les cartes sont proposées dans l'ordre d'ajout.
+- **Recto-verso** (`flashcard`) : énoncé au recto, verso dans `explanation` ; on retourne la carte, puis « Je
+  savais » ou « À revoir » (`answer.text` = `known` / `unknown`). Dans la boîte comme dans un QCM, dans le
+  corrigé et l'aperçu ; éditeur (libellés Recto / Verso, bouton « + Recto-verso ») ; sources de modules
+  (`· flashcard`, verso dans le bloc `>`) ; format d'échange ; GIFT : non exporté. Un export sans corrigé retire
+  le verso, comme toute explication.
+- **Récapitulatif** (`/leitner/recap`) : cartes par compartiment puis acquises, avec ou sans réponses ;
+  « Imprimer ou enregistrer en PDF » (`window.print()`, styles d'impression en clair, sans en-tête ni
+  boutons) ; « Enregistrer en HTML » : fichier autonome (styles et polices des formules inclus, environ
+  400 Ko) qui s'ouvre hors ligne dans un navigateur ; sous Android, seul ce bouton est proposé.
+- Au passage, correction d'un défaut de l'éditeur riche : à la perte du focus quand l'éditeur est retiré de la
+  page, il modifiait un état pendant le rendu (`state_unsafe_mutation`), ce qui pouvait aussi arriver dans
+  l'administration en changeant de question pendant la saisie.
+- **Vérifié** : tests (notation déclarée, validation du verso, sources, format, ordre de saisie) ; dans Chrome,
+  clair à 1100 px et sombre à 390 px, axe sans violation : saisie de deux cartes enregistrées sans pause
+  (la carte suivante reste vierge), révision dans l'ordre de saisie, carte retournée puis notée, recto-verso
+  dans une tentative, récapitulatif avec et sans réponses, impression émulée (PDF produit), fichier HTML ouvert
+  seul. **Reste** : l'impression dans WebKitGTK, WebView2 et WKWebView, et l'enregistrement du fichier sous
+  Android, sur l'application construite.
+
+### Étude
 
 ### Cartes personnelles
 

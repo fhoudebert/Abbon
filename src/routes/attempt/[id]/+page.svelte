@@ -5,7 +5,7 @@
   import { formatDuration, isAnswered, showsInstantFeedback } from '$lib/domain/session';
   import MathInput from '$lib/rich/MathInput.svelte';
   import { renderMath } from '$lib/rich/math';
-  import { expectedText, isTyped } from '$lib/domain/typed';
+  import { expectedText, FLASH_KNOWN, FLASH_UNKNOWN, isTyped } from '$lib/domain/typed';
   import BoxToggle from '$lib/components/BoxToggle.svelte';
   import ClozeText from '$lib/components/ClozeText.svelte';
   import { gapResults } from '$lib/domain/cloze';
@@ -32,6 +32,21 @@
   const checked = $derived(instant && answer?.correct != null);
   const needsValidation = $derived(attempt?.mode === 'training' && !checked && instant);
   const unanswered = $derived(total - session.answeredCount);
+  /** Recto-verso : cartes retournées (une carte déjà notée montre son verso). */
+  let flipped = $state<Record<string, boolean>>({});
+  const showBack = $derived(!!question && (flipped[question.id] || !!answer?.text));
+  const toGrade = $derived(question?.type === 'flashcard' && !answer?.text && !session.locked);
+
+  function flip() {
+    if (question) flipped = { ...flipped, [question.id]: true };
+  }
+
+  /** Recto-verso : l'élève dit s'il savait ; en entraînement, la réponse est aussitôt validée. */
+  async function grade(knew: boolean) {
+    session.typeText(knew ? FLASH_KNOWN : FLASH_UNKNOWN);
+    await session.persist();
+    if (attempt?.mode === 'training' && instant) await session.validate();
+  }
   const flagged = $derived(session.questions.filter((q) => session.answers[q.id]?.flagged).length);
 
   onMount(async () => {
@@ -69,6 +84,7 @@
   }
 
   async function primary() {
+    if (toGrade) return showBack ? undefined : flip();
     if (needsValidation && isAnswered(answer)) return session.validate();
     if (isLast) return askFinish();
     return session.go(session.index + 1);
@@ -170,6 +186,13 @@
           onchange={(i, v) => session.typeGap(i, v)}
           oncommit={() => session.persist()}
         />
+      {:else if question.type === 'flashcard'}
+        {#if showBack}
+          <section class="back" aria-labelledby="back-{question.id}" lang={question.explanation?.[lang] ? lang : fallback}>
+            <h3 id="back-{question.id}" class="muted">{t('play.back')}</h3>
+            <RichContent value={pick(question.explanation ?? {}, lang, fallback)} />
+          </section>
+        {/if}
       {:else if question.type === 'expression'}
         {#key question.id}
           <div class="typed expr" class:is-correct={checked && answer?.correct} class:is-wrong={checked && !answer?.correct}>
@@ -235,12 +258,13 @@
     {#if checked && answer}
       <div class="feedback {answer.correct ? 'ok' : (answer.points ?? 0) > 0 ? 'partial' : 'ko'}" role="status">
         <strong>
-          {answer.correct ? t('play.correct') : (answer.points ?? 0) > 0 ? t('play.partial') : t('play.wrong')}
+          {#if question.type === 'flashcard'}{answer.correct ? t('play.knewDone') : t('play.toReviewDone')}
+          {:else}{answer.correct ? t('play.correct') : (answer.points ?? 0) > 0 ? t('play.partial') : t('play.wrong')}{/if}
         </strong>
         {#if question.type === 'expression' && !answer.correct}
           <p class="expected">{@html t('play.expected', { answer: renderMath(expectedText(question, lang)) })}</p>
         {:else if isTyped(question) && question.type !== 'cloze' && !answer.correct}<p class="expected">{t('play.expected', { answer: expectedText(question, lang) })}</p>{/if}
-        {#if question.explanation}
+        {#if question.explanation && question.type !== 'flashcard'}
           <div class="expl"><span class="muted">{t('play.explanation')} :</span> <RichContent value={pick(question.explanation, lang, fallback)} /></div>
         {/if}
       </div>
@@ -250,7 +274,12 @@
       <button class="secondary" disabled={session.index === 0} onclick={() => session.go(session.index - 1)}>
         ← {t('play.prev')}
       </button>
-      {#if needsValidation}
+      {#if toGrade && !showBack}
+        <button onclick={flip}>{t('play.flip')}</button>
+      {:else if toGrade}
+        <button class="secondary" onclick={() => grade(false)}>{t('play.toReview')}</button>
+        <button onclick={() => grade(true)}>{t('play.knew')}</button>
+      {:else if needsValidation}
         <button disabled={!isAnswered(answer)} onclick={() => session.validate()}>{t('play.validate')}</button>
       {:else if isLast}
         <button onclick={askFinish}>{t('play.finish')}</button>
@@ -536,5 +565,19 @@
   .typed.expr .hint {
     margin: 0;
     font-size: 0.9rem;
+  }
+  .back {
+    border: 1px solid var(--border);
+    border-inline-start: 4px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 0.5rem 1rem;
+    margin-block: 0.75rem;
+  }
+  .back h3 {
+    margin: 0 0 0.25rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
   }
 </style>

@@ -7,7 +7,7 @@
   import ClozeText from '$lib/components/ClozeText.svelte';
   import { gapResults } from '$lib/domain/cloze';
   import { pick } from '$lib/domain/rich';
-  import { expectedText, isTyped } from '$lib/domain/typed';
+  import { expectedText, FLASH_KNOWN, FLASH_UNKNOWN, isTyped } from '$lib/domain/typed';
   import { localize } from '$lib/domain/text';
   import { renderMath } from '$lib/rich/math';
   import RichContent from '$lib/rich/RichContent.svelte';
@@ -79,6 +79,14 @@
       {#if q.type === 'cloze'}
         {@const texts = session.answers[q.id]?.texts ?? []}
         <ClozeText question={q} {lang} {fallback} values={texts} locked results={gapResults(q, texts)} />
+      {:else if q.type === 'flashcard'}
+        {@const given = session.answers[q.id]?.text}
+        <dl class="typed">
+          <dt>{t('play.back')}</dt>
+          <dd lang={q.explanation?.[lang] ? lang : fallback}><RichContent value={pick(q.explanation ?? {}, lang, fallback)} /></dd>
+          <dt>{t('review.yourAnswer')}</dt>
+          <dd>{given === FLASH_KNOWN ? t('play.knew') : given === FLASH_UNKNOWN ? t('play.toReview') : t('review.noAnswer')}</dd>
+        </dl>
       {:else if isTyped(q)}
         {@const given = session.answers[q.id]?.text?.trim()}
         <dl class="typed">
@@ -107,7 +115,7 @@
       </ul>
       {#if selected.length === 0}<p class="muted">{t('review.noAnswer')}</p>{/if}
       {/if}
-      {#if q.explanation}
+      {#if q.explanation && q.type !== 'flashcard'}
         <div class="explanation"><strong>{t('play.explanation')} :</strong> <RichContent value={pick(q.explanation, lang, fallback)} /></div>
       {/if}
     </article>

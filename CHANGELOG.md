@@ -23,6 +23,8 @@ Leur contenu est repris tel quel dans les notes de version (page de télécharge
 - « À propos » : lien vers le code source sur GitHub.
 - Modules : molécules dessinées à partir de leur notation SMILES (formules topologiques qui suivent le thème clair ou sombre).
 - Nouveau type de question « expression » : l'élève écrit une formule ; toute écriture équivalente est acceptée (option « à une constante près » pour les primitives).
+- Boîte de révision : nouvelles cartes saisies directement (recto-verso, réponse courte, numérique, formule…), révisées dans l'ordre de saisie ; récapitulatif de toutes les cartes, à imprimer, enregistrer en PDF ou en HTML.
+- Nouveau type de question « recto-verso » : on retourne la carte, puis on dit si l'on savait.
 - Ceintures et points : la révision régulière de la boîte est récompensée (points par révision, bonus quand la journée est à jour, questions acquises), de la ceinture blanche à la noire, puis des dans ; désactivable dans les paramètres.
 - Boîte de révision : délais de 1, 2, 4, 8 et 16 jours ; une question juste au dernier compartiment est acquise et sort du planning ; à la fin d'un QCM, les questions échouées se rangent dans la boîte en les cochant.
 
@@ -44,6 +46,8 @@ Leur contenu est repris tel quel dans les notes de version (page de télécharge
 - “About”: link to the source code on GitHub.
 - Modules: molecules drawn from their SMILES notation (skeletal formulas that follow the light or dark theme).
 - New “expression” question type: the learner writes a formula; any equivalent form is accepted (“up to a constant” option for antiderivatives).
+- Review box: new cards entered directly (flashcard, short answer, number, formula…), reviewed in the order entered; a summary of all cards, to print, save as PDF or as HTML.
+- New “flashcard” question type: flip the card, then say whether you knew it.
 - Belts and points: regular reviewing of the box is rewarded (points per review, a bonus once the day is up to date, learnt questions), from white to black belt, then dan grades; can be turned off in the settings.
 - Review box: intervals of 1, 2, 4, 8 and 16 days; a question answered right in the last compartment is learnt and leaves the schedule; at the end of a quiz, tick the missed questions to put them in the box.
 

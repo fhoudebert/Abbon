@@ -1,7 +1,7 @@
 import { imagesWithoutAlt, isEmptyRich } from './rich';
 import { gapOptions, markersMatch } from './cloze';
 import { expressionProblem } from './expr';
-import { isTyped } from './typed';
+import { hasChoices } from './typed';
 import type { Quiz } from './types';
 
 export type IssueCode =
@@ -15,6 +15,7 @@ export type IssueCode =
   | 'short_needs_answer'
   | 'numeric_needs_value'
   | 'expression_needs_answer'
+  | 'flashcard_needs_back'
   | 'expression_invalid'
   | 'cloze_needs_gap'
   | 'cloze_markers'
@@ -52,11 +53,13 @@ export function validateQuiz(quiz: Quiz): Issue[] {
     .forEach((q, i) => {
       const at = { questionId: q.id, questionNumber: i + 1 };
       if (isEmptyRich(q.prompt[main])) issues.push({ level: 'error', code: 'prompt_empty', lang: main, ...at });
-      const typed = isTyped(q);
+      const typed = !hasChoices(q);
       if (q.type === 'short' && !(q.expected?.accepted ?? []).some((a) => a.trim()))
         issues.push({ level: 'error', code: 'short_needs_answer', ...at });
       if (q.type === 'numeric' && !(typeof q.expected?.value === 'number' && Number.isFinite(q.expected.value) && (q.expected.tolerance ?? 0) >= 0))
         issues.push({ level: 'error', code: 'numeric_needs_value', ...at });
+      if (q.type === 'flashcard' && isEmptyRich(q.explanation?.[main]))
+        issues.push({ level: 'error', code: 'flashcard_needs_back', ...at });
       if (q.type === 'expression') {
         const latex = q.expected?.latex?.trim() ?? '';
         if (!latex) issues.push({ level: 'error', code: 'expression_needs_answer', ...at });
@@ -97,7 +100,9 @@ export function validateQuiz(quiz: Quiz): Issue[] {
 
       for (const lang of others) {
         const missing =
-          isEmptyRich(q.prompt[lang]) || (!typed && q.choices.some((c) => isEmptyRich(c.content[lang])));
+          isEmptyRich(q.prompt[lang]) ||
+          (!typed && q.choices.some((c) => isEmptyRich(c.content[lang]))) ||
+          (q.type === 'flashcard' && isEmptyRich(q.explanation?.[lang]));
         if (missing) issues.push({ level: 'warning', code: 'translation_missing', lang, ...at });
       }
     });

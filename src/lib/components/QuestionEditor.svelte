@@ -15,7 +15,16 @@
     question = $bindable(),
     number,
     lang,
-  }: { question: Question; number: number; lang: string } = $props();
+    types,
+    showPoints = true,
+  }: {
+    question: Question;
+    number: number;
+    lang: string;
+    /** Types proposés (tous par défaut). */
+    types?: QuestionType[];
+    showPoints?: boolean;
+  } = $props();
 
   /** Réponse à mettre au point après « Entrée » (nouvelle réponse). */
   let focusChoice = $state<string | null>(null);
@@ -32,7 +41,8 @@
     await tick();
   }
 
-  const TYPES: QuestionType[] = ['single', 'multiple', 'short', 'numeric', 'cloze', 'expression'];
+  const ALL_TYPES: QuestionType[] = ['single', 'multiple', 'short', 'numeric', 'cloze', 'expression', 'flashcard'];
+  const TYPES = $derived(types ?? ALL_TYPES);
 
   // ---- Réponse attendue (réponse courte, réponse numérique) ----------------
   const expected = $derived<ExpectedAnswer>(question.expected ?? {});
@@ -107,16 +117,18 @@
         </label>
       {/each}
     </fieldset>
-    <label class="points">
-      {t('qe.points')}
-      <input type="number" min="0.5" step="0.5" bind:value={question.points} />
-    </label>
+    {#if showPoints}
+      <label class="points">
+        {t('qe.points')}
+        <input type="number" min="0.5" step="0.5" bind:value={question.points} />
+      </label>
+    {/if}
   </div>
 
   <div class="field">
-    <span class="label">{t('qe.prompt')}</span>
+    <span class="label">{question.type === 'flashcard' ? t('qe.front') : t('qe.prompt')}</span>
     {#key `${question.id}:${lang}`}
-      <RichEditor value={question.prompt[lang]} onchange={setPrompt} label={t('qe.prompt')} {lang} />
+      <RichEditor value={question.prompt[lang]} onchange={setPrompt} label={question.type === 'flashcard' ? t('qe.front') : t('qe.prompt')} {lang} />
     {/key}
   </div>
 
@@ -263,9 +275,9 @@
   {/if}
 
   <div class="field">
-    <span class="label">{t('qe.explanation')}</span>
+    <span class="label">{question.type === 'flashcard' ? t('qe.back') : t('qe.explanation')}</span>
     {#key `${question.id}:${lang}:expl`}
-      <RichEditor value={question.explanation?.[lang]} onchange={setExplanation} label={t('qe.explanation')} {lang} />
+      <RichEditor value={question.explanation?.[lang]} onchange={setExplanation} label={question.type === 'flashcard' ? t('qe.back') : t('qe.explanation')} {lang} />
     {/key}
   </div>
 </div>

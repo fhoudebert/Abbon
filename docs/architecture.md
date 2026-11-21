@@ -151,6 +151,16 @@ Voir [modules.md](modules.md) pour l'usage et le format des sources.
   correction immédiate. Il reprend le rendu des questions de l'écran de passage ; les deux sont à tenir alignés.
 - Sauvegarde complète : `leitner.json`.
 
+## Cartes personnelles, recto-verso, récapitulatif (lot 16)
+
+- `flashcard` : ni choix ni réponse attendue (`hasChoices` / `isTyped` dans `domain/typed.ts`) ; le verso est
+  `explanation` ; `scoreQuestion` donne juste si `answer.text` vaut `known`.
+- Cartes personnelles : `app.addCustomCard` range la question dans le QCM brouillon `mes-cartes`, puis la carte
+  au compartiment 1 (`leitner_card.quiz_id` n'est pas une clé étrangère : pas de changement de schéma).
+  `dueCards` départage par `addedAt` : ordre de saisie.
+- Récapitulatif : `routes/leitner/recap`. `lib/standalone.ts` produit le fichier HTML autonome (copie du
+  DOM sans `[data-no-export]`, feuilles de style recopiées avec leurs polices en `data:`, images en `data:`).
+
 ## Points et ceintures (lot 15)
 
 - `domain/rewards.ts` (fonctions pures) : barème (`POINTS`), ceintures et dans (`rankOf`, `promotion`), et les

@@ -150,6 +150,16 @@ What is the past simple of *to go*?
   déroulante : la bonne réponse d'abord, puis les autres propositions après `~`. Une langue sans ligne `=`
   reprend le texte de la langue principale ; sinon elle donne son propre texte, avec les mêmes trous. `\{` écrit
   une accolade. `scoring: partial` dans l'en-tête du QCM compte chaque trou juste.
+- **Recto-verso** : `· flashcard`, sans réponses à cocher ni ligne `=` ; l'énoncé est le recto, le bloc `>` le
+  verso. L'élève retourne la carte puis dit s'il savait.
+
+  ```markdown
+  ## pythagore · flashcard
+  Énoncez le théorème de Pythagore.
+
+  > Dans un triangle rectangle, le carré de l'hypoténuse est égal à la somme des carrés des deux autres côtés.
+  ```
+
 - **Expressions** : `· expression`, avec la formule attendue sur une ligne `=`, entre dollars (facultatifs).
   L'élève l'écrit dans un champ de formule (clavier mathématique sur écran tactile) ; toute écriture
   équivalente est acceptée. Pour une primitive, terminer par `+ C` : l'égalité est alors jugée à une constante

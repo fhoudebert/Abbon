@@ -379,6 +379,10 @@ export function quizToGift(quiz: Quiz, lang: Lang, image?: (hash: string) => str
         lines.push(`// Q${i + 1} : texte à trous, non exporté (sans équivalent en GIFT)`, '');
         return;
       }
+      if (q.type === 'flashcard') {
+        lines.push(`// Q${i + 1} : carte recto-verso, non exportée (sans équivalent en GIFT)`, '');
+        return;
+      }
       if (q.type === 'expression') {
         // Moodle ne compare pas des formules en GIFT : les questions « expression » ne sont pas exportées.
         lines.push(`// Q${i + 1} : expression à écrire, non exportée (sans équivalent en GIFT)`, '');

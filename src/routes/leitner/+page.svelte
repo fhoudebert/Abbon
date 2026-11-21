@@ -132,6 +132,11 @@
 
   <p class="muted intro">{t('leitner.intro')}</p>
 
+  <p class="tools">
+    <a class="button secondary" href="/leitner/new">+ {t('leitner.newCard')}</a>
+    {#if app.cards.length}<a class="button secondary" href="/leitner/recap">{t('leitner.recap')}</a>{/if}
+  </p>
+
   {#if app.cards.length === 0}
     <p class="panel">{t('leitner.empty')}</p>
   {:else}
@@ -292,5 +297,10 @@
   }
   .cards .info {
     flex: 1 1 14rem;
+  }
+  .tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
   }
 </style>

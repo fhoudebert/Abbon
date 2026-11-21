@@ -61,6 +61,7 @@ le contenu de l'appareil (le code PIN de l'appareil est conservé).
 | `short` | texte à saisir | `choices` vide ; `expected.accepted` (formes acceptées), `expected.caseSensitive` |
 | `cloze` | texte à trous | `choices` vide ; `expected.text` (texte par langue, trous marqués `{{1}}`, `{{2}}`…), `expected.gaps` |
 | `numeric` | nombre à saisir | `choices` vide ; `expected.value`, `expected.tolerance` (écart absolu), `expected.unit` (affichée, pas saisie) |
+| `flashcard` | carte recto-verso | `choices` vide, `expected` nul ; le verso est `explanation` ; l'élève déclare s'il savait (`answer.text` : `known` ou `unknown`) |
 | `expression` | formule à écrire | `choices` vide ; `expected.latex` (formule attendue, LaTeX), `expected.constant` (égalité à une constante près) |
 
 ```json
@@ -93,7 +94,7 @@ le contenu de l'appareil (le code PIN de l'appareil est conservé).
   notation partielle. Les réponses de l'apprenant sont dans `texts`, une par trou.
 - Sans corrigé (`includesSolutions: false`), `expected` est retiré, sauf l'unité d'une réponse numérique, le
   texte et les propositions des listes d'un texte à trous, et l'indication « à une constante près » d'une expression.
-- **Compatibilité** : `short`, `numeric`, `cloze` et `expression` datent d'Abbon 0.2.0. Un lecteur plus ancien refuse un QCM qui en
+- **Compatibilité** : `short`, `numeric`, `cloze`, `expression` et `flashcard` datent d'Abbon 0.2.0. Un lecteur plus ancien refuse un QCM qui en
   contient (le QCM est signalé invalide, les autres s'importent).
 
 ## Modules

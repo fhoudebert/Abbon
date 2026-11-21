@@ -66,6 +66,8 @@
         <div class="prompt" lang={q.prompt[lang] ? lang : main}><RichContent value={pick(q.prompt, lang, main)} /></div>
         {#if q.type === 'cloze'}
           <ClozeText question={q} {lang} fallback={main} locked values={showAnswers ? (q.expected?.gaps ?? []).map((g) => g.accepted[0] ?? '') : []} />
+        {:else if q.type === 'flashcard'}
+          {#if !showAnswers}<p class="muted">{t('play.back')} : …</p>{/if}
         {:else if isTyped(q)}
           <p class="typed">
             {#if q.type === 'expression' && showAnswers}
@@ -86,7 +88,7 @@
         </ul>
         {#if showAnswers && q.explanation && pick(q.explanation, lang, main)}
           <div class="explanation">
-            <strong>{t('play.explanation')} :</strong>
+            <strong>{q.type === 'flashcard' ? t('play.back') : t('play.explanation')} :</strong>
             <RichContent value={pick(q.explanation, lang, main)} />
           </div>
         {/if}

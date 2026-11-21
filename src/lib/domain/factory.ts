@@ -31,7 +31,8 @@ export function newChoice(position: number): Choice {
   return { id: newId(), content: {}, correct: false, position, feedback: null };
 }
 
-const typed = (type: QuestionType) => type === 'short' || type === 'numeric' || type === 'cloze' || type === 'expression';
+/** Pas de réponses à cocher : questions à saisie et recto-verso. */
+const typed = (type: QuestionType) => type !== 'single' && type !== 'multiple';
 const emptyExpected = (type: QuestionType) =>
   type === 'short' ? { accepted: [''] } : type === 'numeric' ? { tolerance: 0 } : type === 'cloze' ? { text: {}, gaps: [] } : type === 'expression' ? { latex: '' } : null;
 

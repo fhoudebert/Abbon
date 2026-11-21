@@ -72,7 +72,7 @@ interface RawQuestion {
   langs: Map<string, { prompt: string; choices: { correct: boolean; text: string }[]; answers: string[]; explanation: string }>;
 }
 
-const TYPES: readonly string[] = ['single', 'multiple', 'short', 'numeric', 'cloze', 'expression'];
+const TYPES: readonly string[] = ['single', 'multiple', 'short', 'numeric', 'cloze', 'expression', 'flashcard'];
 
 /**
  * Texte à trous d'une source : les trous sont entre accolades.
@@ -366,6 +366,7 @@ export function compileModule(files: readonly SourceFile[], assets: readonly Ass
         const right = flags.filter(Boolean).length;
         const type: QuestionType = raw.type ?? (first.answers.length && !flags.length ? 'short' : right > 1 ? 'multiple' : 'single');
         const typed = type === 'short' || type === 'numeric' || type === 'cloze' || type === 'expression';
+        const flashcard = type === 'flashcard';
 
         // Questions à saisie : lignes « = réponse ». Les formes acceptées de toutes les langues s'additionnent.
         let expected: ExpectedAnswer | null = null;
@@ -406,6 +407,10 @@ export function compileModule(files: readonly SourceFile[], assets: readonly Ass
             expected = parseNumericAnswer(all[0]);
             if (!expected) err(f.path, `réponse numérique illisible : « ${all[0]} » (ex. « = 9,81 ± 0,01 m/s² »)`, ref);
           }
+        } else if (flashcard) {
+          // Recto-verso : l'énoncé est le recto, le bloc « > » le verso ; ni réponses à cocher ni ligne « = ».
+          if (flags.length || first.answers.length)
+            err(f.path, 'recto-verso : ni réponses à cocher ni ligne « = » ; le verso s’écrit dans le bloc « > »', ref);
         } else if (first.answers.length) {
           err(f.path, `ligne « = réponse » dans une question « ${type} » (types à saisie : short, numeric, expression)`, ref);
         }
@@ -414,7 +419,7 @@ export function compileModule(files: readonly SourceFile[], assets: readonly Ass
           // rien à vérifier sur les réponses à cocher
         } else if (type === 'single' && right !== 1) err(f.path, `choix unique : exactement une bonne réponse attendue (${right} cochée(s))`, ref);
         if (type === 'multiple' && right < 1) err(f.path, 'choix multiple : au moins une bonne réponse attendue', ref);
-        if (typed) {
+        if (typed || flashcard) {
           // pas de réponses à cocher
         } else if (flags.length < 2) err(f.path, 'au moins deux réponses attendues', ref);
         else if (flags.length < 3 || flags.length > 5) warn(f.path, `${flags.length} réponses (3 à 5 conseillées)`, ref);

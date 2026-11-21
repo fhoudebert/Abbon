@@ -34,8 +34,10 @@ export type I18nRich = Record<Lang, RichValue>;
  * short, numeric : réponse à saisir, comparée à `expected` (pas de `choices`).
  * cloze : texte à trous (`expected.text` et `expected.gaps`).
  * expression : formule à écrire (LaTeX), comparée à `expected.latex` par évaluation (voir `domain/expr.ts`).
+ * flashcard : carte recto-verso ; le verso est `explanation` ; l'élève dit lui-même s'il savait
+ *   (`answer.text` = « known » ou « unknown »).
  */
-export type QuestionType = 'single' | 'multiple' | 'short' | 'numeric' | 'cloze' | 'expression';
+export type QuestionType = 'single' | 'multiple' | 'short' | 'numeric' | 'cloze' | 'expression' | 'flashcard';
 
 /** Un trou d'un texte à trous. */
 export interface ClozeGap {

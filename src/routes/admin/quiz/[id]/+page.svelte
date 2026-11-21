@@ -360,6 +360,7 @@
           <button class="secondary" onclick={() => addQuestion('numeric')}>{t('qe.addNumeric')}</button>
           <button class="secondary" onclick={() => addQuestion('cloze')}>{t('qe.addCloze')}</button>
           <button class="secondary" onclick={() => addQuestion('expression')}>{t('qe.addExpression')}</button>
+          <button class="secondary" onclick={() => addQuestion('flashcard')}>{t('qe.addFlashcard')}</button>
         </div>
       </nav>
 
