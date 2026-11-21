@@ -73,3 +73,17 @@ Quand deux événements $A$ et $B$ sont-ils indépendants ?
 - [ ] Quand $P(A) = P(B)$
 
 > Si $P(A) \neq 0$, cela revient à $P_A(B) = P(B)$ : savoir que $A$ est réalisé ne change rien à la probabilité de $B$. $P(A \cap B) = 0$ signifie que $A$ et $B$ sont incompatibles, ce qui est très différent : deux événements incompatibles de probabilités non nulles ne sont jamais indépendants.
+
+## contraire · numeric
+On donne $P(A) = 0,3$. Que vaut $P(\overline{A})$ ?
+
+= 0,7
+
+> L'événement contraire $\overline{A}$ se réalise exactement quand $A$ ne se réalise pas : $P(\overline{A}) = 1 - P(A) = 0,7$.
+
+## reunion · numeric
+On donne $P(A) = 0,5$, $P(B) = 0,4$ et $P(A \cap B) = 0,1$. Que vaut $P(A \cup B)$ ?
+
+= 0,8
+
+> $P(A \cup B) = P(A) + P(B) - P(A \cap B) = 0,5 + 0,4 - 0,1 = 0,8$. On retire l'intersection, comptée deux fois dans la somme. Si $A$ et $B$ étaient incompatibles, on aurait simplement $P(A) + P(B)$.

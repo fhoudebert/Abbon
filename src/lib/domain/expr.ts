@@ -465,6 +465,15 @@ export interface CompareOptions {
   constant?: boolean;
 }
 
+/**
+ * Retire un membre de gauche écrit par l'élève (« y = x - 1 », « u_n = … », « f'(x) = … ») : seul ce qui suit
+ * l'unique signe « = » est comparé.
+ */
+export function rightHandSide(latex: string): string {
+  const parts = latex.split('=');
+  return parts.length === 2 && parts[1].trim() ? parts[1] : latex;
+}
+
 /** Retire un « + C » final (constante d'intégration écrite par l'élève ou l'auteur). */
 export function stripConstant(latex: string): string {
   return latex.replace(/\s*\+\s*(?:\\mathrm\{C\}|C|k|K)\s*$/, '');
@@ -479,7 +488,8 @@ export function sameExpression(expected: string, given: string, opts: CompareOpt
   let g: Expr;
   try {
     e = parseExpr(opts.constant ? stripConstant(expected) : expected);
-    g = parseExpr(opts.constant ? stripConstant(given) : given);
+    const rhs = rightHandSide(given);
+    g = parseExpr(opts.constant ? stripConstant(rhs) : rhs);
   } catch {
     return false;
   }

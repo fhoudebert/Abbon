@@ -16,6 +16,16 @@
 - géométrique ($q \neq 1$) : premier terme $\times \dfrac{1 - q^{\,\text{nombre de termes}}}{1 - q}$. Exemple : $1 + q + \dots + q^n = \dfrac{1 - q^{n+1}}{1 - q}$.
 - De $u_0$ à $u_n$, il y a $n + 1$ termes.
 
+## Suites arithmético-géométriques
+
+Pour $u_{n+1} = a\,u_n + b$ avec $a \neq 1$ :
+
+1. chercher le point fixe $\ell$, solution de $\ell = a\,\ell + b$ ;
+2. poser $v_n = u_n - \ell$ : $(v_n)$ est géométrique de raison $a$ ;
+3. en déduire $u_n = \ell + (u_0 - \ell)\,a^n$, puis la limite si $-1 < a < 1$ : $u_n \to \ell$.
+
+Autre suite auxiliaire classique : $v_n = \dfrac{1}{u_n}$ quand $u_{n+1} = \dfrac{u_n}{1 + u_n}$.
+
 ## Limites de $q^n$
 
 - Si $q > 1$ : $q^n \to +\infty$.

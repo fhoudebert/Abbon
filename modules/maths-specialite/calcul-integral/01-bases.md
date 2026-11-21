@@ -79,3 +79,17 @@ $u$ et $v$ sont dérivables, de dérivées continues sur $[a\,;b]$. Que dit la f
 - [ ] $\displaystyle\int_a^b u\,v'\,\mathrm{d}x = u'(b)\,v(a)$
 
 > Elle découle de la dérivée d'un produit, $(uv)' = u'v + uv'$, que l'on intègre entre $a$ et $b$. On l'emploie pour $\displaystyle\int x\,e^x\,\mathrm{d}x$ ou $\displaystyle\int \ln x\,\mathrm{d}x$, en choisissant pour $u$ le facteur qui se simplifie en dérivant. L'intégrale d'un produit n'est pas le produit des intégrales.
+
+## primitive-condition · expression
+Écrivez la primitive $F$ de $f(x) = 2x$ sur $\mathbb{R}$ qui vérifie $F(0) = 1$ : $F(x) = \dots$
+
+= $x^2 + 1$
+
+> Les primitives de $2x$ sont les fonctions $x^2 + C$. La condition $F(0) = 0 + C = 1$ fixe $C = 1$ : $F(x) = x^2 + 1$. Une condition initiale choisit une primitive parmi toutes.
+
+## chasles · numeric
+On sait que $\displaystyle\int_0^1 f(x)\,\mathrm{d}x = 2$ et $\displaystyle\int_1^3 f(x)\,\mathrm{d}x = 5$. Que vaut $\displaystyle\int_0^3 f(x)\,\mathrm{d}x$ ?
+
+= 7
+
+> Relation de Chasles : $\displaystyle\int_0^3 f = \int_0^1 f + \int_1^3 f = 2 + 5 = 7$. Elle vaut pour toute fonction continue, sans avoir besoin de connaître $f$.

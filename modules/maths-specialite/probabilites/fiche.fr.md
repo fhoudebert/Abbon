@@ -9,6 +9,7 @@
 
 - $\dbinom{n}{k} = \dbinom{n}{n - k}$ ; relation de Pascal : $\dbinom{n}{k} + \dbinom{n}{k+1} = \dbinom{n+1}{k+1}$.
 - Un ensemble à $n$ éléments a $2^n$ parties.
+- Anagrammes d'un mot de $n$ lettres dont certaines se répètent $k_1$, $k_2$… fois : $\dfrac{n!}{k_1!\,k_2!\cdots}$ (ANANAS : $\dfrac{6!}{3!\,2!} = 60$).
 
 ## Probabilités conditionnelles
 

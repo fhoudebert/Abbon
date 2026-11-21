@@ -124,3 +124,12 @@ describe('comparaison de deux expressions', () => {
     expect(expressionProblem('\\ln(-x^2-1)')).toMatch(/rarement définie/);
   });
 });
+
+describe('membre de gauche écrit par l’élève', () => {
+  it('est ignoré', () => {
+    expect(sameExpression('x-1', 'y=x-1')).toBe(true);
+    expect(sameExpression('3x^2', "f'(x)=3x^2")).toBe(true);
+    expect(sameExpression('3x^2', 'y=3x')).toBe(false);
+    expect(sameExpression('3x^2', 'a=b=3x^2')).toBe(false); // deux « = » : illisible
+  });
+});
