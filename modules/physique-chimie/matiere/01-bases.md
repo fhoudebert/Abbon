@@ -120,3 +120,15 @@ Que produit la réaction d'estérification entre un acide carboxylique et un alc
 > $$\begin{gathered}\ce{CH3COOH + C2H5OH}\\ \ce{<=> CH3COOC2H5 + H2O}\end{gathered}$$
 >
 > La réaction est lente et limitée ; un catalyseur acide l'accélère, et retirer l'eau formée déplace l'équilibre vers l'ester.
+
+## groupe-ester · single
+Quel groupe caractéristique porte la molécule ci-dessous ?
+
+![formule topologique de l'éthanoate d'éthyle, CH3-COO-CH2-CH3](smiles:CCOC(C)=O)
+
+- [x] Ester
+- [ ] Acide carboxylique
+- [ ] Cétone
+- [ ] Alcool
+
+> L'atome de carbone doublement lié à un oxygène est aussi lié à un second oxygène, lui-même relié à une chaîne carbonée : c'est le groupe ester $\ce{-COO-}$. Un acide carboxylique porterait $\ce{-COOH}$ (un hydrogène à la place de la chaîne) ; une cétone n'a qu'un oxygène, doublement lié. Cette molécule est l'éthanoate d'éthyle, formé par estérification de l'acide éthanoïque et de l'éthanol.

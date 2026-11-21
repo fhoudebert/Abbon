@@ -7,7 +7,8 @@ Une seule base de code HTML5 / TypeScript, empaquetée avec [Tauri 2](https://v2
 
 Logiciel libre sous licence [MIT](LICENSE). Le contenu des modules (dossier `modules/`) est sous licence
 [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.fr). Le rendu des formules embarque
-[KaTeX](https://katex.org) (licence MIT), et leur saisie visuelle [MathLive](https://mathlive.io) (licence MIT).
+[KaTeX](https://katex.org) (licence MIT), et leur saisie visuelle [MathLive](https://mathlive.io) (licence MIT). Les molécules des modules sont dessinées à leur construction par
+[RDKit](https://www.rdkit.org) (licence BSD), qui n'est pas embarqué dans l'application.
 
 > **État : lot 7 (formules et figures).** Formules LaTeX rendues par KaTeX, équations chimiques et unités
 > (mhchem), figures SVG incrustées après nettoyage, qui suivent le thème clair ou sombre.

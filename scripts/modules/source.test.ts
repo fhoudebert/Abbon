@@ -69,7 +69,7 @@ const files = (quiz = QUIZ, extra: SourceFile[] = []): SourceFile[] => [
   { path: 'rust/01-possession.md', text: quiz },
   ...extra,
 ];
-const errors = (f: SourceFile[]) => compileModule(f).issues.filter((i) => i.level === 'error').map((i) => i.message);
+const errors = (f: SourceFile[], assets: Parameters<typeof compileModule>[1] = []) => compileModule(f, assets).issues.filter((i) => i.level === 'error').map((i) => i.message);
 
 describe('compilation d’un module', () => {
   it('découpe les questions, les langues et ignore les « ## » dans le code', () => {
@@ -226,6 +226,39 @@ Value of *g*?
     expect(parseNumericAnswer('-1,5e3 +/- 10')).toEqual({ value: -1500, tolerance: 10 });
     expect(parseNumericAnswer('6 faces')).toEqual({ value: 6, tolerance: 0, unit: 'faces' });
     expect(parseNumericAnswer('environ 4')).toBeNull();
+  });
+
+  it('résout les molécules « smiles: » dessinées avant la compilation', () => {
+    const quiz = `---
+id: mol-01
+title: { fr: Molécules, en: Molecules }
+level: bases
+---
+
+## ester · single
+Quel groupe ? ![éthanoate d'éthyle](smiles:CCOC(C)=O)
+
+- [x] Ester
+- [ ] Alcool
+
+> Groupe ester.
+
+### en
+Which group? ![ethyl ethanoate](smiles:CCOC(C)=O)
+
+- [x] Ester
+- [ ] Alcohol
+
+> Ester group.
+`;
+    const ok = [{ path: 'smiles:CCOC(C)=O', hash: 'a'.repeat(64), mime: 'image/svg+xml' }];
+    const c = compileModule(files(quiz), ok);
+    expect(c.issues.filter((i) => i.level === 'error')).toEqual([]);
+    expect(c.assets).toEqual(['smiles:CCOC(C)=O']);
+    expect(c.manifest.requires?.features).toContain('svg');
+    expect(JSON.stringify(c.quizzes[0].questions[0].prompt.fr)).toContain('"hash":"' + 'a'.repeat(64));
+    expect(errors(files(quiz), [{ ...ok[0], mime: null }])).toEqual(expect.arrayContaining([expect.stringContaining('SMILES illisible')]));
+    expect(errors(files(quiz.replace("![éthanoate d'éthyle]", '![]')), ok)).toEqual(expect.arrayContaining([expect.stringContaining('sans texte alternatif')]));
   });
 
   it('lit les expressions attendues (primitive : « + C »)', () => {

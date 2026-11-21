@@ -219,6 +219,15 @@ export function compileModule(files: readonly SourceFile[], assets: readonly Ass
   /** Images et formules d'un fichier source, dans une langue (les chemins d'image sont relatifs au fichier). */
   const context = (file: string, lang: string): MarkdownContext => ({
     image(src, alt) {
+      // Molécule : dessinée avant la compilation (molecules.ts), rangée sous sa cible « smiles:… ».
+      if (src.startsWith('smiles:')) {
+        const mol = assetByPath.get(src);
+        if (!mol?.mime) throw new Error(`molécule « ${src.slice(7)} » : SMILES illisible`);
+        if (!alt) throw new Error(`molécule « ${src.slice(7)} » sans texte alternatif : écrire ![nom de la molécule](${src})`);
+        usedAssets.add(mol.path);
+        features.add('svg');
+        return { type: 'image', attrs: { hash: mol.hash, alt } };
+      }
       const dir = file.includes('/') ? file.slice(0, file.lastIndexOf('/') + 1) : '';
       const parts: string[] = [];
       for (const p of (dir + src).split('/')) {

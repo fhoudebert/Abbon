@@ -222,6 +222,22 @@ $\pu{9,81 m.s-2}$                                 grandeur avec son unité
   (`stroke="currentColor"`, `fill="currentColor"` pour le texte) et donner un `viewBox`.
 - Une image présente dans le dossier mais non utilisée est signalée et n'est pas jointe.
 
+### Molécules
+
+```markdown
+![formule topologique de l'éthanoate d'éthyle](smiles:CCOC(C)=O)
+```
+
+- La cible `smiles:` donne la molécule en notation SMILES (parenthèses permises). `module:check` et
+  `module:build` la dessinent avec RDKit (RDKit.js, licence BSD, dépendance de développement seulement : rien
+  n'est ajouté à l'application) : formule topologique, en `currentColor` sur fond transparent, qui suit donc le
+  thème. Le SVG obtenu est joint au module comme une figure ordinaire.
+- Un SMILES illisible est une erreur ; le texte alternatif est obligatoire (nommer la molécule, et donner si
+  utile sa formule semi-développée, que le lecteur d'écran lira).
+- Toutes les molécules sont à la même échelle ; une grande molécule est réduite à la largeur de l'écran.
+- Exemples : éthanol `CCO`, acide éthanoïque `CC(=O)O`, benzène `c1ccccc1`, aspirine `CC(=O)Oc1ccccc1C(=O)O`,
+  but-2-ène (E) `C/C=C/C`.
+
 Les fonctions de rendu utilisées (`math`, `svg`) sont ajoutées d'elles-mêmes à `requires.features` : une version
 d'Abbon qui ne sait pas les afficher refuse d'installer le module, avec un message.
 

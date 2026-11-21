@@ -16,11 +16,11 @@ Ordre de travail de la branche `qcm`, après le socle (lots 0 à 5). Le cadrage 
 | Technique A | **Actions GitHub et Node.js** : actions en Node 24, construction en Node 26 | fait, validé sur GitHub |
 | Technique B | **Version macOS en CI** : application universelle (Apple silicon et Intel), `.dmg`, mises à jour automatiques | fait, validé sur GitHub |
 | Lot 13 | **MathLive** : saisie visuelle des formules dans l'éditeur, puis réponses sous forme d'expression | fait (à valider sous Linux et Android) |
-| Lot 14 | **Molécules** : formules topologiques générées en SVG à la construction des modules ; Ketcher plus tard, si besoin | à étudier |
+| Lot 14 | **Molécules** : formules topologiques générées en SVG à la construction des modules ; Ketcher plus tard, si besoin | fait (génération au build) |
 | Lot 15 | **Ceintures et points** : récompenser surtout la révision régulière, selon le planning de la boîte, et la mémorisation ; la collecte des questions échouées un peu ; les QCM et modules terminés accessoirement | fait (avant le perfectionnement des QCM) |
 
-Ordre retenu ensuite : lot 15 (fait), le type « expression » (lot 13, fait), puis les molécules (lot 14), qui
-servent le perfectionnement des QCM de bac (niveaux « approfondissement » et « expert ») qui les suit.
+Ordre retenu ensuite : lot 15, le type « expression » (lot 13) et les molécules (lot 14) sont faits ; vient le
+perfectionnement des QCM de bac (niveaux « approfondissement » et « expert »), qui peut s'en servir.
 
 ## Lot 6 ter — textes à trous
 
@@ -70,7 +70,7 @@ servent le perfectionnement des QCM de bac (niveaux « approfondissement » et �
   ($y = f'(a)(x - a) + f(a)$) et le résultat du titrage (0,075 mol·L⁻¹).
 - Les questions qui attendent une formule en réponse (« dérivée de $u/v$ ? ») sont devenues des choix entre
   formules, en attendant un type « expression » (lot 13).
-- Physique-chimie 0.3.0 : question d'oxydoréduction sur l'argenterie noircie (rôle de l'aluminium, du sel, de
+- Physique-chimie 0.4.0 : première molécule dessinée (lot 14). 0.3.0 : question d'oxydoréduction sur l'argenterie noircie (rôle de l'aluminium, du sel, de
   la chaleur et du bicarbonate ; d'après Médiachimie), exemple repris dans la fiche ; équations longues des
   explications écrites sur deux lignes pour tenir à 390 px.
 - Étiquette `prog-2019` sur chaque QCM de maths, pour la bascule vers le programme 2026 (bac 2028).
@@ -170,6 +170,16 @@ servent le perfectionnement des QCM de bac (niveaux « approfondissement » et �
   en SVG avec sa source (molfile) pour pouvoir le modifier.
 - **Opportunité** : la génération au build oui, dès que la chimie organique entre dans le module ; Ketcher dans
   l'application, non pour l'instant.
+- **Fait — génération au build** : `![nom](smiles:…)` dans les sources ; RDKit.js 2026.9.2 (WebAssembly, en
+  dépendance de développement) dessine la molécule pendant `module:check` / `module:build`
+  (`scripts/modules/molecules.ts`) ; le SVG est réécrit (couleurs en `currentColor`, fond et métadonnées
+  retirés, agrandi ×1,7 pour la lisibilité) puis joint comme une figure. Dessin reproductible (même fichier à
+  chaque construction). L'analyseur Markdown des sources accepte les parenthèses dans la cible d'une image.
+- **Premier usage** : physique-chimie 0.4.0, question « groupe caractéristique » sur l'éthanoate d'éthyle.
+- **Vérifié** : tests de la réécriture, du dessin réel (RDKit chargé dans les tests), du compilateur (molécule
+  résolue, SMILES illisible, texte alternatif manquant) ; dans Chrome, clair à 1100 px et sombre à 390 px : traits
+  de la couleur du texte, texte alternatif lu (`role="img"`), aucun débordement, axe sans violation.
+- **Reste** : Ketcher dans l'éditeur, si l'on veut un jour dessiner des molécules dans l'application.
 
 ## Lot 15 — ceintures et points
 
