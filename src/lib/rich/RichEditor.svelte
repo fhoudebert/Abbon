@@ -10,6 +10,7 @@
   import { t } from '$lib/i18n/index.svelte';
   import { CODE_LANGUAGES, lowlight } from './lowlight';
   import { mathError, renderMath } from './math';
+  import MathFieldDialog from './MathFieldDialog.svelte';
   import { ACCEPTED_IMAGES, addImage, mediaUrlSync } from './media.svelte';
   import { registerFlush } from './pending';
 
@@ -206,6 +207,30 @@
     return '';
   });
 
+  let mathDialog = $state<MathFieldDialog>();
+  /** Ouvre l'éditeur visuel sur la formule sous le curseur ; la validation remplace sa source. */
+  function openVisualMath() {
+    if (!editor) return;
+    const at = editor.state.selection.$from;
+    let depth = at.depth;
+    while (depth >= 0 && !['math', 'mathBlock'].includes(at.node(depth).type.name)) depth--;
+    if (depth < 0) return;
+    const node = at.node(depth);
+    const start = at.before(depth);
+    mathDialog?.open(node.textContent, node.type.name === 'mathBlock', (latex) => {
+      if (!editor || latex === node.textContent) return;
+      const current = editor.state.doc.nodeAt(start);
+      if (!current || current.type !== node.type) return;
+      const tr = editor.state.tr;
+      const from = start + 1;
+      const to = start + current.nodeSize - 1;
+      if (latex) tr.replaceWith(from, to, editor.state.schema.text(latex));
+      else tr.delete(from, to);
+      editor.view.dispatch(tr);
+      editor.commands.focus();
+    });
+  }
+
   /** Insère une formule ; le texte sélectionné devient sa source. */
   function insertMath(type: 'math' | 'mathBlock') {
     if (!editor) return;
@@ -273,6 +298,7 @@
       <div class="contextbar math-bar">
         <span class="muted">{t('editor.mathPreview')} :</span>
         <span class="math-preview">{@html renderMath(mathLatex, active('mathBlock'))}</span>
+        <button type="button" class="tb wide" onclick={openVisualMath}>{t('editor.mathVisual')}</button>
         {#if problem}<span class="error" role="status">{problem}</span>{/if}
         <span class="muted hint">{t('editor.mathHint')}</span>
       </div>
@@ -302,6 +328,7 @@
     {#if error}<p class="error" role="alert">{error}</p>{/if}
   {/if}
   <div bind:this={element} class="surface-host"></div>
+  <MathFieldDialog bind:this={mathDialog} />
 </div>
 
 <style>

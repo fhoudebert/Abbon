@@ -11,10 +11,12 @@ import {
   dueAfter,
   dueCards,
   isCorrect,
+  isAcquired,
   isDue,
   LEITNER_BOXES,
   LEITNER_INTERVALS,
   newCard,
+  restoreCard,
   reviewCard,
 } from './leitner';
 
@@ -32,20 +34,39 @@ describe('boîte de Leitner', () => {
     expect(c.snapshot.question).not.toBe(q1);
   });
 
-  it('avance d’un compartiment à chaque bonne réponse, avec des délais croissants', () => {
+  it('avance d’un compartiment à chaque bonne réponse, avec des délais qui doublent, puis est acquise', () => {
     let c = newCard(quiz, q1, now);
     const seen: [number, string][] = [];
     let when = now;
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 4; i++) {
       c = reviewCard(c, true, when);
       seen.push([c.box, c.dueAt]);
       when = new Date(c.dueAt); // révisée le jour prévu
     }
-    expect(seen.map(([b]) => b)).toEqual([2, 3, 4, 5, 5, 5]);
+    expect(seen.map(([b]) => b)).toEqual([2, 3, 4, 5]);
     const gaps = seen.map(([, d], i) => Math.round((Date.parse(d) - Date.parse(i ? seen[i - 1][1] : dueAfter(now, 0))) / 86_400_000));
-    expect(gaps).toEqual([2, 4, 7, 15, 15, 15]);
-    expect(c.reviews).toBe(6);
+    expect(gaps).toEqual([2, 4, 8, 16]);
     expect(LEITNER_INTERVALS).toHaveLength(LEITNER_BOXES);
+    // Juste au dernier compartiment : acquise, hors du planning, 30 jours après le premier passage.
+    c = reviewCard(c, true, when);
+    expect(isAcquired(c)).toBe(true);
+    expect(Math.round((Date.parse(c.acquiredAt!) - Date.parse(dueAfter(now, 0))) / 86_400_000)).toBe(30);
+    expect(isDue(c, days(400))).toBe(false);
+    expect(dueCards([c], days(400))).toEqual([]);
+    expect(boxCounts([c])).toEqual([0, 0, 0, 0, 0]);
+    expect(c.reviews).toBe(5);
+  });
+
+  it('une carte acquise ne bouge pas si elle est juste, revient au premier compartiment sur une erreur', () => {
+    const acquired = { ...newCard(quiz, q1, now), box: 5, acquiredAt: now.toISOString() };
+    expect(reviewCard(acquired, true, days(1))).toMatchObject({ box: 5, acquiredAt: now.toISOString(), reviews: 1 });
+    const back = reviewCard(acquired, false, days(1));
+    expect([back.box, back.acquiredAt, back.lapses, isDue(back, days(2))]).toEqual([1, null, 1, true]);
+  });
+
+  it('« Remettre en révision » replace une carte acquise au premier compartiment, à revoir tout de suite', () => {
+    const r = restoreCard({ ...newCard(quiz, q1, now), box: 5, acquiredAt: now.toISOString() }, days(3));
+    expect([r.box, r.acquiredAt, isDue(r, days(3))]).toEqual([1, null, true]);
   });
 
   it('renvoie la carte dans le premier compartiment à la moindre erreur', () => {

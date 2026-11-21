@@ -76,3 +76,17 @@ Lequel de ces entiers est premier ?
 - [ ] 1
 
 > Pour tester 97, il suffit d'essayer les nombres premiers jusqu'à $\sqrt{97} \approx 9,8$ : 2, 3, 5 et 7 ne le divisent pas. $91 = 7 \times 13$ et $87 = 3 \times 29$. 1 n'est pas premier : un nombre premier a exactement deux diviseurs.
+
+## nombre-diviseurs · numeric
+Combien l'entier 36 a-t-il de diviseurs positifs ?
+
+= 9
+
+> $36 = 2^2 \times 3^2$ : un diviseur s'écrit $2^a \times 3^b$ avec $a$ et $b$ entre 0 et 2, soit $3 \times 3 = 9$ diviseurs : 1, 2, 3, 4, 6, 9, 12, 18, 36.
+
+## division-negatif · numeric
+Quel est le reste de la division euclidienne de $-17$ par 5 ?
+
+= 3
+
+> On cherche $-17 = 5q + r$ avec $0 \leq r < 5$ : $q = -4$ et $r = 3$, car $5 \times (-4) + 3 = -17$. Le reste n'est jamais négatif : $-2$ ne convient pas.

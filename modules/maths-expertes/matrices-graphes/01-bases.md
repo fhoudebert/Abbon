@@ -78,3 +78,17 @@ Dans la matrice de transition d'une chaîne de Markov (une ligne par état de d�
 - [ ] Elle dépend de la ligne
 
 > Chaque ligne donne les probabilités de passer de l'état de départ à chacun des états possibles : leur somme vaut 1. Si $\pi_n$ est la distribution (en ligne) à l'étape $n$, alors $\pi_{n+1} = \pi_n\,P$.
+
+## coefficient-produit · numeric
+Avec $A = \begin{pmatrix} 1 & 2 \\ 3 & 4 \end{pmatrix}$ et $B = \begin{pmatrix} 0 & 1 \\ 1 & 0 \end{pmatrix}$, que vaut le coefficient de la ligne 1 et de la colonne 1 de $A\,B$ ?
+
+= 2
+
+> Ligne 1 de $A$ par colonne 1 de $B$ : $1 \times 0 + 2 \times 1 = 2$. Au total, $A\,B = \begin{pmatrix} 2 & 1 \\ 4 & 3 \end{pmatrix}$ : multiplier à droite par $B$ échange les colonnes de $A$.
+
+## graphe-complet · numeric
+Combien d'arêtes a le graphe complet à 5 sommets ?
+
+= 10
+
+> Chaque sommet est relié aux 4 autres : $5 \times 4 = 20$ extrémités d'arêtes, et chaque arête est comptée deux fois, d'où $\dfrac{5 \times 4}{2} = 10$ arêtes. En général, $\dfrac{n(n-1)}{2}$.

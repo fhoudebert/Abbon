@@ -363,7 +363,7 @@ const pct = (n: number) => String(Math.round(n * 100000) / 100000);
 /**
  * Écrit un QCM en GIFT, dans une langue. Choix multiples : chaque bonne réponse vaut 100/n %,
  * chaque mauvaise −100 % (au plus proche de « tout ou rien » ; Moodle plafonne à 0).
- * Réponse courte : `{=a =b}` ; réponse numérique : `{#valeur:écart}` ; texte à trous : non exporté.
+ * Réponse courte : `{=a =b}` ; réponse numérique : `{#valeur:écart}` ; texte à trous, expression : non exportés.
  */
 export function quizToGift(quiz: Quiz, lang: Lang, image?: (hash: string) => string | undefined, categoryName?: string): string {
   const main = quiz.languages[0];
@@ -377,6 +377,11 @@ export function quizToGift(quiz: Quiz, lang: Lang, image?: (hash: string) => str
       if (q.type === 'cloze') {
         // GIFT ne sait décrire qu'un seul trou par question : les textes à trous ne sont pas exportés.
         lines.push(`// Q${i + 1} : texte à trous, non exporté (sans équivalent en GIFT)`, '');
+        return;
+      }
+      if (q.type === 'expression') {
+        // Moodle ne compare pas des formules en GIFT : les questions « expression » ne sont pas exportées.
+        lines.push(`// Q${i + 1} : expression à écrire, non exportée (sans équivalent en GIFT)`, '');
         return;
       }
       const correct = q.choices.filter((c) => c.correct).length;

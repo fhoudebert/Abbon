@@ -4,11 +4,20 @@
   import { t } from '$lib/i18n/index.svelte';
 
   /** Met une question dans la boîte de révision (Leitner), ou l'en retire. */
-  let { quiz, question }: { quiz: Pick<Quiz, 'id' | 'title' | 'languages'>; question: Question } = $props();
+  let {
+    quiz,
+    question,
+    failed = false,
+  }: {
+    quiz: Pick<Quiz, 'id' | 'title' | 'languages'>;
+    question: Question;
+    /** Question échouée dans une tentative terminée (corrigé). */
+    failed?: boolean;
+  } = $props();
   const inBox = $derived(app.inBox(question.id));
 </script>
 
-<button class="ghost box" aria-pressed={inBox} title={t('leitner.toggleHint')} onclick={() => app.toggleCard(quiz, question)}>
+<button class="ghost box" aria-pressed={inBox} title={t('leitner.toggleHint')} onclick={() => app.toggleCard(quiz, question, failed)}>
   <span aria-hidden="true">{inBox ? '▣' : '▢'}</span>
   {t('leitner.toggle')}
 </button>

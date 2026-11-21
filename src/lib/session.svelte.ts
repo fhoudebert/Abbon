@@ -170,6 +170,7 @@ export class AttemptSession {
       this.attempt = done.attempt;
       this.answers = Object.fromEntries(done.answers.map((a) => [a.questionId, a]));
       await app.reload();
+      await app.rewardAttempt(this.quiz, done.attempt, done.result.passed);
       return true;
     } finally {
       this.#finishing = false;

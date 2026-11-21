@@ -150,12 +150,44 @@ What is the past simple of *to go*?
   déroulante : la bonne réponse d'abord, puis les autres propositions après `~`. Une langue sans ligne `=`
   reprend le texte de la langue principale ; sinon elle donne son propre texte, avec les mêmes trous. `\{` écrit
   une accolade. `scoring: partial` dans l'en-tête du QCM compte chaque trou juste.
+- **Expressions** : `· expression`, avec la formule attendue sur une ligne `=`, entre dollars (facultatifs).
+  L'élève l'écrit dans un champ de formule (clavier mathématique sur écran tactile) ; toute écriture
+  équivalente est acceptée. Pour une primitive, terminer par `+ C` : l'égalité est alors jugée à une constante
+  près, et « + C » est accepté dans la réponse.
+
+  ```markdown
+  ## derivee-cube · expression
+  Dérivée de $x^3 + \dfrac{1}{x}$ ?
+
+  = $3x^2 - \frac{1}{x^2}$
+
+  > On dérive terme à terme.
+
+  ## primitive · expression
+  Une primitive de $2x\,e^{x^2}$ ?
+
+  = $e^{x^2} + C$
+
+  > Forme $u'e^u$.
+  ```
+
+  La comparaison calcule les deux formules en 24 points tirés au hasard (valeurs positives puis de signe
+  quelconque ; entiers de 1 à 12 pour `n`, `k`, `p`, `m`) et exige qu'elles coïncident partout où l'attendue
+  est définie. Elle ne juge donc pas la *forme* : une consigne « factorisez » accepterait aussi la forme
+  développée. Reconnu : `+ - \cdot \times / \frac \sqrt ^`, multiplication implicite, `\pi`, `e`,
+  `\sin \cos \tan \ln \log \exp` et leurs réciproques, valeur absolue, variables d'une lettre (avec indice) ;
+  pas de factorielle, de somme, de limite ni de dérivée notée `f'`. `module:check` signale une formule
+  attendue illisible.
 - Autres réglages possibles dans l'en-tête : `description`, `timeLimitSec`, `passThreshold`, `scoring`,
   `solutionVisibility`, `shuffle`.
 
 Markdown reconnu : `code`, `**gras**`, `*italique*`, blocs de code (```` ```rust ````), listes, citations,
 tableaux à barres verticales, titres `##` et `###` (dans les fiches), formules et images (ci-dessous). Aucun HTML
 n'est interprété.
+
+Sur téléphone, la fiche ne fait qu'environ 330 px de large : préférer des tableaux de deux colonnes (au-delà,
+une liste se lit mieux), couper une longue formule en plusieurs blocs `$$…$$`, et placer ces blocs entre deux
+paragraphes plutôt qu'au milieu d'une liste, qu'ils interrompraient.
 
 ### Formules, chimie, unités
 
@@ -189,6 +221,22 @@ $\pu{9,81 m.s-2}$                                 grandeur avec son unité
   thème clair ou sombre, tracer en `currentColor` sur fond transparent
   (`stroke="currentColor"`, `fill="currentColor"` pour le texte) et donner un `viewBox`.
 - Une image présente dans le dossier mais non utilisée est signalée et n'est pas jointe.
+
+### Molécules
+
+```markdown
+![formule topologique de l'éthanoate d'éthyle](smiles:CCOC(C)=O)
+```
+
+- La cible `smiles:` donne la molécule en notation SMILES (parenthèses permises). `module:check` et
+  `module:build` la dessinent avec RDKit (RDKit.js, licence BSD, dépendance de développement seulement : rien
+  n'est ajouté à l'application) : formule topologique, en `currentColor` sur fond transparent, qui suit donc le
+  thème. Le SVG obtenu est joint au module comme une figure ordinaire.
+- Un SMILES illisible est une erreur ; le texte alternatif est obligatoire (nommer la molécule, et donner si
+  utile sa formule semi-développée, que le lecteur d'écran lira).
+- Toutes les molécules sont à la même échelle ; une grande molécule est réduite à la largeur de l'écran.
+- Exemples : éthanol `CCO`, acide éthanoïque `CC(=O)O`, benzène `c1ccccc1`, aspirine `CC(=O)Oc1ccccc1C(=O)O`,
+  but-2-ène (E) `C/C=C/C`.
 
 Les fonctions de rendu utilisées (`math`, `svg`) sont ajoutées d'elles-mêmes à `requires.features` : une version
 d'Abbon qui ne sait pas les afficher refuse d'installer le module, avec un message.

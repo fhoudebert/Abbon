@@ -14,7 +14,8 @@ module.json            facultatif : le fichier est un module           → modul
 
 Une **sauvegarde complète** (`"kind": "backup"`) contient en plus `attempts.json` (tentatives, avec la copie du QCM
 au démarrage), `answers.json`, `settings.json` et, s'il y en a, `modules.json` (modules installés : manifeste et dates) et `leitner.json` (boîte de
-révision : compartiment, dates et copie de chaque question). Elle se restaure depuis *Paramètres › Sauvegarde* et remplace tout
+révision : compartiment, dates, date d'acquisition et copie de chaque question) et `rewards.json` (points : type
+d'événement, référence, points, date). Elle se restaure depuis *Paramètres › Sauvegarde* et remplace tout
 le contenu de l'appareil (le code PIN de l'appareil est conservé).
 
 ## Règles
@@ -60,6 +61,7 @@ le contenu de l'appareil (le code PIN de l'appareil est conservé).
 | `short` | texte à saisir | `choices` vide ; `expected.accepted` (formes acceptées), `expected.caseSensitive` |
 | `cloze` | texte à trous | `choices` vide ; `expected.text` (texte par langue, trous marqués `{{1}}`, `{{2}}`…), `expected.gaps` |
 | `numeric` | nombre à saisir | `choices` vide ; `expected.value`, `expected.tolerance` (écart absolu), `expected.unit` (affichée, pas saisie) |
+| `expression` | formule à écrire | `choices` vide ; `expected.latex` (formule attendue, LaTeX), `expected.constant` (égalité à une constante près) |
 
 ```json
 { "id": "q1", "type": "short", "prompt": { "fr": "Prétérit de to go ?" }, "points": 1, "position": 0,
@@ -89,9 +91,9 @@ le contenu de l'appareil (le code PIN de l'appareil est conservé).
   `text` se compare comme une réponse courte ; un trou `select` est une liste déroulante formée de sa bonne
   réponse (`accepted[0]`) et de ses `options`. Notation : tout ou rien, ou part des trous justes si le QCM est en
   notation partielle. Les réponses de l'apprenant sont dans `texts`, une par trou.
-- Sans corrigé (`includesSolutions: false`), `expected` est retiré, sauf l'unité d'une réponse numérique, et sauf le
-  texte et les propositions des listes d'un texte à trous.
-- **Compatibilité** : `short`, `numeric` et `cloze` datent d'Abbon 0.2.0. Un lecteur plus ancien refuse un QCM qui en
+- Sans corrigé (`includesSolutions: false`), `expected` est retiré, sauf l'unité d'une réponse numérique, le
+  texte et les propositions des listes d'un texte à trous, et l'indication « à une constante près » d'une expression.
+- **Compatibilité** : `short`, `numeric`, `cloze` et `expression` datent d'Abbon 0.2.0. Un lecteur plus ancien refuse un QCM qui en
   contient (le QCM est signalé invalide, les autres s'importent).
 
 ## Modules

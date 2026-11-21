@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { checkRequirements } from '$lib/interchange/module';
 import { buildPackage, parsePackage } from '$lib/interchange/qcmPackage';
-import { compileModule, frenchDecimals, parseClozeSource, parseNumericAnswer, splitQuestions, type SourceFile } from './source';
+import { compileModule, frenchDecimals, parseClozeSource, parseExpressionAnswer, parseNumericAnswer, splitQuestions, type SourceFile } from './source';
 
 const MODULE = `id: org.abbon.test
 version: 1.2.3
@@ -69,7 +69,7 @@ const files = (quiz = QUIZ, extra: SourceFile[] = []): SourceFile[] => [
   { path: 'rust/01-possession.md', text: quiz },
   ...extra,
 ];
-const errors = (f: SourceFile[]) => compileModule(f).issues.filter((i) => i.level === 'error').map((i) => i.message);
+const errors = (f: SourceFile[], assets: Parameters<typeof compileModule>[1] = []) => compileModule(f, assets).issues.filter((i) => i.level === 'error').map((i) => i.message);
 
 describe('compilation d’un module', () => {
   it('découpe les questions, les langues et ignore les « ## » dans le code', () => {
@@ -226,6 +226,82 @@ Value of *g*?
     expect(parseNumericAnswer('-1,5e3 +/- 10')).toEqual({ value: -1500, tolerance: 10 });
     expect(parseNumericAnswer('6 faces')).toEqual({ value: 6, tolerance: 0, unit: 'faces' });
     expect(parseNumericAnswer('environ 4')).toBeNull();
+  });
+
+  it('résout les molécules « smiles: » dessinées avant la compilation', () => {
+    const quiz = `---
+id: mol-01
+title: { fr: Molécules, en: Molecules }
+level: bases
+---
+
+## ester · single
+Quel groupe ? ![éthanoate d'éthyle](smiles:CCOC(C)=O)
+
+- [x] Ester
+- [ ] Alcool
+
+> Groupe ester.
+
+### en
+Which group? ![ethyl ethanoate](smiles:CCOC(C)=O)
+
+- [x] Ester
+- [ ] Alcohol
+
+> Ester group.
+`;
+    const ok = [{ path: 'smiles:CCOC(C)=O', hash: 'a'.repeat(64), mime: 'image/svg+xml' }];
+    const c = compileModule(files(quiz), ok);
+    expect(c.issues.filter((i) => i.level === 'error')).toEqual([]);
+    expect(c.assets).toEqual(['smiles:CCOC(C)=O']);
+    expect(c.manifest.requires?.features).toContain('svg');
+    expect(JSON.stringify(c.quizzes[0].questions[0].prompt.fr)).toContain('"hash":"' + 'a'.repeat(64));
+    expect(errors(files(quiz), [{ ...ok[0], mime: null }])).toEqual(expect.arrayContaining([expect.stringContaining('SMILES illisible')]));
+    expect(errors(files(quiz.replace("![éthanoate d'éthyle]", '![]')), ok)).toEqual(expect.arrayContaining([expect.stringContaining('sans texte alternatif')]));
+  });
+
+  it('lit les expressions attendues (primitive : « + C »)', () => {
+    expect(parseExpressionAnswer('$3x^2$')).toEqual({ expected: { latex: '3x^2' }, problem: null });
+    expect(parseExpressionAnswer('$\\frac{x^3}{3} + C$')).toEqual({ expected: { latex: '\\frac{x^3}{3}', constant: true }, problem: null });
+    expect(parseExpressionAnswer('x+').problem).toMatch(/incomplète/);
+    const quiz = `---
+id: expr-01
+title: { fr: Dérivées, en: Derivatives }
+level: bases
+---
+
+## carre · expression
+Dérivée de $x^3$ ?
+
+= $3x^2$
+
+> $(x^n)' = n x^{n-1}$.
+
+### en
+Derivative of $x^3$?
+
+> $(x^n)' = n x^{n-1}$.
+
+## primitive · expression
+Une primitive de $x^2$ ?
+
+= $\\frac{x^3}{3} + C$
+
+> Toute fonction $\\frac{x^3}{3} + C$ convient.
+
+### en
+An antiderivative of $x^2$?
+
+> Any function $\\frac{x^3}{3} + C$ works.
+`;
+    const c = compileModule(files(quiz));
+    expect(c.issues.filter((i) => i.level === 'error')).toEqual([]);
+    expect(c.quizzes[0].questions.map((q) => [q.type, q.expected])).toEqual([
+      ['expression', { latex: '3x^2' }],
+      ['expression', { latex: '\\frac{x^3}{3}', constant: true }],
+    ]);
+    expect(errors(files(quiz.replace('= $3x^2$', '= $3x^$')))).toEqual([expect.stringContaining('expression attendue illisible')]);
   });
 
   it('signale les incohérences', () => {

@@ -212,6 +212,34 @@ export const demoScience: Quiz = {
       ],
       { value: 5, tolerance: 0, unit: 'cm' },
     ),
+    rich(
+      'demo-science-q-4',
+      'expression',
+      [
+        doc(para('Écrivez la dérivée de ', tex(String.raw`f(x) = x^3 + \dfrac{1}{x}`), '.')),
+        doc(para('Write the derivative of ', tex(String.raw`f(x) = x^3 + \dfrac{1}{x}`), '.')),
+      ],
+      [],
+      [
+        doc(para('On dérive terme à terme : ', tex(String.raw`f'(x) = 3x^2 - \dfrac{1}{x^2}`), '. Toute écriture équivalente est acceptée.')),
+        doc(para('Differentiate term by term: ', tex(String.raw`f'(x) = 3x^2 - \dfrac{1}{x^2}`), '. Any equivalent form is accepted.')),
+      ],
+      { latex: String.raw`3x^2-\frac{1}{x^2}` },
+    ),
+    rich(
+      'demo-science-q-5',
+      'expression',
+      [
+        doc(para('Écrivez une primitive de ', tex(String.raw`f(x) = 2x\,e^{x^2}`), '.')),
+        doc(para('Write an antiderivative of ', tex(String.raw`f(x) = 2x\,e^{x^2}`), '.')),
+      ],
+      [],
+      [
+        doc(para('C’est la forme ', tex(String.raw`u'\,e^{u}`), ' avec ', tex('u = x^2'), ' : ', tex(String.raw`F(x) = e^{x^2} + C`), '.')),
+        doc(para('It has the form ', tex(String.raw`u'\,e^{u}`), ' with ', tex('u = x^2'), ': ', tex(String.raw`F(x) = e^{x^2} + C`), '.')),
+      ],
+      { latex: String.raw`e^{x^2}`, constant: true },
+    ),
   ],
 };
 demoQuizzes.push(demoScience);

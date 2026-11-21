@@ -7,6 +7,8 @@
   import { prefs } from '$lib/prefs.svelte';
   import { updates } from '$lib/update.svelte';
   import { i18n, t, SUPPORTED } from '$lib/i18n/index.svelte';
+  import Belt from '$lib/components/Belt.svelte';
+  import { capitalize, rankName } from '$lib/components/RankCard.svelte';
 
   let { children }: { children: Snippet } = $props();
 
@@ -65,11 +67,57 @@
   </div>
 {/if}
 
+<!-- Passage de ceinture : région toujours présente pour que l'annonce soit lue. -->
+<div class="promo-region" role="status" aria-live="polite">
+  {#if app.promotion}
+    <div class="promo panel">
+      <Belt belt={app.promotion.belt} size={40} />
+      <p>{capitalize(t('rank.promoted', { rank: rankName(app.promotion) }))}</p>
+      <button class="ghost" onclick={() => (app.promotion = null)}>{t('rank.close')}</button>
+    </div>
+  {/if}
+</div>
+
 <main id="main" tabindex="-1">
   {@render children()}
 </main>
 
 <style>
+  .promo-region {
+    position: fixed;
+    inset-inline: 0;
+    inset-block-end: max(1rem, env(safe-area-inset-bottom));
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .promo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-inline: 1rem;
+    padding: 0.6rem 0.75rem 0.6rem 1rem;
+    border-color: var(--accent);
+    box-shadow: var(--shadow);
+    pointer-events: auto;
+    animation: rise 0.3s ease-out;
+  }
+  .promo p {
+    margin: 0;
+    font-weight: 600;
+  }
+  @keyframes rise {
+    from {
+      transform: translateY(1rem);
+      opacity: 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .promo {
+      animation: none;
+    }
+  }
   .top {
     display: flex;
     flex-wrap: wrap;

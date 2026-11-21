@@ -6,6 +6,9 @@
   import type { ClozeGap, ExpectedAnswer, Question, QuestionType, RichDoc } from '$lib/domain/types';
   import { t } from '$lib/i18n/index.svelte';
   import RichEditor from '$lib/rich/RichEditor.svelte';
+  import MathFieldDialog from '$lib/rich/MathFieldDialog.svelte';
+  import { renderMath } from '$lib/rich/math';
+  import { expressionProblem } from '$lib/domain/expr';
 
   /** Édition d'une question dans une langue donnée. */
   let {
@@ -29,12 +32,19 @@
     await tick();
   }
 
-  const TYPES: QuestionType[] = ['single', 'multiple', 'short', 'numeric', 'cloze'];
+  const TYPES: QuestionType[] = ['single', 'multiple', 'short', 'numeric', 'cloze', 'expression'];
 
   // ---- Réponse attendue (réponse courte, réponse numérique) ----------------
   const expected = $derived<ExpectedAnswer>(question.expected ?? {});
   const accepted = $derived(expected.accepted?.length ? expected.accepted : ['']);
   const patchExpected = (p: Partial<ExpectedAnswer>) => (question.expected = { ...expected, ...p });
+
+  // ---- Expression -----------------------------------------------------------
+  let mathDialog = $state<MathFieldDialog>();
+  const exprProblem = $derived(
+    question.type === 'expression' && expected.latex?.trim() ? expressionProblem(expected.latex, { constant: expected.constant }) : null,
+  );
+
   const setAccepted = (i: number, v: string) => patchExpected({ accepted: accepted.map((a, k) => (k === i ? v : a)) });
   /** Champ numérique libre (virgule acceptée) → nombre, ou champ vidé si illisible. */
   function setNumber(key: 'value' | 'tolerance', input: HTMLInputElement) {
@@ -168,6 +178,38 @@
           </li>
         {/each}
       </ol>
+    </div>
+  {:else if question.type === 'expression'}
+    <div class="field">
+      <label class="label" for="expr-{question.id}">{t('qe.expected')}</label>
+      <p class="hint muted" id="expr-hint-{question.id}">{t('qe.expressionHint')}</p>
+      <div class="row expr">
+        <input
+          id="expr-{question.id}"
+          class="mono"
+          type="text"
+          autocomplete="off"
+          spellcheck="false"
+          aria-describedby="expr-hint-{question.id}"
+          value={expected.latex ?? ''}
+          oninput={(e) => patchExpected({ latex: e.currentTarget.value })}
+        />
+        <button type="button" class="secondary" onclick={() => mathDialog?.open(expected.latex ?? '', false, (latex) => patchExpected({ latex }))}>
+          {t('editor.mathVisual')}
+        </button>
+      </div>
+      {#if expected.latex?.trim()}
+        <p class="expr-preview">
+          <span class="muted">{t('editor.mathPreview')} :</span>
+          {@html renderMath(expected.constant ? `${expected.latex} + C` : expected.latex)}
+        </p>
+      {/if}
+      {#if exprProblem}<p class="error" role="status">{t('qe.expressionProblem', { detail: exprProblem })}</p>{/if}
+      <label class="check">
+        <input type="checkbox" checked={expected.constant ?? false} onchange={(e) => patchExpected({ constant: e.currentTarget.checked || undefined })} />
+        {t('qe.expressionConstant')}
+      </label>
+      <MathFieldDialog bind:this={mathDialog} />
     </div>
   {:else if question.type === 'numeric'}
     <div class="field">
@@ -404,5 +446,13 @@
   }
   .danger {
     color: var(--bad);
+  }
+  .expr input {
+    flex: 1 1 14rem;
+    font-family: var(--mono, ui-monospace, monospace);
+  }
+  .expr-preview {
+    overflow-x: auto;
+    margin-block: 0.5rem;
   }
 </style>

@@ -11,6 +11,22 @@ import type { RichDoc, RichNode, RichValue } from '$lib/domain/types';
 
 type Mark = { type: 'bold' | 'italic' | 'code' };
 
+/**
+ * `![alt](cible)` : la cible peut contenir des parenthèses équilibrées (deux niveaux), pour les molécules
+ * (`smiles:CC(=O)O`).
+ */
+const IMAGE = /^!\[([^\]]*)\]\(((?:[^()\s]|\((?:[^()\s]|\([^()\s]*\))*\))+)\)/;
+
+/** Cibles des images d'un texte source (pour préparer les molécules avant la compilation). */
+export function imageTargets(text: string): string[] {
+  const out: string[] = [];
+  for (let i = text.indexOf('!['); i !== -1; i = text.indexOf('![', i + 2)) {
+    const m = IMAGE.exec(text.slice(i));
+    if (m) out.push(m[2]);
+  }
+  return out;
+}
+
 /** Ce que le compilateur de modules fournit : résolution des images, contrôle des formules. */
 export interface MarkdownContext {
   /** Nœud image pour `![alt](src)` ; lève une erreur si le fichier manque ou si le texte alternatif est vide. */
@@ -58,7 +74,7 @@ export function parseInline(src: string, ctx: MarkdownContext = {}): RichNode[] 
       out.push(mathNode('math', src.slice(i + 1, end), ctx));
       i = end;
     } else if (ch === '!' && src[i + 1] === '[') {
-      const m = /^!\[([^\]]*)\]\(([^)\s]+)\)/.exec(src.slice(i));
+      const m = IMAGE.exec(src.slice(i));
       if (!m || !ctx.image) {
         buf += ch;
         continue;

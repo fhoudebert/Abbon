@@ -2,10 +2,12 @@
  * Questions à saisie : « réponse courte » (texte) et « réponse numérique ».
  * Comparaison de la réponse saisie à la réponse attendue, en fonctions pures.
  */
+import { sameExpression } from './expr';
 import type { ExpectedAnswer, Question } from './types';
 
 /** Question à saisie : pas de réponses à cocher (`choices` vide). */
-export const isTyped = (q: Pick<Question, 'type'>) => q.type === 'short' || q.type === 'numeric' || q.type === 'cloze';
+export const isTyped = (q: Pick<Question, 'type'>) =>
+  q.type === 'short' || q.type === 'numeric' || q.type === 'cloze' || q.type === 'expression';
 
 /**
  * Texte ramené à une forme comparable : espaces superflus retirés, apostrophes et espaces
@@ -54,6 +56,7 @@ export function matchesExpected(question: Pick<Question, 'type' | 'expected'>, t
     const eps = 1e-9 * Math.max(1, Math.abs(e.value), tol);
     return Math.abs(n - e.value) <= tol + eps;
   }
+  if (question.type === 'expression') return !!e.latex && sameExpression(e.latex, text, { constant: e.constant });
   return false;
 }
 
@@ -72,5 +75,7 @@ export function expectedText(question: Pick<Question, 'type' | 'expected'>, lang
     const tol = e.tolerance ? ` (± ${formatNumber(e.tolerance, lang)})` : '';
     return `${formatNumber(e.value, lang)}${unit}${tol}`;
   }
+  // Expression : la source LaTeX (les écrans l'affichent rendue, avec `renderMath`).
+  if (question.type === 'expression') return e.latex ? (e.constant ? `${e.latex} + C` : e.latex) : '';
   return '';
 }

@@ -1,4 +1,5 @@
 import type { LeitnerCard } from '$lib/domain/leitner';
+import type { Reward } from '$lib/domain/rewards';
 import type { Answer, Attempt, Category, InstalledModule, ModuleManifest, Quiz, QuizSummary } from '$lib/domain/types';
 
 /**
@@ -53,6 +54,11 @@ export interface Repository {
   saveCard(card: LeitnerCard): Promise<void>;
   deleteCard(questionId: string): Promise<void>;
 
+  // ---- Points et ceintures ----
+  listRewards(): Promise<Reward[]>;
+  /** Enregistre des récompenses ; celles déjà présentes (même `kind` et `ref`) sont ignorées. Renvoie les nouvelles. */
+  addRewards(rewards: Reward[]): Promise<Reward[]>;
+
   // ---- Sauvegarde complète ----
   /** Toutes les tentatives (avec l'instantané du QCM) et toutes les réponses. */
   exportHistory(): Promise<{ attempts: Attempt[]; answers: AnswerRow[] }>;
@@ -104,4 +110,5 @@ export interface FullData {
   media: Media[];
   modules?: InstalledModule[];
   cards?: LeitnerCard[];
+  rewards?: Reward[];
 }

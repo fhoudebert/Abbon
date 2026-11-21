@@ -88,12 +88,18 @@ export const ExpectedSchema = z.object({
     )
     .max(50)
     .optional(),
+  /** Expression : formule attendue (LaTeX), égale à une constante près si `constant`. */
+  latex: z.string().max(1000).optional(),
+  constant: z.boolean().optional(),
 });
 
 export const QuestionSchema = z.object({
   id,
-  /** single, multiple : réponses à cocher ; short, numeric : réponse à saisir ; cloze : texte à trous (`expected`). */
-  type: z.enum(['single', 'multiple', 'short', 'numeric', 'cloze']),
+  /**
+   * single, multiple : réponses à cocher ; short, numeric : réponse à saisir ; cloze : texte à trous ;
+   * expression : formule à écrire (`expected`).
+   */
+  type: z.enum(['single', 'multiple', 'short', 'numeric', 'cloze', 'expression']),
   prompt: I18nRichSchema,
   points: z.number().positive().max(1000),
   position: z.number().int().min(0),

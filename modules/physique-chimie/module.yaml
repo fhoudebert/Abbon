@@ -2,12 +2,12 @@
 # Questions reprises des ébauches (modules/_ebauches/chimie, physique), reformulées et vérifiées.
 
 id: org.abbon.physique-chimie
-version: 0.1.0
+version: 0.4.0
 date: 2026-11-21
 title:
   fr: "Physique-chimie, terminale spécialité"
 description:
-  fr: "Révisions du bac. Version pilote : matière, mouvement, ondes et signaux, 28 questions."
+  fr: "Révisions du bac. Version pilote : matière, mouvement, ondes et signaux ; 32 questions et leurs fiches de révision."
 level: terminale
 license: CC-BY-NC-SA-4.0
 authors: [Abbon]

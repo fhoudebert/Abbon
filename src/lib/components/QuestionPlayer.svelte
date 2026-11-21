@@ -8,6 +8,8 @@
   import type { Question } from '$lib/domain/types';
   import { t } from '$lib/i18n/index.svelte';
   import RichContent from '$lib/rich/RichContent.svelte';
+  import MathInput from '$lib/rich/MathInput.svelte';
+  import { renderMath } from '$lib/rich/math';
 
   /**
    * Une question seule, avec correction immédiate : répondre, valider, lire le corrigé, continuer.
@@ -99,6 +101,19 @@
       texts = next;
     }}
   />
+{:else if question.type === 'expression'}
+  <div class="typed expr" class:is-correct={correct === true} class:is-wrong={correct === false}>
+    <MathInput
+      value={text}
+      readonly={checked}
+      label={t('play.yourAnswer')}
+      describedby="lp-{question.id}"
+      autofocus
+      oninput={(v) => (text = v)}
+      onenter={() => (checked ? onnext() : validate())}
+    />
+    {#if question.expected?.constant}<p class="muted hint">{t('play.constant')}</p>{/if}
+  </div>
 {:else if isTyped(question)}
   <label class="typed" class:is-correct={correct === true} class:is-wrong={correct === false}>
     <span class="visually-hidden">{t('play.yourAnswer')}</span>
@@ -137,7 +152,9 @@
 {#if checked}
   <div class="feedback {correct ? 'ok' : 'ko'}" role="status">
     <strong>{correct ? t('play.correct') : t('play.wrong')}</strong>
-    {#if isTyped(question) && question.type !== 'cloze' && !correct}<p class="expected">{t('play.expected', { answer: expectedText(question, lang) })}</p>{/if}
+    {#if question.type === 'expression' && !correct}
+      <p class="expected">{@html t('play.expected', { answer: renderMath(expectedText(question, lang)) })}</p>
+    {:else if isTyped(question) && question.type !== 'cloze' && !correct}<p class="expected">{t('play.expected', { answer: expectedText(question, lang) })}</p>{/if}
     {#if question.explanation}
       <div class="expl"><span class="muted">{t('play.explanation')} :</span> <RichContent value={pick(question.explanation, lang, fallback)} /></div>
     {/if}
@@ -251,5 +268,21 @@
     display: flex;
     justify-content: flex-end;
     margin-block-start: 1rem;
+  }
+  .typed.expr {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .typed.expr.is-correct :global(.math-input) {
+    border-color: var(--ok);
+    box-shadow: 0 0 0 1px var(--ok);
+  }
+  .typed.expr.is-wrong :global(.math-input) {
+    border-color: var(--bad);
+    box-shadow: 0 0 0 1px var(--bad);
+  }
+  .typed.expr .hint {
+    margin: 0;
+    font-size: 0.9rem;
   }
 </style>

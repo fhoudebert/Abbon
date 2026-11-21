@@ -57,6 +57,18 @@ pub fn migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/0007_leitner.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 8,
+            description: "rewards",
+            sql: include_str!("../migrations/0008_rewards.sql"),
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 9,
+            description: "question_types",
+            sql: include_str!("../migrations/0009_question_types.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 

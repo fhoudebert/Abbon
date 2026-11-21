@@ -3,12 +3,12 @@
 # Questions reprises des ébauches (modules/_ebauches/math/01-bases.md), reformulées et vérifiées.
 
 id: org.abbon.maths-specialite
-version: 0.1.0
+version: 0.3.0
 date: 2026-11-21
 title:
   fr: "Maths spécialité, terminale"
 description:
-  fr: "Révisions du bac. Version pilote : suites, fonctions, calcul intégral, probabilités, 36 questions."
+  fr: "Révisions du bac : suites, fonctions, calcul intégral, probabilités ; niveaux bases et approfondissement, 80 questions et leurs fiches de révision."
 level: terminale
 license: CC-BY-NC-SA-4.0
 authors: [Abbon]

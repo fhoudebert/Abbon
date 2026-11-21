@@ -151,6 +151,37 @@ Voir [modules.md](modules.md) pour l'usage et le format des sources.
   correction immédiate. Il reprend le rendu des questions de l'écran de passage ; les deux sont à tenir alignés.
 - Sauvegarde complète : `leitner.json`.
 
+## Points et ceintures (lot 15)
+
+- `domain/rewards.ts` (fonctions pures) : barème (`POINTS`), ceintures et dans (`rankOf`, `promotion`), et les
+  récompenses produites par une révision (`reviewRewards`), une collecte (`collectRewards`) ou une tentative
+  terminée (`attemptRewards`). `domain/leitner.ts` fait sortir du planning une carte juste au compartiment 5
+  (`acquiredAt`) et l'y remet (`restoreCard`).
+- Table `reward` (migration 8), clé primaire (`kind`, `ref`) : un événement ne compte qu'une fois
+  (`addRewards` ignore les doublons et renvoie les nouveaux). Aucune récompense n'est jamais retirée ; une
+  désinstallation de module n'y touche pas.
+- `app.svelte.ts` tient le total (`points`), le dernier jour « à jour » et le rang à annoncer (`promotion`,
+  affiché par `+layout.svelte` dans une région `role="status"` toujours présente). Le réglage `rewards` = `off`
+  masque l'affichage sans arrêter le décompte.
+- Les points d'une révision sont calculés après l'enregistrement de la carte (le bonus « journée à jour » dépend
+  des cartes encore dues) ; ceux d'une tentative, après son enregistrement, dans `AttemptSession.finish`.
+- Sauvegarde complète : `rewards.json`.
+
+## Questions « expression » (lot 13)
+
+- `domain/expr.ts` (fonctions pures, sans dépendance) : lecture du LaTeX en arbre (`parseExpr`), évaluation,
+  comparaison par évaluation en points tirés au hasard (`sameExpression`, tirage reproductible d'après la
+  formule attendue), option « à une constante près ». Sert au passage (`typed.ts`), à la validation et à
+  l'outillage des modules. Pas de calcul formel : léger et synchrone, mais ne juge pas la forme.
+- `rich/MathInput.svelte` : champ de réponse MathLive (chargé à la première question de ce type, champ texte
+  LaTeX si le chargement échoue) ; `rich/mathlive.ts` règle MathLive une fois pour ce champ et pour l'éditeur
+  visuel. La réponse enregistrée (`answer.text`) est la source LaTeX ; corrigé et aperçu la rendent par KaTeX.
+- Migration 9 : reconstruction des tables `question` et `choice`, sans la contrainte CHECK sur le type (SQLite
+  ne sait pas la modifier ; les types sont contrôlés par le schéma d'échange et la validation). L'ordre des
+  opérations évite les suppressions en cascade ; un test applique les migrations 1 à 8, remplit les tables,
+  applique la 9 et vérifie données, clés étrangères et index.
+- GIFT : non exporté (pas d'équivalent).
+
 ## Formules et figures (lot 7)
 
 - **Formules** : nœuds `math` et `mathBlock`, la source LaTeX étant le texte du nœud (repli lisible partout où le
@@ -158,7 +189,13 @@ Voir [modules.md](modules.md) pour l'usage et le format des sources.
   mhchem) et met le HTML en cache ; `RichNode` l'insère. KaTeX produit HTML + MathML ; ses polices sont embarquées
   en woff2 seulement (`vite.config.js`).
 - **Éditeur** : la formule s'édite sous sa forme LaTeX, dans une pastille ; l'aperçu rendu et l'erreur éventuelle
-  s'affichent sous la barre d'outils quand le curseur est dans la formule.
+  s'affichent sous la barre d'outils quand le curseur est dans la formule. Le bouton « Éditeur visuel » de cette
+  barre ouvre `rich/MathFieldDialog.svelte` : un champ MathLive (`<math-field>`) dans une fenêtre modale, avec
+  clavier virtuel sur écran tactile. MathLive (≈ 800 Ko) est importé à la première ouverture seulement ; il
+  réutilise les polices de KaTeX (`fontsDirectory = null`), sans son. Son clavier virtuel est placé dans la
+  fenêtre (sinon la couche supérieure le cacherait) et fixé au bas de l'écran. Une formule validée sans
+  modification garde sa source exacte ; modifiée, elle prend l'écriture de MathLive (`f^{\prime}` pour `f'`),
+  rendue à l'identique par KaTeX. `\ce` et `\pu` passent tels quels.
 - **SVG** : `domain/svg.ts` est un analyseur XML strict suivi d'une réécriture par liste blanche, sans DOM (il
   sert aussi à l'outillage). Le fichier d'origine est conservé (son empreinte reste valable) et nettoyé à chaque
   chargement (`rich/media.svelte.ts`), avec des identifiants préfixés par l'empreinte.

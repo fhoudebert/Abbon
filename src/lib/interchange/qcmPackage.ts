@@ -5,6 +5,7 @@ import { strFromU8, strToU8, unzipSync, zipSync, type Zippable } from 'fflate';
 import { z } from 'zod';
 import { mediaHashes } from '$lib/domain/rich';
 import type { LeitnerCard } from '$lib/domain/leitner';
+import type { Reward } from '$lib/domain/rewards';
 import { looksLikeSvg, sanitizeSvg } from '$lib/domain/svg';
 import type { Attempt, Category, InstalledModule, ModuleManifest, Quiz, RichValue } from '$lib/domain/types';
 import {
@@ -34,7 +35,15 @@ const LeitnerCardSchema = z.object({
   lastAt: z.string().max(40).nullable(),
   reviews: z.number().int().min(0),
   lapses: z.number().int().min(0),
+  acquiredAt: z.string().max(40).nullable().optional(),
   snapshot: z.object({ question: QuestionSchema, quizTitle: I18nTextSchema, languages: z.array(z.string().max(20)).max(50) }),
+});
+
+const RewardSchema = z.object({
+  kind: z.enum(['review', 'day', 'acquired', 'collect', 'quiz', 'module']),
+  ref: z.string().min(1).max(200),
+  points: z.number().int().min(0).max(1000),
+  at: z.string().max(40),
 });
 
 const InstalledModuleSchema = z.object({
@@ -64,6 +73,8 @@ export interface BackupBundle extends ContentBundle {
   modules?: InstalledModule[];
   /** Boîte de révision (sauvegarde complète : `leitner.json`). */
   cards?: LeitnerCard[];
+  /** Points et ceintures (sauvegarde complète : `rewards.json`). */
+  rewards?: Reward[];
 }
 
 /** Problème non bloquant relevé à la lecture (l'élément concerné est ignoré ou corrigé). */
@@ -164,7 +175,9 @@ export function stripSolutions(quiz: Quiz): Quiz {
                   : { kind: g.kind, accepted: [] },
               ),
             }
-          : null,
+          : x.type === 'expression' && x.expected?.constant
+            ? { constant: true } // consigne visible (« à une constante près »), pas la réponse
+            : null,
     choices: x.choices.map(({ correct: _c, feedback: _f, ...c }) => c as Quiz['questions'][number]['choices'][number]),
   }));
   return q;
@@ -235,6 +248,7 @@ export function buildPackage(bundle: ContentBundle | BackupBundle, opts: BuildOp
     files['settings.json'] = json(bundle.settings);
     if (modules.length) files['modules.json'] = json(modules);
     if (bundle.cards?.length) files['leitner.json'] = json(bundle.cards);
+    if (bundle.rewards?.length) files['rewards.json'] = json(bundle.rewards);
   }
   // Date fixe si `now` est fourni : deux constructions du même contenu donnent le même fichier.
   return zipSync(files, { level: 6, ...(opts.now ? { mtime: opts.now } : {}) });
@@ -253,6 +267,8 @@ export interface ParsedPackage {
   modules?: InstalledModule[];
   /** Boîte de révision (sauvegarde complète). */
   cards?: LeitnerCard[];
+  /** Points et ceintures (sauvegarde complète). */
+  rewards?: Reward[];
   attempts?: Attempt[];
   answers?: AnswerRow[];
   settings?: Record<string, string>;
@@ -369,6 +385,7 @@ export async function parsePackage(bytes: Uint8Array): Promise<ParsedPackage> {
   let settings: Record<string, string> | undefined;
   let modules: InstalledModule[] | undefined;
   let cards: LeitnerCard[] | undefined;
+  let rewards: Reward[] | undefined;
   if (manifest.kind === 'backup') {
     attempts = [];
     answers = [];
@@ -389,6 +406,12 @@ export async function parsePackage(bytes: Uint8Array): Promise<ParsedPackage> {
       for (const c of (readJson(files, 'leitner.json') as unknown[]) ?? []) {
         const r = LeitnerCardSchema.safeParse(c);
         if (r.success) cards.push(r.data as LeitnerCard);
+        else problems.push({ code: 'history_invalid', detail: issueText(r.error) });
+      }
+      rewards = [];
+      for (const x of (readJson(files, 'rewards.json') as unknown[]) ?? []) {
+        const r = RewardSchema.safeParse(x);
+        if (r.success) rewards.push(r.data);
         else problems.push({ code: 'history_invalid', detail: issueText(r.error) });
       }
       modules = [];
@@ -431,5 +454,5 @@ export async function parsePackage(bytes: Uint8Array): Promise<ParsedPackage> {
   const sheets = sheetMedia([...(module ? [module] : []), ...(modules ?? []).map((m) => m.manifest)]);
   for (const h of new Set([...quizMedia(quizzes), ...sheets])) if (!media.has(h)) problems.push({ code: 'media_missing', ref: h });
 
-  return { manifest, quizzes, categories, media, module, modules, cards, attempts, answers, settings, problems };
+  return { manifest, quizzes, categories, media, module, modules, cards, rewards, attempts, answers, settings, problems };
 }

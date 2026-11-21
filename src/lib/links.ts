@@ -1,7 +1,10 @@
 import { isTauri } from '@tauri-apps/api/core';
 
+/** Dépôt du code source d'Abbon. */
+export const REPO_URL = 'https://github.com/fhoudebert/Abbon';
+
 /** Page où les modules de contenu sont publiés (fichiers .qcm joints aux versions). */
-export const MODULES_URL = 'https://github.com/fhoudebert/Abbon/releases';
+export const MODULES_URL = `${REPO_URL}/releases`;
 
 /**
  * Ouvre une adresse https dans le navigateur du système (plugin opener sous Tauri).

@@ -22,6 +22,8 @@ const katexWoff2Only = {
 // https://vite.dev/config/
 export default defineConfig(() => ({
   plugins: [katexWoff2Only, sveltekit()],
+  // MathLive (≈ 800 Ko) forme un morceau à part, chargé seulement à l'ouverture de l'éditeur visuel.
+  build: { chunkSizeWarningLimit: 900 },
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
   },

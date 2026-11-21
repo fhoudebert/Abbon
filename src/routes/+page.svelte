@@ -1,6 +1,8 @@
 <script lang="ts">
   import { app, type QuizEntry } from '$lib/app.svelte';
   import QuizCard from '$lib/components/QuizCard.svelte';
+  import RankCard from '$lib/components/RankCard.svelte';
+  import { POINTS } from '$lib/domain/rewards';
   import type { Progress } from '$lib/domain/progress';
   import { localize } from '$lib/domain/text';
   import { i18n, t } from '$lib/i18n/index.svelte';
@@ -30,6 +32,8 @@
   ];
 
   const byProgress = (p: Progress): QuizEntry[] => visible.filter((e) => e.info.progress === p);
+  const due = $derived(app.dueCount());
+  const dayDone = $derived(app.dayDone());
 </script>
 
 <svelte:head><title>{t('nav.home')} — Abbon</title></svelte:head>
@@ -39,6 +43,26 @@
 {:else if !app.ready}
   <p aria-busy="true">{t('home.loading')}</p>
 {:else}
+  {#if app.cards.length || app.showRewards}
+    <div class="today">
+      {#if app.cards.length}
+        <section class="panel due" aria-labelledby="h-today">
+          <h2 id="h-today" class="visually-hidden">{t('leitner.title')}</h2>
+          {#if due}
+            <p>
+              <strong>{t('home.dueToday', { n: due })}</strong>
+              {#if app.showRewards && !dayDone}<span class="muted"> · {t('home.dayBonus', { n: POINTS.day })}</span>{/if}
+            </p>
+            <a class="button" href="/leitner">{t('home.review')}</a>
+          {:else}
+            <p>{app.showRewards && dayDone ? t('home.dayDone') : t('home.nothingDue')}</p>
+          {/if}
+        </section>
+      {/if}
+      {#if app.showRewards}<RankCard />{/if}
+    </div>
+  {/if}
+
   <div class="filters">
     <label>
       <span class="visually-hidden">{t('home.search')}</span>
@@ -112,5 +136,25 @@
   }
   .error {
     color: var(--warn);
+  }
+  .today {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+    gap: 0.75rem;
+    margin-block-end: 1.25rem;
+  }
+  .today > :global(.panel) {
+    margin: 0;
+  }
+  .due {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+  }
+  .due p {
+    margin: 0;
   }
 </style>

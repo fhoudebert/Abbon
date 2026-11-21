@@ -82,3 +82,23 @@ Quelles sont les solutions dans $\mathbb{C}$ de l'équation $z^2 = -1$ ?
 - [ ] $i$ seulement
 
 > $i^2 = -1$ et $(-i)^2 = -1$. Dans $\mathbb{R}$, l'équation n'a pas de solution ; dans $\mathbb{C}$, toute équation du second degré en a deux, éventuellement confondues.
+
+## argument · single
+Quel est un argument de $z = 1 + i$ ?
+
+- [x] $\dfrac{\pi}{4}$
+- [ ] $\dfrac{\pi}{2}$
+- [ ] $1$
+- [ ] $\sqrt{2}$
+
+> $|z| = \sqrt{2}$, et $\cos\theta = \dfrac{1}{\sqrt{2}}$, $\sin\theta = \dfrac{1}{\sqrt{2}}$ : $\theta = \dfrac{\pi}{4}$ (à $2\pi$ près). Donc $1 + i = \sqrt{2}\,e^{i\pi/4}$. $\sqrt{2}$ est le module, pas l'argument.
+
+## inverse · single
+Que vaut $\dfrac{1}{i}$ ?
+
+- [x] $-i$
+- [ ] $i$
+- [ ] $1$
+- [ ] $-1$
+
+> On multiplie numérateur et dénominateur par le conjugué $-i$ : $\dfrac{1}{i} = \dfrac{-i}{i \times (-i)} = \dfrac{-i}{1} = -i$. Vérification : $i \times (-i) = -i^2 = 1$.

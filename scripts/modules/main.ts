@@ -4,6 +4,8 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { buildPackage, parsePackage, sha256Hex, sniffMime, type MediaFile } from '$lib/interchange/qcmPackage';
+import { imageTargets } from './markdown';
+import { loadRDKit, moleculeSvg, SMILES_PREFIX } from './molecules';
 import { compileModule, type Asset, type Compiled, type SourceFile } from './source';
 
 /** Fichiers texte d'un dossier de module (récursif), chemins relatifs avec des « / ». */
@@ -38,6 +40,23 @@ async function readAssets(dir: string): Promise<{ assets: Asset[]; bytes: Map<st
   };
   await walk(dir);
   return { assets, bytes };
+}
+
+/**
+ * Molécules citées par les sources (`![…](smiles:…)`), dessinées par RDKit et ajoutées aux images du module.
+ * Un SMILES illisible donne une image sans type : le compilateur le signale.
+ */
+async function drawMolecules(sources: SourceFile[], images: { assets: Asset[]; bytes: Map<string, Uint8Array> }): Promise<number> {
+  const targets = [...new Set(sources.flatMap((f) => imageTargets(f.text)).filter((t) => t.startsWith(SMILES_PREFIX)))].sort();
+  if (!targets.length) return 0;
+  const rdkit = await loadRDKit();
+  for (const path of targets) {
+    const svg = moleculeSvg(rdkit, path.slice(SMILES_PREFIX.length));
+    const bytes = new TextEncoder().encode(svg ?? '');
+    images.bytes.set(path, bytes);
+    images.assets.push({ path, hash: await sha256Hex(bytes), mime: svg ? sniffMime(bytes) : null });
+  }
+  return targets.length;
 }
 
 function report(name: string, c: Compiled): boolean {
@@ -89,7 +108,9 @@ export async function main(argv: string[], root: string): Promise<number> {
     let images: Awaited<ReturnType<typeof readAssets>>;
     try {
       images = await readAssets(join(modulesDir, name));
-      c = compileModule(readSources(join(modulesDir, name)), images.assets);
+      const sources = readSources(join(modulesDir, name));
+      await drawMolecules(sources, images);
+      c = compileModule(sources, images.assets);
     } catch (e) {
       console.log(`\n${name}\n  ERREUR  ${(e as Error).message}`);
       ok = false;

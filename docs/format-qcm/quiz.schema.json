@@ -163,7 +163,8 @@
               "multiple",
               "short",
               "numeric",
-              "cloze"
+              "cloze",
+              "expression"
             ]
           },
           "prompt": {
@@ -374,6 +375,13 @@
                       ],
                       "additionalProperties": false
                     }
+                  },
+                  "latex": {
+                    "type": "string",
+                    "maxLength": 1000
+                  },
+                  "constant": {
+                    "type": "boolean"
                   }
                 },
                 "additionalProperties": false
