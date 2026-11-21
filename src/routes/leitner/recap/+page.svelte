@@ -7,6 +7,9 @@
   import { onMount } from 'svelte';
   import { app } from '$lib/app.svelte';
   import ClozeText from '$lib/components/ClozeText.svelte';
+  import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+  import { richToPlain } from '$lib/domain/rich';
+  import { MY_CARDS_ID } from '$lib/app.svelte';
   import { cardQuestion, isAcquired, LEITNER_BOXES, type LeitnerCard } from '$lib/domain/leitner';
   import { pick } from '$lib/domain/rich';
   import { localize } from '$lib/domain/text';
@@ -53,6 +56,19 @@
 
   const shown = (c: LeitnerCard) => cardQuestion(c, live.get(c.quizId));
   const correctChoices = (q: Question) => [...q.choices].filter((c) => c.correct).sort((a, b) => a.position - b.position);
+
+  // ---- Retrait d'une carte ----
+  let toRemove = $state<LeitnerCard | null>(null);
+  let confirm: ConfirmDialog;
+  function askRemove(c: LeitnerCard) {
+    toRemove = c;
+    queueMicrotask(() => confirm.open());
+  }
+  const removeBody = (c: LeitnerCard) => {
+    const s = shown(c);
+    const text = richToPlain(pick(s.question.prompt, lang, s.languages[0])) || '—';
+    return c.quizId === MY_CARDS_ID ? `${text}\n\n${t('leitner.remove.custom')}` : text;
+  };
 
   async function print() {
     message = null;
@@ -130,6 +146,7 @@
               <p class="meta muted">
                 {localize(s.quizTitle, lang, fb)} ·
                 {g.acquired ? t('recap.acquiredOn', { date: fmtDate(c.acquiredAt ?? c.dueAt) }) : t('recap.next', { date: fmtDate(c.dueAt) })}
+                <button class="ghost danger remove" data-no-export onclick={() => askRemove(c)}>{t('leitner.remove')}</button>
               </p>
             </li>
           {/each}
@@ -138,6 +155,18 @@
     {/each}
   {/if}
 </div>
+
+<ConfirmDialog
+  bind:this={confirm}
+  title={t('leitner.remove.title')}
+  body={toRemove ? removeBody(toRemove) : ''}
+  confirmLabel={t('leitner.remove')}
+  danger
+  onconfirm={async () => {
+    if (toRemove) await app.removeCard(toRemove.questionId);
+    toRemove = null;
+  }}
+/>
 
 <style>
   .tools {
@@ -197,6 +226,14 @@
   .meta {
     font-size: 0.85rem;
     margin: 0.35rem 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.5rem;
+  }
+  .remove {
+    margin-inline-start: auto;
+    font-size: 0.85rem;
   }
   .message {
     font-weight: 600;

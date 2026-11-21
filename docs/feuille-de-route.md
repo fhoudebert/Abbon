@@ -336,6 +336,10 @@ Ces seuils sont des constantes, à recaler après quelques semaines d'usage rée
   « Imprimer ou enregistrer en PDF » (`window.print()`, styles d'impression en clair, sans en-tête ni
   boutons) ; « Enregistrer en HTML » : fichier autonome (styles et polices des formules inclus, environ
   400 Ko) qui s'ouvre hors ligne dans un navigateur ; sous Android, seul ce bouton est proposé.
+- **Retirer une carte** : depuis les listes de l'écran Révision (cartes du planning et acquises), pendant une
+  séance (« Retirer cette carte de la boîte » : on passe à la suivante) et depuis le récapitulatif (bouton absent
+  de l'impression et du fichier HTML). Une carte personnelle retirée reste dans le QCM « Mes cartes de
+  révision », ce que la confirmation rappelle.
 - Au passage, correction d'un défaut de l'éditeur riche : à la perte du focus quand l'éditeur est retiré de la
   page, il modifiait un état pendant le rendu (`state_unsafe_mutation`), ce qui pouvait aussi arriver dans
   l'administration en changeant de question pendant la saisie.

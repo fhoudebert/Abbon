@@ -484,6 +484,8 @@ export const fr = {
   'leitner.dueOn': 'à revoir à partir du {date}',
   'leitner.remove': 'Retirer',
   'leitner.remove.title': 'Retirer cette question de la boîte ?',
+  'leitner.removeCurrent': 'Retirer cette carte de la boîte',
+  'leitner.remove.custom': 'La question reste dans le QCM « Mes cartes de révision », où l’administration permet de la modifier ou de la supprimer.',
   'leitner.stop': 'Arrêter la révision',
   'leitner.finish': 'Terminer',
   'leitner.done': 'Révision terminée',

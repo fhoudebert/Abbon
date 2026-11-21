@@ -64,4 +64,7 @@
     background: var(--bad);
     border-color: var(--bad);
   }
+  p {
+    white-space: pre-line;
+  }
 </style>

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { app } from '$lib/app.svelte';
+  import { app, MY_CARDS_ID } from '$lib/app.svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import QuestionPlayer from '$lib/components/QuestionPlayer.svelte';
   import RankCard from '$lib/components/RankCard.svelte';
@@ -117,7 +117,10 @@
       />
     {/key}
   </article>
-  <p><button class="secondary" onclick={() => ((running = false), (finished = reviewed > 0))}>{t('leitner.stop')}</button></p>
+  <p class="session-tools">
+    <button class="secondary" onclick={() => ((running = false), (finished = reviewed > 0))}>{t('leitner.stop')}</button>
+    <button class="ghost danger" onclick={() => askRemove(card)}>{t('leitner.removeCurrent')}</button>
+  </p>
 {:else}
   {#if finished}
     <section class="panel done" role="status">
@@ -203,11 +206,25 @@
 <ConfirmDialog
   bind:this={confirm}
   title={t('leitner.remove.title')}
-  body={toRemove ? promptOf(toRemove) : ''}
+  body={toRemove ? promptOf(toRemove) + (toRemove.quizId === MY_CARDS_ID ? `\n\n${t('leitner.remove.custom')}` : '') : ''}
   confirmLabel={t('leitner.remove')}
   danger
   onconfirm={async () => {
-    if (toRemove) await app.removeCard(toRemove.questionId);
+    if (toRemove) {
+      const id = toRemove.questionId;
+      await app.removeCard(id);
+      // Pendant une séance : la carte retirée quitte la file, on passe à la suivante.
+      if (running && queue.some((c) => c.questionId === id)) {
+        const at = queue.findIndex((c) => c.questionId === id);
+        queue = queue.filter((c) => c.questionId !== id);
+        if (at < index) index--;
+        answeredCurrent = false;
+        if (index >= queue.length) {
+          running = false;
+          finished = reviewed > 0;
+        }
+      }
+    }
     toRemove = null;
   }}
 />
@@ -301,6 +318,12 @@
   .tools {
     display: flex;
     flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .session-tools {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
     gap: 0.5rem;
   }
 </style>
