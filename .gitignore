@@ -24,3 +24,4 @@ keystore.base64
 commandes.txt
 local.properties
 /dist
+/site

@@ -1,6 +1,6 @@
 //! Mises à jour.
 //!
-//! - Ordinateur (Linux, Windows) : plugin updater de Tauri. Le serveur publie
+//! - Ordinateur (Linux, Windows, macOS) : plugin updater de Tauri. Le serveur publie
 //!   `releases/latest.json` ; chaque fichier est signé, et la signature est vérifiée avec la
 //!   clé publique intégrée à la compilation (`ABBON_UPDATER_PUBKEY`). Sans clé, la mise à
 //!   jour automatique est désactivée.

@@ -13,8 +13,8 @@ Ordre de travail de la branche `qcm`, après le socle (lots 0 à 5). Le cadrage 
 | Lot 8 | Module Informatique : 13 rubriques, environ 450 questions ; version pilote 0.1.0 (un QCM de bases par rubrique, 130 questions) | en cours |
 | Lots 9 à 11 | Modules de bac : Physique-chimie, Maths spécialité, Maths expertes ; versions pilotes 0.1.0 tirées des ébauches (90 questions) | en cours |
 | Lot 12 | Anglais : verbes irréguliers, version complète (environ 150 verbes) | à faire |
-| Technique A | **Actions GitHub et Node.js** : actions en Node 24, construction en Node 26 | à faire, prioritaire |
-| Technique B | **Version macOS en CI** : application universelle (Apple silicon et Intel), `.dmg` et `.app` | à faire |
+| Technique A | **Actions GitHub et Node.js** : actions en Node 24, construction en Node 26 | fait, à valider sur GitHub |
+| Technique B | **Version macOS en CI** : application universelle (Apple silicon et Intel), `.dmg`, mises à jour automatiques | fait, à valider sur GitHub |
 | Lot 13 | **MathLive** : saisie visuelle des formules dans l'éditeur, puis réponses sous forme d'expression | à étudier, puis à faire |
 | Lot 14 | **Molécules** : formules topologiques générées en SVG à la construction des modules ; Ketcher plus tard, si besoin | à étudier |
 
@@ -79,11 +79,13 @@ Ordre de travail de la branche `qcm`, après le socle (lots 0 à 5). Le cadrage 
   Node 24, avec des avertissements, sans garantie de bon fonctionnement.
 - **Node 22** n'est plus qu'en maintenance, jusqu'au 30 avril 2027. Node 24 est maintenu jusqu'en avril 2028,
   Node 26 (LTS depuis octobre 2026) jusqu'en avril 2029.
-- **À faire** : passer aux versions d'actions déjà éprouvées dans tabulon (`checkout@v7`, `setup-node@v7`,
-  `upload-artifact@v7`, `download-artifact@v8`), vérifier les autres (`setup-java`, `setup-android`,
-  `android-emulator-runner`, `action-gh-release`) ; construire en Node 26 et exiger Node 24 au minimum
-  (`engines`). Relire les changements de `download-artifact` entre v4 et v8 (chemins de téléchargement).
-- **Opportunité** : forte, et petit lot ; à faire avant le prochain changement des machines de GitHub.
+- **Fait** : toutes les actions passent à une version en Node 24 : `checkout@v7`, `setup-node@v7`,
+  `upload-artifact@v7`, `download-artifact@v8`, `setup-java@v6`, `action-gh-release@v3` ; `setup-android@v4`,
+  `android-emulator-runner@v2` et `rust-cache@v2` y étaient déjà (leurs étiquettes majeures ont suivi).
+  Construction en Node 26, `engines: >=24`. Le script de release s'exécute sans `--experimental-strip-types`.
+- **Vérifié hors GitHub** : `actionlint` et shellcheck sans remarque ; mêmes entrées pour toutes les actions ;
+  téléchargement d'un artefact par nom inchangé (dans `path`), `merge-multiple` toujours disponible.
+- **Reste** : un premier passage complet du workflow *Build* sur GitHub.
 
 ## Technique B — version macOS en CI
 
@@ -92,8 +94,11 @@ Ordre de travail de la branche `qcm`, après le socle (lots 0 à 5). Le cadrage 
   `tauri build --target universal-apple-darwin --bundles app,dmg`, signature ad hoc
   (`"signingIdentity": "-"`, sans laquelle macOS refuse le binaire Apple silicon), puis contrôle par
   `codesign --verify` et `lipo -archs`, et `.app` zippée par `ditto` pour garder sa structure.
-- **Propre à Abbon** : l'icône `icon.icns` existe déjà ; ajouter les fichiers macOS au site de téléchargement
-  et à la release, prévoir (ou non) la mise à jour automatique sur macOS, et un test de lancement.
+- **Fait** : job `macos` (application universelle, `.dmg`, contrôle de la signature et des deux architectures),
+  archive `.app.tar.gz` signée pour les mises à jour automatiques quand la clé est configurée (entrées
+  `darwin-aarch64` et `darwin-x86_64` de `latest.json`), job `smoke-macos` (installation depuis le `.dmg`,
+  lancement 30 s, base créée), fichiers macOS sur la page de téléchargement avec l'aide au premier lancement.
+- **Reste** : premier passage sur GitHub, puis essai sur un vrai Mac (premier lancement, mise à jour).
 - **Limite** : sans compte développeur Apple, l'application n'est ni signée par Apple ni notarisée ; macOS
   avertit au premier lancement. La documentation doit expliquer comment l'ouvrir (clic droit › Ouvrir, ou
   Réglages › Confidentialité et sécurité).

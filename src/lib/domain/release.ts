@@ -55,6 +55,7 @@ export function downloadFor(release: Release, platform: string): ReleaseFile | u
     android: ['apk'],
     windows: ['nsis', 'msi'],
     linux: ['appimage', 'deb', 'rpm'],
+    macos: ['dmg'],
   };
   const files = release.files.filter((f) => f.platform === platform);
   for (const kind of order[platform] ?? []) {
