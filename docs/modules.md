@@ -42,6 +42,9 @@ modules/anglais-verbes/
     fiche.en.md
 ```
 
+Un dossier de `modules/` sans `module.yaml` n'est pas un module : l'outillage l'ignore, avec un message. C'est
+la place des ébauches et des notes, rangées par convention dans `modules/_ebauches/`.
+
 ### `module.yaml`
 
 ```yaml

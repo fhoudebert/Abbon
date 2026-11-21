@@ -1,0 +1,27 @@
+# Module « Maths expertes, terminale » — programme 2019.
+# Questions reprises des ébauches (modules/_ebauches/math/02-expert.md), reformulées et vérifiées.
+
+id: org.abbon.maths-expertes
+version: 0.1.0
+date: 2026-11-21
+title:
+  fr: "Maths expertes, terminale"
+description:
+  fr: "Révisions. Version pilote : nombres complexes, arithmétique, matrices et graphes, 24 questions."
+level: terminale
+license: CC-BY-NC-SA-4.0
+authors: [Abbon]
+homepage: https://github.com/fhoudebert/Abbon
+languages: [fr]
+requires:
+  app: ">=0.2.0"
+defaults:
+  passThreshold: 0.6
+
+categories:
+  - id: complexes
+    name: { fr: "Nombres complexes" }
+  - id: arithmetique
+    name: { fr: "Arithmétique" }
+  - id: matrices-graphes
+    name: { fr: "Matrices et graphes" }

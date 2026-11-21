@@ -11,7 +11,12 @@ Ordre de travail de la branche `qcm`, après le socle (lots 0 à 5). Le cadrage 
 | Lot 6 quater | **Révision espacée (boîtes de Leitner)** : entraînement par répétitions sur des questions choisies | fait |
 | Lot 7 | Formules (LaTeX, rendu KaTeX), équations chimiques, unités, figures SVG incrustées après nettoyage | fait |
 | Lot 8 | Module Informatique : 13 rubriques, environ 450 questions ; version pilote 0.1.0 (un QCM de bases par rubrique, 130 questions) | en cours |
-| Lots 9 à 11 | Modules de contenu : Anglais (version complète), Physique-chimie, Maths spécialité, Maths expertes | à faire |
+| Lots 9 à 11 | Modules de bac : Physique-chimie, Maths spécialité, Maths expertes ; versions pilotes 0.1.0 tirées des ébauches (90 questions) | en cours |
+| Lot 12 | Anglais : verbes irréguliers, version complète (environ 150 verbes) | à faire |
+| Technique A | **Actions GitHub et Node.js** : actions en Node 24, construction en Node 26 | à faire, prioritaire |
+| Technique B | **Version macOS en CI** : application universelle (Apple silicon et Intel), `.dmg` et `.app` | à faire |
+| Lot 13 | **MathLive** : saisie visuelle des formules dans l'éditeur, puis réponses sous forme d'expression | à étudier, puis à faire |
+| Lot 14 | **Molécules** : formules topologiques générées en SVG à la construction des modules ; Ketcher plus tard, si besoin | à étudier |
 
 ## Lot 6 ter — textes à trous
 
@@ -52,6 +57,84 @@ Ordre de travail de la branche `qcm`, après le socle (lots 0 à 5). Le cadrage 
 - Les comportements de code annoncés (Python, Rust, JavaScript, SQL) et les calculs ont été vérifiés par
   exécution ; l'exécution automatique des extraits marqués `run` reste à outiller.
 
+## Lots 9 à 11 — modules de bac
+
+- Ébauches de questions (fournies dans `modules/_ebauches/`) reprises, reformulées et vérifiées dans
+  `physique-chimie` (30 questions), `maths-specialite` (36) et `maths-expertes` (24). Trois erreurs des ébauches
+  y sont corrigées : `ln(0) = 1` (ln 0 n'est pas défini, c'est ln 1 qui vaut 0), l'équation de la tangente
+  ($y = f'(a)(x - a) + f(a)$) et le résultat du titrage (0,075 mol·L⁻¹).
+- Les questions qui attendent une formule en réponse (« dérivée de $u/v$ ? ») sont devenues des choix entre
+  formules, en attendant un type « expression » (lot 13).
+- Étiquette `prog-2019` sur chaque QCM de maths, pour la bascule vers le programme 2026 (bac 2028).
+- Suite : fiches de révision par catégorie, niveaux « approfondissement » et « expert », relecture par un
+  enseignant ; physique-chimie : catégorie « L'énergie : conversions et transferts ».
+- Un dossier de `modules/` sans `module.yaml` (ébauches, notes) est désormais ignoré par l'outillage, avec un
+  message, au lieu de faire échouer la vérification.
+
+## Technique A — actions GitHub et Node.js
+
+- **Constat** : Abbon se construit déjà en Node 22 (`engines: >=22.13`), mais ses workflows utilisent des actions en
+  v4 (`checkout`, `setup-node`, `upload-artifact`, `download-artifact`, `setup-java`…), qui déclarent le moteur
+  Node 20. GitHub a retiré Node 20 de ses machines en septembre 2026 : ces actions sont exécutées de force en
+  Node 24, avec des avertissements, sans garantie de bon fonctionnement.
+- **Node 22** n'est plus qu'en maintenance, jusqu'au 30 avril 2027. Node 24 est maintenu jusqu'en avril 2028,
+  Node 26 (LTS depuis octobre 2026) jusqu'en avril 2029.
+- **À faire** : passer aux versions d'actions déjà éprouvées dans tabulon (`checkout@v7`, `setup-node@v7`,
+  `upload-artifact@v7`, `download-artifact@v8`), vérifier les autres (`setup-java`, `setup-android`,
+  `android-emulator-runner`, `action-gh-release`) ; construire en Node 26 et exiger Node 24 au minimum
+  (`engines`). Relire les changements de `download-artifact` entre v4 et v8 (chemins de téléchargement).
+- **Opportunité** : forte, et petit lot ; à faire avant le prochain changement des machines de GitHub.
+
+## Technique B — version macOS en CI
+
+- **Modèle** : le workflow de publication de tabulon (`.github/workflows/release.yml`), même pile technique
+  (Tauri 2) : machine `macos-latest`, cibles Rust `aarch64-apple-darwin` et `x86_64-apple-darwin`,
+  `tauri build --target universal-apple-darwin --bundles app,dmg`, signature ad hoc
+  (`"signingIdentity": "-"`, sans laquelle macOS refuse le binaire Apple silicon), puis contrôle par
+  `codesign --verify` et `lipo -archs`, et `.app` zippée par `ditto` pour garder sa structure.
+- **Propre à Abbon** : l'icône `icon.icns` existe déjà ; ajouter les fichiers macOS au site de téléchargement
+  et à la release, prévoir (ou non) la mise à jour automatique sur macOS, et un test de lancement.
+- **Limite** : sans compte développeur Apple, l'application n'est ni signée par Apple ni notarisée ; macOS
+  avertit au premier lancement. La documentation doit expliquer comment l'ouvrir (clic droit › Ouvrir, ou
+  Réglages › Confidentialité et sécurité).
+
+## Lot 13 — MathLive (formules)
+
+- **MathLive** (licence MIT, aucune dépendance) : un champ de saisie de formules avec clavier virtuel, pensé pour
+  le tactile. Environ 850 Ko de code (230 Ko compressé) et 300 Ko de polices, pour la version 0.111 ; encore en
+  0.x, donc des changements possibles d'une version à l'autre.
+- **Compatible avec le format actuel** : MathLive lit et produit du LaTeX, ce que contiennent déjà les nœuds de
+  formule. Aucune migration.
+- **Deux usages** :
+  1. **Éditeur** : saisir une formule en la voyant, au lieu d'écrire du LaTeX, au clavier virtuel sur tablette.
+     Bénéfice immédiat pour qui ne connaît pas LaTeX.
+  2. **Réponses** : un type de question « expression », où l'élève écrit une formule (dérivée, primitive,
+     factorisation). Il faut alors juger si deux expressions sont égales : comparaison par évaluation en
+     plusieurs points tirés au hasard, ou calcul formel (Compute Engine, de la même équipe, licence MIT). C'est
+     le point délicat, à prototyper.
+- **À vérifier** : fonctionnement dans WebKitGTK (Linux) et la WebView Android, cohabitation de son clavier
+  virtuel avec celui du téléphone, accessibilité, chargement à la demande (seulement dans l'éditeur et sur les
+  questions « expression ») pour ne pas alourdir le démarrage. Le rendu dans le champ (moteur de MathLive)
+  différera légèrement de l'affichage (KaTeX).
+- **Opportunité** : réelle ; l'éditeur d'abord, le type « expression » ensuite.
+
+## Lot 14 — molécules (Ketcher ou génération au build)
+
+- **Ketcher** (EPAM, licence Apache 2.0, version 3.21, très actif) : éditeur complet de structures chimiques.
+  Mais il est écrit avec React (un second cadre d'interface dans une application Svelte), son mode hors ligne
+  embarque le moteur Indigo en WebAssembly (environ 9 Mo, plus environ 16 Mo de JavaScript), et rien n'indique
+  qu'il soit utilisable au doigt sur téléphone. L'application passerait d'environ 2 Mo à plus de 15 Mo.
+- **Besoin réel d'Abbon** : surtout *afficher* des molécules (formules topologiques, groupes caractéristiques)
+  dans des questions écrites par les auteurs ; l'élève n'en dessine pas dans un QCM.
+- **Proposition** : d'abord générer les figures **à la construction des modules**, depuis une notation SMILES dans
+  les sources (par exemple `![éthanol](smiles:CCO)`), avec RDKit (licence BSD) ou Indigo. Le résultat est un SVG
+  ordinaire, tracé en `currentColor`, qui passe par le nettoyage existant : rien de plus dans l'application.
+- **Ketcher plus tard**, seulement si l'on veut dessiner des molécules dans l'éditeur d'Abbon : chargé à la
+  demande, sur ordinateur, dans un cadre isolé (mode d'intégration prévu par Ketcher), le dessin étant enregistré
+  en SVG avec sa source (molfile) pour pouvoir le modifier.
+- **Opportunité** : la génération au build oui, dès que la chimie organique entre dans le module ; Ketcher dans
+  l'application, non pour l'instant.
+
 ## Décisions prises
 
 - Licence du contenu : CC BY-NC-SA 4.0.
@@ -60,5 +143,6 @@ Ordre de travail de la branche `qcm`, après le socle (lots 0 à 5). Le cadrage 
 - Distribution des modules : fichiers `.qcm` joints aux releases GitHub, lien dans l'application, puis import.
 - Module Informatique : 13 rubriques ; cybersécurité en culture générale, sans exclusion de sujet ; anglais prévu
   mais pas dans les premières versions.
+- Modules de bac : français seulement ; ébauches de questions dans `modules/_ebauches/`, reprises dans les modules.
 - Tant qu'Abbon n'a pas d'autres utilisateurs, aucune reprise de données n'est exigée d'un lot à l'autre : une
   migration peut être modifiée, et la base locale effacée (`~/.config/org.abbon.app` sous Linux).

@@ -1,0 +1,27 @@
+# Module « Physique-chimie, terminale spécialité » — programme du BO spécial n° 8 du 25 juillet 2019 (bac 2027).
+# Questions reprises des ébauches (modules/_ebauches/chimie, physique), reformulées et vérifiées.
+
+id: org.abbon.physique-chimie
+version: 0.1.0
+date: 2026-11-21
+title:
+  fr: "Physique-chimie, terminale spécialité"
+description:
+  fr: "Révisions du bac. Version pilote : matière, mouvement, ondes et signaux, 28 questions."
+level: terminale
+license: CC-BY-NC-SA-4.0
+authors: [Abbon]
+homepage: https://github.com/fhoudebert/Abbon
+languages: [fr]
+requires:
+  app: ">=0.2.0"
+defaults:
+  passThreshold: 0.6
+
+categories:
+  - id: matiere
+    name: { fr: "Constitution et transformations de la matière" }
+  - id: mouvement
+    name: { fr: "Mouvement et interactions" }
+  - id: ondes-signaux
+    name: { fr: "Ondes et signaux" }

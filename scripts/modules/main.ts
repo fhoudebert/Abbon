@@ -1,7 +1,7 @@
 /**
  * Commandes `module:check` et `module:build` (voir cli.mjs).
  */
-import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { buildPackage, parsePackage, sha256Hex, sniffMime, type MediaFile } from '$lib/interchange/qcmPackage';
 import { compileModule, type Asset, type Compiled, type SourceFile } from './source';
@@ -63,7 +63,19 @@ export async function main(argv: string[], root: string): Promise<number> {
     return 2;
   }
   const modulesDir = join(root, 'modules');
-  const all = readdirSync(modulesDir).filter((n) => statSync(join(modulesDir, n)).isDirectory()).sort();
+  // Un module est un dossier qui contient module.yaml. Les autres (ébauches, notes) sont ignorés,
+  // avec un message : ils ne cassent ni la vérification ni la construction.
+  const dirs = readdirSync(modulesDir).filter((n) => statSync(join(modulesDir, n)).isDirectory()).sort();
+  const isModule = (n: string) => existsSync(join(modulesDir, n, 'module.yaml'));
+  const all = dirs.filter(isModule);
+  const skipped = dirs.filter((n) => !isModule(n));
+  if (!names.length && skipped.length)
+    console.log(`Ignoré(s), sans module.yaml : ${skipped.map((n) => `modules/${n}/`).join(', ')}`);
+  const notModules = names.filter((n) => skipped.includes(n));
+  if (notModules.length) {
+    console.error(`pas de module.yaml dans : ${notModules.map((n) => `modules/${n}/`).join(', ')}`);
+    return 2;
+  }
   const unknown = names.filter((n) => !all.includes(n));
   if (unknown.length) {
     console.error(`module(s) inconnu(s) : ${unknown.join(', ')} (disponibles : ${all.join(', ')})`);

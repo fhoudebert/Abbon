@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { checkRequirements } from '$lib/interchange/module';
 import { buildPackage, parsePackage } from '$lib/interchange/qcmPackage';
-import { compileModule, parseClozeSource, parseNumericAnswer, splitQuestions, type SourceFile } from './source';
+import { compileModule, frenchDecimals, parseClozeSource, parseNumericAnswer, splitQuestions, type SourceFile } from './source';
 
 const MODULE = `id: org.abbon.test
 version: 1.2.3
@@ -352,5 +352,14 @@ An object falls with $g = 9.81$: what is $v$ after $t$ seconds?
     expect(e('figures/rc.svg', 'figures/absent.svg')).toEqual(expect.arrayContaining([expect.stringContaining('introuvable')]));
     expect(e('figures/rc.svg', 'casse.svg')).toEqual(expect.arrayContaining([expect.stringContaining('SVG mal formé')]));
     expect(e('![Schéma de la chute]', '![]')).toEqual(expect.arrayContaining([expect.stringContaining('sans texte alternatif')]));
+  });
+});
+
+describe('virgule décimale française dans les formules', () => {
+  it('protège la virgule entre deux chiffres, sauf dans \\pu et \\ce', () => {
+    expect(frenchDecimals('g = 9,81')).toBe('g = 9{,}81');
+    expect(frenchDecimals(String.raw`x = 1,5 \text{ et } \pu{0,075 mol.L-1} + 2,5`)).toBe(String.raw`x = 1{,}5 \text{ et } \pu{0,075 mol.L-1} + 2{,}5`);
+    expect(frenchDecimals(String.raw`\ce{A_{1,2}} = 3,1`)).toBe(String.raw`\ce{A_{1,2}} = 3{,}1`);
+    expect(frenchDecimals('f(a, b)')).toBe('f(a, b)');
   });
 });
