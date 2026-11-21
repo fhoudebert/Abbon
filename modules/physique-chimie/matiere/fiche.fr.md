@@ -15,6 +15,7 @@ $$\frac{n_A}{a} = \frac{n_B}{b} \quad\text{soit}\quad C_A = \frac{a\,C_B\,V_E}{b
 - Constante d'acidité : $K_A = \dfrac{[\ce{A-}]\,[\ce{H3O+}]}{[\ce{AH}]\,c^\circ}$, $\mathrm{p}K_A = -\log K_A$, et $\mathrm{pH} = \mathrm{p}K_A + \log\dfrac{[\ce{A-}]}{[\ce{AH}]}$.
 - Diagramme de prédominance : $\ce{AH}$ prédomine si $\mathrm{pH} < \mathrm{p}K_A$, $\ce{A-}$ si $\mathrm{pH} > \mathrm{p}K_A$.
 - Un acide **fort** réagit totalement avec l'eau ; un acide **faible**, partiellement.
+- Solution tampon ($[\ce{A-}] = [\ce{AH}]$) et **demi-équivalence** d'un titrage d'acide faible : $\mathrm{pH} = \mathrm{p}K_A$.
 
 ## Oxydoréduction
 
@@ -37,7 +38,8 @@ $$\frac{n_A}{a} = \frac{n_B}{b} \quad\text{soit}\quad C_A = \frac{a\,C_B\,V_E}{b
 ## Chimie organique
 
 - **Estérification** : acide carboxylique + alcool $\rightleftharpoons$ ester + eau ; lente et limitée. On l'accélère par un catalyseur acide et la chaleur ; on augmente le rendement en mettant un réactif en excès ou en retirant l'eau.
-- Groupes caractéristiques : hydroxyle (alcool), carbonyle (aldéhyde, cétone), carboxyle (acide carboxylique), ester, amine, amide.
+- Rendement : quantité de produit obtenue divisée par la quantité maximale (celle que donnerait le réactif limitant entièrement consommé).
+- Groupes caractéristiques : hydroxyle (alcool), carbonyle (aldéhyde en bout de chaîne, cétone dans la chaîne), carboxyle (acide carboxylique), ester, amine, amide.
 
 ## Pièges classiques
 
