@@ -11,7 +11,7 @@ Ordre de travail de la branche `qcm`, après le socle (lots 0 à 5). Le cadrage 
 | Lot 6 quater | **Révision espacée (boîtes de Leitner)** : entraînement par répétitions sur des questions choisies | fait |
 | Lot 7 | Formules (LaTeX, rendu KaTeX), équations chimiques, unités, figures SVG incrustées après nettoyage | fait |
 | Lot 8 | Module Informatique : 13 rubriques, environ 450 questions ; version pilote 0.1.0 (un QCM de bases par rubrique, 130 questions) | en cours |
-| Lots 9 à 11 | Modules de bac : Physique-chimie, Maths spécialité, Maths expertes ; bases et fiches faites, approfondissement fait en maths spécialité (0.3.0, 80 questions), maths expertes (0.3.0, 60 questions) et physique-chimie (0.5.0, 72 questions, catégorie énergie créée) | en cours |
+| Lots 9 à 11 | Modules de bac : Physique-chimie, Maths spécialité, Maths expertes ; bases et fiches faites, approfondissement fait en maths spécialité (0.3.0, 80 questions), maths expertes (0.3.0, 60 questions) et physique-chimie (0.7.0, 82 questions, énergie comprise) ; niveau expert à faire | en cours |
 | Lot 12 | Anglais : verbes irréguliers, version complète (environ 150 verbes) | à faire |
 | Technique A | **Actions GitHub et Node.js** : actions en Node 24, construction en Node 26 | fait, validé sur GitHub |
 | Technique B | **Version macOS en CI** : application universelle (Apple silicon et Intel), `.dmg`, mises à jour automatiques | fait, validé sur GitHub |
@@ -80,6 +80,10 @@ perfectionnement des QCM de bac (niveaux « approfondissement » et « expert »
   probabilités passent à 10 questions. Toutes les valeurs ont été recalculées (SymPy) ; pour chaque expression,
   un test vérifie que les écritures équivalentes sont acceptées et les erreurs classiques refusées
   (`domain/expr.modules.test.ts`). Fiches complétées (suites arithmético-géométriques, anagrammes).
+- **Physique-chimie 0.7.0 — approfondissement de l'énergie** : compression isotherme, quantité de gaz, signes
+  du premier principe, mélange, bouilloire, résistance d'une paroi, mur isolé, loi de Newton à écrire
+  (question « expression » : $T(t) = 20 + 70\,e^{-t/10}$) puis sa valeur, transformation isotherme. Fiche
+  complétée.
 - **Physique-chimie 0.5.0 — approfondissement et énergie** : un QCM « approfondissement » de 10 questions pour
   la matière (pH et $\mathrm{p}K_A$, tampon, demi-équivalence, cinétique d'ordre 1, quotient de réaction,
   rendement, Beer-Lambert, pile, cétone dessinée), le mouvement (portée, hauteur, satellite, champ électrique,
@@ -101,7 +105,7 @@ perfectionnement des QCM de bac (niveaux « approfondissement » et « expert »
 - Étiquette `prog-2019` sur chaque QCM de maths, pour la bascule vers le programme 2026 (bac 2028).
 - Version 0.2.0 : une fiche de révision par catégorie (10 fiches) — l'essentiel du cours, les formules et les
   pièges classiques, en cohérence avec les questions. Vérifiées à 390 px (aucun tableau ni formule coupés).
-- Suite : approfondissement de l'énergie, puis niveau « expert » ; relecture par un
+- Suite : niveau « expert » des trois modules ; relecture par un
   enseignant (questions et fiches) ; physique-chimie : catégorie « L'énergie : conversions et transferts ».
 - Un dossier de `modules/` sans `module.yaml` (ébauches, notes) est désormais ignoré par l'outillage, avec un
   message, au lieu de faire échouer la vérification.

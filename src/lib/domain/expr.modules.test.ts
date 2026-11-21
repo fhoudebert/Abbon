@@ -20,6 +20,7 @@ const cases: [string, boolean, string[], string[]][] = [
   ['\\left(\\frac{1}{2}\\right)^{n}', false, ['\\frac{1}{2^n}', '0{,}5^n', '2^{-n}'], ['\\frac{n}{2}', '\\frac12']],
   ['x^2 + 1', false, ['1+x^2', 'F(x)=x^2+1'], ['x^2', 'x^2+C', '2x']],
   ['n', false, ['a_n=n', '1+(n-1)'], ['n+1', '1', 'n^2']],
+  ['20 + 70e^{-\\frac{t}{10}}', false, ['70\\exp(-0{,}1t)+20', '20+\\frac{70}{e^{t/10}}', 'T(t)=20+70e^{-0.1t}'], ['90e^{-\\frac{t}{10}}', '20+70e^{-10t}', '70e^{-\\frac{t}{10}}']],
 ];
 it.each(cases)('%s', (expected, constant, ok, ko) => {
   const opts = { constant };
