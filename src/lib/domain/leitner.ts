@@ -8,8 +8,8 @@
 import { scoreQuestion, type Given } from './scoring';
 import type { I18nText, Lang, Question, Quiz } from './types';
 
-/** Délai avant la prochaine révision, en jours, pour les compartiments 1 à 5. */
-export const LEITNER_INTERVALS = [1, 2, 4, 7, 15] as const;
+/** Délai avant la prochaine révision, en jours, pour les compartiments 1 à 5 : il double à chaque compartiment. */
+export const LEITNER_INTERVALS = [1, 2, 4, 8, 16] as const;
 export const LEITNER_BOXES = LEITNER_INTERVALS.length;
 /** Nombre de questions d'une session de révision. */
 export const LEITNER_SESSION_SIZE = 20;

@@ -13,11 +13,11 @@ Ordre de travail de la branche `qcm`, après le socle (lots 0 à 5). Le cadrage 
 | Lot 8 | Module Informatique : 13 rubriques, environ 450 questions ; version pilote 0.1.0 (un QCM de bases par rubrique, 130 questions) | en cours |
 | Lots 9 à 11 | Modules de bac : Physique-chimie, Maths spécialité, Maths expertes ; versions pilotes 0.2.0 tirées des ébauches (90 questions, 10 fiches) | en cours |
 | Lot 12 | Anglais : verbes irréguliers, version complète (environ 150 verbes) | à faire |
-| Technique A | **Actions GitHub et Node.js** : actions en Node 24, construction en Node 26 | fait, à valider sur GitHub |
-| Technique B | **Version macOS en CI** : application universelle (Apple silicon et Intel), `.dmg`, mises à jour automatiques | fait, à valider sur GitHub |
+| Technique A | **Actions GitHub et Node.js** : actions en Node 24, construction en Node 26 | fait, validé sur GitHub |
+| Technique B | **Version macOS en CI** : application universelle (Apple silicon et Intel), `.dmg`, mises à jour automatiques | fait, validé sur GitHub |
 | Lot 13 | **MathLive** : saisie visuelle des formules dans l'éditeur, puis réponses sous forme d'expression | éditeur fait (à valider sous Linux et Android) ; type « expression » à faire |
 | Lot 14 | **Molécules** : formules topologiques générées en SVG à la construction des modules ; Ketcher plus tard, si besoin | à étudier |
-| Lot 15 | **Ceintures et points** : récompenser la mémorisation (questions échouées rangées dans la boîte puis acquises), et accessoirement les QCM et modules terminés | étudié, à valider |
+| Lot 15 | **Ceintures et points** : récompenser surtout la révision régulière, selon le planning de la boîte, et la mémorisation ; la collecte des questions échouées un peu ; les QCM et modules terminés accessoirement | étudié (barème revu), à valider |
 
 ## Lot 6 ter — textes à trous
 
@@ -34,7 +34,7 @@ Ordre de travail de la branche `qcm`, après le socle (lots 0 à 5). Le cadrage 
 
 - **Une seule boîte pour tous les QCM**, alimentée à la main : le bouton « Ma boîte », pendant un QCM ou dans son
   corrigé, y range la question affichée (ou l'en retire).
-- Écran « Révision » (menu) : cinq compartiments revus après 1, 2, 4, 7 et 15 jours. Une bonne réponse fait
+- Écran « Révision » (menu) : cinq compartiments revus après 1, 2, 4, 8 et 16 jours (le délai double d'un compartiment au suivant). Une bonne réponse fait
   avancer la question d'un compartiment, une erreur la renvoie dans le premier.
 - Session de 20 questions au plus, correction immédiate, tous types de questions. « Réviser quand même » permet de
   s'entraîner avant la date : une bonne réponse ne fait alors pas avancer la question.
@@ -87,7 +87,7 @@ Ordre de travail de la branche `qcm`, après le socle (lots 0 à 5). Le cadrage 
   Construction en Node 26, `engines: >=24`. Le script de release s'exécute sans `--experimental-strip-types`.
 - **Vérifié hors GitHub** : `actionlint` et shellcheck sans remarque ; mêmes entrées pour toutes les actions ;
   téléchargement d'un artefact par nom inchangé (dans `path`), `merge-multiple` toujours disponible.
-- **Reste** : un premier passage complet du workflow *Build* sur GitHub.
+- **Validé** : le workflow *Build* passe sur GitHub en Node 26 (21 novembre 2026).
 
 ## Technique B — version macOS en CI
 
@@ -100,7 +100,8 @@ Ordre de travail de la branche `qcm`, après le socle (lots 0 à 5). Le cadrage 
   archive `.app.tar.gz` signée pour les mises à jour automatiques quand la clé est configurée (entrées
   `darwin-aarch64` et `darwin-x86_64` de `latest.json`), job `smoke-macos` (installation depuis le `.dmg`,
   lancement 30 s, base créée), fichiers macOS sur la page de téléchargement avec l'aide au premier lancement.
-- **Reste** : premier passage sur GitHub, puis essai sur un vrai Mac (premier lancement, mise à jour).
+- **Validé** : les jobs `macos` et `smoke-macos` passent sur GitHub (21 novembre 2026).
+- **Reste** : un essai sur un vrai Mac (premier lancement, mise à jour automatique).
 - **Limite** : sans compte développeur Apple, l'application n'est ni signée par Apple ni notarisée ; macOS
   avertit au premier lancement. La documentation doit expliquer comment l'ouvrir (clic droit › Ouvrir, ou
   Réglages › Confidentialité et sécurité).
@@ -153,79 +154,105 @@ Ordre de travail de la branche `qcm`, après le socle (lots 0 à 5). Le cadrage 
 
 ## Lot 15 — ceintures et points (étude)
 
-**But** : inciter à ranger dans la boîte de révision les questions échouées, puis à les réviser jusqu'à les
-savoir. La récompense doit donc suivre la **mémorisation**, pas le volume d'activité : des points pour chaque
-réponse pousseraient à enchaîner des QCM faciles, ce qui est l'inverse de l'objectif.
+**But** : faire réviser chaque jour, selon le planning de la boîte, des questions choisies — en priorité celles
+qu'on a échouées — jusqu'à les savoir. La récompense suit donc la **révision régulière** et la **mémorisation** ;
+la collecte d'une carte rapporte peu, et une réponse dans un QCM ordinaire rien.
 
-### Ce qui rapporte des points
+### Planning de révision
+
+Le délai double d'un compartiment (niveau) au suivant : niveau 1 tous les jours, 2 tous les 2 jours, 3 tous les
+4 jours, 4 tous les 8 jours, 5 tous les 16 jours. (Appliqué à la boîte dès cette version, à la place de 1, 2, 4,
+7, 15.)
+
+- **Carte acquise** : bonne réponse à sa révision au niveau 5, soit au moins 30 jours de bonnes réponses. Elle
+  **sort alors du planning** et rejoint la liste « Acquises » de la boîte, d'où l'on peut la remettre au niveau 1.
+  Sans cette sortie, les cartes s'accumuleraient au niveau 5 : avec une carte ajoutée par jour, on atteindrait
+  20 révisions par jour au bout d'un an, et des points sans rapport avec ce qu'on apprend encore. Avec elle, la
+  charge se stabilise vers 8 révisions par jour pour une carte ajoutée par jour (simulation sur un an).
+- Le planning étant une suite de constantes, on pourra ajouter un niveau 6 (32 jours) avant l'acquisition si
+  l'on veut un contrôle à plus long terme.
+- **Cartes choisies** : seules les questions qu'on range soi-même entrent dans la boîte, pas toutes celles d'un
+  QCM ni toutes ses erreurs.
+
+### Barème
 
 | Événement | Points | Condition |
 |---|---|---|
-| Erreur rangée | 1 | La question a été échouée dans une tentative terminée, puis mise dans la boîte |
-| Question en progrès | 2 | Elle atteint le compartiment 3 (deux bonnes réponses, sur au moins 2 jours) |
-| Question acquise | 5, ou 10 si c'était une erreur rangée | Bonne réponse à une révision due, depuis le compartiment 5 (au moins 28 jours après le premier passage) |
-| QCM réussi | 2 | Première tentative complète au-dessus du seuil de réussite du QCM |
-| Module terminé | 10 | Tous les QCM du module réussis au moins une fois ; un badge à son nom |
+| Révision faite | 1, ou 2 si la réponse est juste | Carte due (le jour prévu ou en retard) ; « Réviser quand même » ne rapporte rien |
+| Journée à jour | 10 | Plus aucune carte due après la dernière révision du jour ; une fois par jour, s'il y avait au moins une carte due |
+| Carte acquise | 10 | Une fois par question |
+| Erreur rangée | 1 | Question échouée dans une tentative terminée, puis mise dans la boîte ; une fois par question |
+| QCM réussi | 2 | Première tentative complète au-dessus du seuil du QCM |
+| Module terminé | 10 | Tous ses QCM réussis au moins une fois ; un badge à son nom |
 
-- Une erreur rangée puis acquise rapporte ainsi 13 points, contre 2 pour un QCM réussi : la boîte est le
-  chemin le plus payant, ce qui est voulu.
-- Le point « erreur rangée », gagné tout de suite, récompense la collecte ; les deux autres, gagnés au fil des
-  révisions, récompensent la répétition. L'étape du compartiment 3 évite d'attendre un mois la première
-  récompense.
-- **Chaque événement ne rapporte qu'une fois** (par question, par QCM, par module) : retirer puis remettre une
-  carte, ou refaire un QCM réussi, ne rapporte rien. « Réviser quand même » ne fait déjà pas avancer une carte ;
-  il ne rapporte donc rien non plus.
-- **Les points ne se perdent jamais**, comme une ceinture de judo ne se retire pas : une carte qui retombe au
-  compartiment 1 ne coûte rien, elle pourra seulement être acquise plus tard. Perdre des points ferait redouter
-  les erreurs, qui sont précisément la matière de la boîte.
+- Une carte rapporte environ 11 points de révisions sur son parcours, plus 10 à l'acquisition, contre 1 pour
+  l'avoir rangée : la collecte pèse 3 à 4 % des points (simulation). C'est la régularité qui fait avancer, et
+  le bonus « journée à jour » récompense le respect du planning.
+- Une erreur en révision rapporte quand même 1 point : réviser est l'effort à encourager, et l'erreur renvoie
+  déjà la carte au niveau 1.
+- **Les points ne se perdent jamais** et chaque événement n'est compté qu'une fois (par question, par jour, par
+  QCM, par module).
+- Pas de série de jours consécutifs à préserver : un jour manqué fait seulement perdre le bonus de ce jour, et
+  les cartes en retard restent à réviser (elles rapportent toujours leurs points).
 
 ### Ceintures
 
-Ordre des ceintures du judo en France, d'après le total des points :
+Ordre des ceintures du judo en France, d'après le total des points ; seuils calés par simulation :
 
 | Ceinture | Blanche | Jaune | Orange | Verte | Bleue | Marron | Noire |
 |---|---|---|---|---|---|---|---|
-| Points | 0 | 20 | 60 | 120 | 250 | 450 | 750 |
+| Points | 0 | 100 | 300 | 700 | 1 500 | 3 000 | 5 000 |
 
-Puis un **dan** de plus tous les 500 points, pour ne pas plafonner. La ceinture jaune vient dans la première
-semaine d'usage régulier ; la noire demande de l'ordre de 50 questions échouées puis acquises, en plus des QCM,
-donc plusieurs mois. Ces seuils sont des constantes, à recaler après quelques semaines d'usage : les points
-étant enregistrés événement par événement, les changer ne perd rien.
+Puis un **dan** de plus tous les 3 000 points. Délais simulés pour qui révise tous les jours :
+
+| Cartes ajoutées | Révisions par jour | Verte | Bleue | Marron | Noire |
+|---|---|---|---|---|---|
+| 1 par jour | 8 | 5 semaines | 2 mois | 3 mois | 5 mois |
+| 3 par jour | 24 | 3 semaines | 5 semaines | 2 mois | 2 mois et demi |
+| 1 par jour, un jour sur trois sauté | 8 | 6 semaines | 2 mois | 3 mois et demi | 6 mois |
+
+Ces seuils sont des constantes, à recaler après quelques semaines d'usage réel : les points étant enregistrés
+événement par événement, les changer ne perd rien.
 
 ### Où cela se voit
 
-- **Corrigé d'une tentative** : un bouton « Ranger mes N erreurs dans ma boîte (+N points) », en plus du bouton
-  « Ma boîte » de chaque question. C'est le geste à encourager, il doit tenir en un clic. (L'ajout groupé était
-  déjà noté comme évolution possible de la boîte.)
-- **Accueil et écran Révision** : la ceinture (petit dessin et nom en toutes lettres), les points, ce qu'il
-  reste avant la suivante, le nombre de questions acquises et de questions à revoir aujourd'hui.
+- **Corrigé d'une tentative** : un encadré « Questions à retenir » liste les questions échouées, chacune avec une
+  case à cocher (aucune cochée d'avance), et un bouton « Ranger la sélection dans ma boîte ». Le bouton « Ma
+  boîte » de chaque question reste disponible, y compris pour une question réussie.
+- **Accueil** : nombre de cartes dues aujourd'hui en tête, avec le bonus à gagner (« 7 révisions pour être à
+  jour : +10 »), la ceinture (petit dessin et nom en toutes lettres), les points et ce qu'il reste avant la
+  suivante.
+- **Écran Révision** : en fin de séance, les points gagnés et, le cas échéant, « Journée à jour » ; les cinq
+  niveaux et leur rythme ; la liste des cartes acquises.
 - **Passage de ceinture** : un message annoncé aux lecteurs d'écran, animation désactivée si l'appareil demande
   moins de mouvement.
 - **Réglages** : « Afficher les ceintures et les points », activé par défaut. Désactivé, rien ne s'affiche, mais
   les points continuent d'être comptés.
-- Le nom de la ceinture est toujours écrit : la couleur seule ne suffit pas (daltonisme, lecteurs d'écran), et
-  les ceintures blanche et noire ont un contour pour rester visibles en thème clair comme sombre.
+- Le nom de la ceinture est toujours écrit (la couleur seule ne suffit pas) ; les ceintures blanche et noire ont
+  un contour pour rester visibles en thème clair comme sombre.
 
 ### Écarté
 
-- **Séries de jours consécutifs** : elles poussent à revenir chaque jour, mais une série perdue décourage ; la
-  boîte fixe déjà le rythme par ses dates de révision. À reconsidérer sous forme d'objectif hebdomadaire.
+- **Séries de jours consécutifs** : une série perdue décourage ; le bonus quotidien récompense la régularité
+  sans rien retirer.
 - **Classements** : Abbon fonctionne hors ligne, pour une seule personne.
-- **Points pour chaque bonne réponse** : récompense le volume, pas la mémorisation.
-- **Contournements** : on pourrait gagner des points avec un QCM personnel trop facile. Pour une application
-  personnelle hors ligne, on ne tricherait que contre soi-même ; aucune protection n'est prévue.
+- **Points pour chaque réponse de QCM** : récompense le volume, pas la mémorisation.
+- **Contournements** (cartes trop faciles, erreurs volontaires) : pour une application personnelle hors ligne, on
+  ne tricherait que contre soi-même ; aucune protection n'est prévue.
 
 ### Réalisation
 
 - Migration `0008` : table `reward` (`kind`, `ref`, `points`, `at`), clé primaire (`kind`, `ref`) pour qu'un
-  événement ne compte qu'une fois ; colonne `origin` (`error` ou `choice`) sur `leitner_card`, renseignée à
-  l'ajout selon que la question a été échouée ou non.
+  événement ne compte qu'une fois (`ref` : la question, le QCM, le module, ou la date pour « journée à jour ») ;
+  colonne `acquired_at` sur `leitner_card` pour les cartes sorties du planning.
 - `domain/rewards.ts`, fonctions pures et testées : barème, événements produits par une révision, une fin de
-  tentative ou un ajout de carte, ceinture et dan d'après un total.
-- Branchements dans le dépôt de données (ajout de carte, révision, fin de tentative) ; table comprise dans la
-  sauvegarde complète ; les points restent si un module est désinstallé.
-- Interface : bouton groupé du corrigé, ceinture à l'accueil et dans l'écran Révision, réglage, textes français
-  et anglais ; audit d'accessibilité.
+  tentative ou un ajout de carte, ceinture et dan d'après un total ; le simulateur qui a servi à caler les
+  seuils devient un test.
+- `domain/leitner.ts` : sortie du planning à l'acquisition, remise au niveau 1.
+- Branchements dans le dépôt de données ; table comprise dans la sauvegarde complète ; les points restent si un
+  module est désinstallé.
+- Interface : encadré du corrigé, accueil, écran Révision, réglage, textes français et anglais ; audit
+  d'accessibilité.
 - Taille : un lot moyen, comparable à celui de la boîte de révision.
 
 ## Décisions prises

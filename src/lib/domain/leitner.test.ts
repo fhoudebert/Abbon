@@ -43,7 +43,7 @@ describe('boîte de Leitner', () => {
     }
     expect(seen.map(([b]) => b)).toEqual([2, 3, 4, 5, 5, 5]);
     const gaps = seen.map(([, d], i) => Math.round((Date.parse(d) - Date.parse(i ? seen[i - 1][1] : dueAfter(now, 0))) / 86_400_000));
-    expect(gaps).toEqual([2, 4, 7, 15, 15, 15]);
+    expect(gaps).toEqual([2, 4, 8, 16, 16, 16]);
     expect(c.reviews).toBe(6);
     expect(LEITNER_INTERVALS).toHaveLength(LEITNER_BOXES);
   });
