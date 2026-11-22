@@ -1,0 +1,28 @@
+# Module « Espagnol : pièges des francophones » — niveau A2-B2. Premier questionnaire repris d'une série de
+# 25 questions fournie, complétée et classée en trois rubriques.
+# Format des sources : docs/modules.md. Vérifier : npm run module:check ; construire : npm run module:build
+
+id: org.abbon.espagnol
+version: 0.1.0
+date: 2026-11-22
+title:
+  fr: "Espagnol : pièges des francophones"
+description:
+  fr: "Faux amis, ser ou estar, subjonctif, passé simple ou imparfait, expressions idiomatiques : les erreurs typiques des francophones, niveau A2 à B2. Version pilote : 31 questions et leurs fiches de révision."
+level: A2-B2
+license: CC-BY-NC-SA-4.0
+authors: [Abbon]
+homepage: https://github.com/fhoudebert/Abbon
+languages: [fr]
+requires:
+  app: ">=0.2.0"
+defaults:
+  passThreshold: 0.7
+
+categories:
+  - id: vocabulaire
+    name: { fr: "Faux amis et vocabulaire" }
+  - id: grammaire
+    name: { fr: "Grammaire et conjugaison" }
+  - id: expressions
+    name: { fr: "Expressions idiomatiques" }

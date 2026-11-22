@@ -32,7 +32,8 @@ l'interface, puis par rubrique :
 
 ```
 abbon/questionnaires/
-  fr/langues/       Abbon-anglais-verbes-…qcm, Abbon-anglais-grammaire-…qcm
+  fr/langues/       Abbon-anglais-verbes-…qcm, Abbon-anglais-grammaire-…qcm, Abbon-espagnol-…qcm
+  fr/histoire/      Abbon-histoire-…qcm
   fr/sciences/      Abbon-maths-specialite-…qcm, Abbon-maths-expertes-…qcm, Abbon-physique-chimie-…qcm
   fr/technologie/   Abbon-informatique-…qcm
 ```
