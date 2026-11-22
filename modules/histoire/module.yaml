@@ -1,0 +1,28 @@
+# Module « Histoire : dates insolites ou méconnues » — culture générale. Premier questionnaire constitué à partir
+# d'une série d'éléments fournie (dates, événements, textes à trous), vérifiés, complétés et classés par période.
+# Format des sources : docs/modules.md. Vérifier : npm run module:check ; construire : npm run module:build
+
+id: org.abbon.histoire
+version: 0.1.0
+date: 2026-11-22
+title:
+  fr: "Histoire : dates insolites ou méconnues"
+description:
+  fr: "Culture générale, de la domestication des animaux au premier iPhone : dates célèbres, événements méconnus, épisodes insolites, de l'Antiquité à nos jours. Version pilote : 33 questions et leurs fiches de révision."
+level: culture générale
+license: CC-BY-NC-SA-4.0
+authors: [Abbon]
+homepage: https://github.com/fhoudebert/Abbon
+languages: [fr]
+requires:
+  app: ">=0.2.0"
+defaults:
+  passThreshold: 0.6
+
+categories:
+  - id: antiquite
+    name: { fr: "Préhistoire et Antiquité" }
+  - id: moyen-age
+    name: { fr: "Moyen Âge" }
+  - id: epoque-moderne
+    name: { fr: "Époques moderne et contemporaine" }

@@ -5,6 +5,8 @@
 #   choix des plateformes. Les paquets sont disponibles dans les « artifacts » de l'exécution.
 # - Sur un tag vX.Y.Z : les quatre plateformes, puis un brouillon de release GitHub avec
 #   tous les fichiers et leurs empreintes SHA-256. Le tag doit correspondre à la version de package.json.
+#   Les questionnaires (.qcm) n'en font pas partie : l'application se construit sans eux, et ils sont publiés
+#   à part sur GitHub Pages (voir docs/modules.md, « Publication »).
 #
 # Configuration (Settings › Secrets and variables › Actions), tout est facultatif :
 #   Variables : ABBON_SITE_URL        adresse du site (https://…), serveur de mises à jour par défaut ;
@@ -464,12 +466,6 @@ jobs:
             if ! compgen -G "dist/$pattern" > /dev/null; then echo "::error::aucun paquet $pattern dans dist/"; missing=1; fi
           done
           exit $missing
-      - name: Modules de contenu (.qcm joints à la release)
-        run: |
-          npm ci
-          npm run module:build
-          mv dist/modules/*.qcm dist/
-          rmdir dist/modules
       - name: Site de téléchargement (page, version.json, latest.json, SHA256SUMS) et manifestes de la release
         env:
           SITE_URL: ${{ vars.ABBON_SITE_URL }}

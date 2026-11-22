@@ -3,7 +3,7 @@
   import { isTauri } from '@tauri-apps/api/core';
   import { app } from '$lib/app.svelte';
   import { t } from '$lib/i18n/index.svelte';
-  import { openExternal, REPO_URL } from '$lib/links';
+  import { MODULES_URL, openExternal, REPO_URL } from '$lib/links';
 
   const version = __APP_VERSION__;
   const platform = isTauri() ? 'Tauri' : 'Web';
@@ -30,6 +30,13 @@
       {REPO_URL.replace('https://', '')}
     </a>
     <span class="muted">— {t('about.sourceHint')}</span>
+  </dd>
+  <dt>{t('about.quizzes')}</dt>
+  <dd>
+    <a href={MODULES_URL} target="_blank" rel="noopener noreferrer" onclick={(e) => openExternal(e, MODULES_URL)}>
+      {MODULES_URL.replace('https://', '').replace(/\/$/, '')}
+    </a>
+    <span class="muted">— {t('about.quizzesHint')}</span>
   </dd>
 </dl>
 

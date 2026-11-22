@@ -1,6 +1,6 @@
 {
   "name": "abbon",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Abbon — application de QCM multiplateforme (Tauri + Svelte)",
   "type": "module",
   "scripts": {
@@ -19,6 +19,7 @@
     "module:check": "node scripts/modules/cli.mjs check",
     "module:build": "node scripts/modules/cli.mjs build",
     "module:site": "node scripts/modules/cli.mjs site",
+    "module:catalogue": "node scripts/modules/catalogue.ts",
     "build:site": "vite build --mode site && node scripts/site/pack.ts",
     "android:apk": "bash scripts/android/build-apk.sh"
   },
