@@ -1,6 +1,6 @@
 import { SITE } from '$lib/site';
 import { getRepository, type Repository } from '$lib/data';
-import { seedDemo } from '$lib/data/seed';
+import { seedDemo, tidyDemo } from '$lib/data/seed';
 import { progressOf, type ProgressInfo } from '$lib/domain/progress';
 import { createPin, verifyPin, type PinRecord } from '$lib/domain/pin';
 import { b64ToBytes, bytesToB64 } from '$lib/data/bytes';
@@ -92,7 +92,10 @@ class AppState {
       else setLang(i18n.lang);
       this.pinSet = !!(await repo.getSetting(PIN_KEY));
       this.showRewards = (await repo.getSetting(REWARDS_KEY)) !== 'off';
-      if (!SITE) await seedDemo(repo);
+      if (!SITE) {
+        await seedDemo(repo);
+        await tidyDemo(repo);
+      }
       await this.reload();
       this.ready = true;
     } catch (e) {

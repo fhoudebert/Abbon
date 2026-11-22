@@ -4,7 +4,7 @@
  */
 import { beforeEach, describe, expect, it } from 'vitest';
 import { startAttempt } from '$lib/domain/session';
-import { demoQuizzes, seedDemo } from './seed';
+import { demoCategories, demoQuizzes, demoScience, installedDemoQuizzes, seedDemo, tidyDemo } from './seed';
 import { SqliteRepository } from './sqlite';
 import { nodeDriver } from './sqlite.testing';
 
@@ -24,7 +24,10 @@ describe('SqliteRepository', () => {
   it('liste les QCM avec le nombre de questions', async () => {
     await seedDemo(repo);
     const list = await repo.listQuizzes();
-    expect(list).toHaveLength(demoQuizzes.length);
+    expect(list).toHaveLength(installedDemoQuizzes.length);
+    // « Anglais – verbes irréguliers » : aperçu dans un navigateur seulement.
+    expect(list.map((q) => q.id)).not.toContain('demo-english');
+    expect(list.find((q) => q.id === 'demo-science')?.title.fr).toBe('Formules et figures (démonstration)');
     const network = list.find((q) => q.id === 'demo-network');
     expect(network?.questionCount).toBe(2);
   });
@@ -49,11 +52,11 @@ describe('SqliteRepository', () => {
 
   it('enregistre et met à jour une tentative', async () => {
     await seedDemo(repo);
-    const [a] = await repo.listAttempts('demo-english');
-    expect(a.status).toBe('in_progress');
-    await repo.saveAttempt({ ...a, status: 'finished', finishedAt: new Date().toISOString(), score: 1, maxScore: 1 });
-    const [b] = await repo.listAttempts('demo-english');
-    expect(b).toMatchObject({ status: 'finished', score: 1, maxScore: 1 });
+    const [a] = await repo.listAttempts('demo-network');
+    expect(a.status).toBe('finished');
+    await repo.saveAttempt({ ...a, status: 'abandoned', score: 2, maxScore: 2 });
+    const [b] = await repo.listAttempts('demo-network');
+    expect(b).toMatchObject({ status: 'abandoned', score: 2, maxScore: 2 });
   });
 
   it('n’installe la démonstration qu’une fois', async () => {
@@ -188,5 +191,29 @@ describe('SqliteRepository', () => {
     for (const hash of ['a', 'b', 'c']) await repo.saveMedia({ hash, mime: 'image/png', sizeBytes: 1, data: 'AA==' });
     expect(await repo.deleteUnusedMedia(['b'])).toBe(2);
     expect(await repo.listMediaHashes()).toEqual(['b']);
+  });
+
+  it('installation précédente : QCM de démonstration retirés ou renommés s’ils sont intacts, une seule fois', async () => {
+    // Données d'une version précédente : « Anglais – verbes irréguliers » et l'ancien titre.
+    const english = demoQuizzes.find((q) => q.id === 'demo-english')!;
+    const oldScience = { ...demoScience, title: { fr: 'Formules et figures', en: 'Formulas and figures' } };
+    for (const c of demoCategories) await repo.saveCategory(c);
+    await repo.saveQuiz(english);
+    await repo.saveQuiz(oldScience);
+    await tidyDemo(repo);
+    expect(await repo.getQuiz('demo-english')).toBeNull();
+    expect((await repo.getQuiz('demo-science'))?.title).toEqual(demoScience.title);
+    // Déjà fait : un QCM recréé ensuite n'est plus touché.
+    await repo.saveQuiz(english);
+    await tidyDemo(repo);
+    expect(await repo.getQuiz('demo-english')).not.toBeNull();
+  });
+
+  it('installation précédente : un QCM de démonstration modifié est gardé', async () => {
+    const english = { ...demoQuizzes.find((q) => q.id === 'demo-english')!, version: 2 };
+    for (const c of demoCategories) await repo.saveCategory(c);
+    await repo.saveQuiz(english);
+    await tidyDemo(repo);
+    expect(await repo.getQuiz('demo-english')).not.toBeNull();
   });
 });

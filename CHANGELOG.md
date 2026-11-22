@@ -6,6 +6,7 @@ Leur contenu est repris tel quel dans les notes de version (page de télécharge
 ## 0.2.0
 
 ### fr
+- QCM livrés avec l'application : « Formules et figures » est signalé comme questionnaire de démonstration ; « Anglais – verbes irréguliers » (une question) n'est plus installé, et il est retiré d'une installation existante s'il n'a pas été modifié.
 - Modules de contenu : un fichier `.qcm` s'installe, se met à jour et se retire d'un bloc ; ses QCM sont protégés (« Dupliquer pour modifier » en fait une copie personnelle).
 - Fiches de révision par catégorie, depuis la page d'un QCM et depuis le corrigé.
 - Premier module, en version pilote : « Anglais : verbes irréguliers » (60 questions, français et anglais).
@@ -44,6 +45,7 @@ Leur contenu est repris tel quel dans les notes de version (page de télécharge
 - Modules de révision du bac « Philosophie, terminale générale » (notions par perspective, auteurs, repères) et « Histoire, terminale générale » (les quatre thèmes du tronc commun, avec une frise par thème), en version pilote : 40 questions chacun, avec leurs fiches.
 - Maths spécialité 0.5.0 : géométrie dans l'espace, logique et raisonnement, algorithmique et méthodes numériques (32 questions), communes au programme de 2019 et au nouveau programme de terminale (rentrée 2027). Physique-chimie 0.9.0 : mécanique des fluides (10 questions).
 ### en
+- Quizzes shipped with the app: “Formulas and figures” is labelled as a demo quiz; “English – irregular verbs” (a single question) is no longer installed, and is removed from an existing installation if it was not modified.
 - Content modules: a `.qcm` file is installed, updated and removed as a whole; its quizzes are protected (“Duplicate to edit” makes a personal copy).
 - Revision sheets per category, from the quiz page and from the answers.
 - First module, pilot version: “English: irregular verbs” (60 questions, French and English).
