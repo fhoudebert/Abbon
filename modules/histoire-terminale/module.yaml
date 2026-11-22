@@ -1,0 +1,30 @@
+# Module « Histoire, terminale générale » — révision du bac, tronc commun (BO spécial n° 8 du 25 juillet 2019) :
+# « Les relations entre les puissances et l'opposition des modèles politiques, des années 1930 à nos jours ».
+# Format des sources : docs/modules.md.
+
+id: org.abbon.histoire-terminale
+version: 0.1.0
+date: 2026-11-22
+title:
+  fr: "Histoire, terminale générale"
+description:
+  fr: "Révision du bac, tronc commun : les quatre thèmes du programme, de la crise de 1929 au monde d'aujourd'hui (démocraties et totalitarismes, guerre froide et décolonisation, remises en cause des années 1970-1991, coopérations et conflits depuis 1990). Version pilote : 40 questions, une frise par thème et leurs fiches."
+level: terminale
+license: CC-BY-NC-SA-4.0
+authors: [Abbon]
+homepage: https://github.com/fhoudebert/Abbon
+languages: [fr]
+requires:
+  app: ">=0.2.0"
+defaults:
+  passThreshold: 0.6
+
+categories:
+  - id: theme1-1929-1945
+    name: { fr: "Thème 1 — Démocraties, totalitarismes et Seconde Guerre mondiale (1929-1945)" }
+  - id: theme2-1945-1970
+    name: { fr: "Thème 2 — Un monde bipolaire (1945-début des années 1970)" }
+  - id: theme3-1970-1991
+    name: { fr: "Thème 3 — Les remises en cause des années 1970 à 1991" }
+  - id: theme4-depuis-1990
+    name: { fr: "Thème 4 — Le monde, l'Europe et la France depuis les années 1990" }

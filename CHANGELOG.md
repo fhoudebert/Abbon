@@ -36,6 +36,7 @@ Leur contenu est repris tel quel dans les notes de version (page de télécharge
 - Modules « Espagnol : pièges des francophones » (31 questions : faux amis, grammaire et conjugaison, expressions) et « Histoire : dates insolites ou méconnues » (33 questions, de la domestication des animaux au premier iPhone), en version pilote, avec leurs fiches de révision.
 - Module « Enseignement scientifique, terminale générale », en version pilote : un QCM d'entraînement par thème du programme (climat, énergies, histoire du vivant), 36 questions et leurs fiches de révision.
 - Module « Étymologie : curiosités méconnues », en version pilote : argent et travail, mots voyageurs, noms propres et fausses pistes, 36 questions et leurs fiches.
+- Modules de révision du bac « Philosophie, terminale générale » (notions par perspective, auteurs, repères) et « Histoire, terminale générale » (les quatre thèmes du tronc commun, avec une frise par thème), en version pilote : 40 questions chacun, avec leurs fiches.
 ### en
 - Content modules: a `.qcm` file is installed, updated and removed as a whole; its quizzes are protected (“Duplicate to edit” makes a personal copy).
 - Revision sheets per category, from the quiz page and from the answers.
@@ -66,6 +67,7 @@ Leur contenu est repris tel quel dans les notes de version (page de télécharge
 - “Spanish: traps for French speakers” (31 questions) and “History: unusual or little-known dates” (33 questions) modules, pilot versions with revision sheets (French only).
 - “Enseignement scientifique” (French final-year general science) module, pilot version: one practice quiz per syllabus theme, 36 questions with revision sheets (French only).
 - “Étymologie” (French word origins) module, pilot version: 36 questions with revision sheets (French only).
+- “Philosophie” and “Histoire” French final-year exam revision modules, pilot versions: 40 questions each, with revision sheets (French only).
 
 ## 0.1.0
 

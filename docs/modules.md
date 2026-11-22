@@ -34,7 +34,8 @@ l'interface, puis par rubrique :
 abbon/questionnaires/
   fr/langues/       Abbon-anglais-verbes-…qcm, Abbon-anglais-grammaire-…qcm, Abbon-espagnol-…qcm,
                     Abbon-etymologie-…qcm
-  fr/histoire/      Abbon-histoire-…qcm
+  fr/histoire/      Abbon-histoire-…qcm, Abbon-histoire-terminale-…qcm
+  fr/philosophie/   Abbon-philosophie-…qcm
   fr/sciences/      Abbon-maths-specialite-…qcm, Abbon-maths-expertes-…qcm, Abbon-physique-chimie-…qcm,
                     Abbon-enseignement-scientifique-…qcm
   fr/technologie/   Abbon-informatique-…qcm
