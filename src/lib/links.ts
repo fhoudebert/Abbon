@@ -3,8 +3,12 @@ import { isTauri } from '@tauri-apps/api/core';
 /** Dépôt du code source d'Abbon. */
 export const REPO_URL = 'https://github.com/fhoudebert/Abbon';
 
-/** Page où les modules de contenu sont publiés (fichiers .qcm joints aux versions). */
-export const MODULES_URL = `${REPO_URL}/releases`;
+/**
+ * Page de téléchargement des questionnaires (.qcm), classés par langue puis par rubrique
+ * (fr/langues, fr/sciences, fr/technologie). Publiée sur GitHub Pages, indépendamment des versions de
+ * l'application ; pages index produites par `npm run module:catalogue`.
+ */
+export const MODULES_URL = 'https://fhoudebert.github.io/abbon/questionnaires/';
 
 /**
  * Ouvre une adresse https dans le navigateur du système (plugin opener sous Tauri).

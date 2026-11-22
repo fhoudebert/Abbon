@@ -4,14 +4,16 @@ Abbon est distribué depuis les **releases GitHub** (https://github.com/fhoudebe
 facultativement, depuis un **site PHP** (hébergement mutualisé, n'importe quel nom de domaine) : une page de
 téléchargement et un dossier `releases/` contenant les paquets et deux manifestes.
 
-Chaque release GitHub contient les paquets, leurs signatures `.sig`, les modules de contenu `.qcm`,
+Chaque release GitHub contient les paquets, leurs signatures `.sig`,
 `SHA256SUMS.txt`, et les deux manifestes `version.json` et `latest.json` (adresses des fichiers de cette
 release). Sans site (variable `ABBON_SITE_URL` absente), le serveur de mises à jour par défaut des applications
 est le dépôt GitHub : elles lisent `https://github.com/<propriétaire>/<dépôt>/releases/latest/download/latest.json`
 (ou `version.json`), c'est-à-dire les manifestes de la **dernière release publiée** (ni brouillon ni pré-version).
 L'AppImage se met ainsi à jour depuis GitHub, signature vérifiée comme pour le site. Dans *Paramètres › Mises à
-jour*, l'adresse `https://github.com/fhoudebert/Abbon/releases` (ou sans `/releases`) est acceptée. Les modules
-`.qcm` se téléchargent depuis la même page (lien « Obtenir des modules » de la page d'import).
+jour*, l'adresse `https://github.com/fhoudebert/Abbon/releases` (ou sans `/releases`) est acceptée. Les questionnaires
+`.qcm` ne sont pas joints aux releases : l'application se construit sans eux, et ils sont publiés à part sur
+https://fhoudebert.github.io/abbon/questionnaires/ (lien dans « À propos » et sur la page d'import ; voir
+[modules.md](modules.md#publication)).
 
 ```
 https://votre-domaine/chemin/

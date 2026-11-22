@@ -19,8 +19,33 @@ Le site web d'un module se dépose tel quel sur un hébergement statique, même 
 module ou non : *Administration › Exporter › Site web*. Les modes proposés (entraînement, examen ou les deux) et
 le corrigé de l'examen se changent aussi après coup, dans le fichier `reglages.js` du site.
 
-La CI lance les deux à chaque push ; les fichiers `.qcm` sont joints aux releases GitHub. Dans l'application :
-*Administration › Importer*, qui propose aussi le lien de téléchargement.
+La CI lance les deux à chaque push, dans un job séparé de celui de l'application : un questionnaire en erreur ne
+bloque pas la construction de l'application, et l'application se construit sans les questionnaires. Dans
+l'application : *Administration › Importer*, qui propose aussi le lien de téléchargement.
+
+## Publication
+
+Les fichiers `.qcm` sont publiés sur GitHub Pages, dans le dépôt
+[fhoudebert.github.io](https://github.com/fhoudebert/fhoudebert.github.io), indépendamment des versions de
+l'application : https://fhoudebert.github.io/abbon/questionnaires/. Ils y sont classés par langue de
+l'interface, puis par rubrique :
+
+```
+abbon/questionnaires/
+  fr/langues/       Abbon-anglais-verbes-…qcm, Abbon-anglais-grammaire-…qcm
+  fr/sciences/      Abbon-maths-specialite-…qcm, Abbon-maths-expertes-…qcm, Abbon-physique-chimie-…qcm
+  fr/technologie/   Abbon-informatique-…qcm
+```
+
+GitHub Pages n'affiche pas le contenu d'un dossier : chaque niveau a sa page `index.html`, produite par
+
+```sh
+npm run module:catalogue -- ../fhoudebert.github.io/abbon/questionnaires
+```
+
+après l'ajout ou le remplacement d'un fichier (titre, description, nombre de QCM, de questions et de fiches, taille,
+lus dans chaque `.qcm`). Seules les pages produites par cette commande sont réécrites : un `index.html` écrit à la
+main est laissé intact. Une nouvelle rubrique ou une nouvelle langue est simplement un nouveau dossier.
 
 ## Dans l'application
 
