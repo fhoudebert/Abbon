@@ -38,7 +38,7 @@ abbon/questionnaires/
   fr/philosophie/   Abbon-philosophie-…qcm
   fr/sciences/      Abbon-maths-specialite-…qcm, Abbon-maths-expertes-…qcm, Abbon-physique-chimie-…qcm,
                     Abbon-enseignement-scientifique-…qcm, Abbon-svt-…qcm
-  fr/technologie/   Abbon-informatique-…qcm
+  fr/technologie/   Abbon-informatique-…qcm, Abbon-sciences-ingenieur-…qcm
 ```
 
 GitHub Pages n'affiche pas le contenu d'un dossier : chaque niveau a sa page `index.html`, produite par
