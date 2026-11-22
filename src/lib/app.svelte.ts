@@ -1,3 +1,4 @@
+import { SITE } from '$lib/site';
 import { getRepository, type Repository } from '$lib/data';
 import { seedDemo } from '$lib/data/seed';
 import { progressOf, type ProgressInfo } from '$lib/domain/progress';
@@ -5,11 +6,12 @@ import { createPin, verifyPin, type PinRecord } from '$lib/domain/pin';
 import { b64ToBytes, bytesToB64 } from '$lib/data/bytes';
 import { cloneQuiz, newQuiz } from '$lib/domain/factory';
 import { localize } from '$lib/domain/text';
-import { writeAutoBackup } from '$lib/files';
+import { fileSafe, writeAutoBackup } from '$lib/files';
 import { quizToGift } from '$lib/interchange/gift';
 import type { ResolvedImport } from '$lib/interchange/plan';
 import type { ModulePlan } from '$lib/interchange/module';
 import { buildPackage, cardMedia, quizMedia, sheetMedia, type ContentBundle, type MediaFile, type ParsedPackage } from '$lib/interchange/qcmPackage';
+import { siteContent, siteDataOf, siteMediaHashes, zipSite, type SiteOptions } from '$lib/interchange/siteExport';
 import { startAttempt } from '$lib/domain/session';
 import { dueCards, newCard, restoreCard, reviewCard, type LeitnerCard } from '$lib/domain/leitner';
 import {
@@ -90,7 +92,7 @@ class AppState {
       else setLang(i18n.lang);
       this.pinSet = !!(await repo.getSetting(PIN_KEY));
       this.showRewards = (await repo.getSetting(REWARDS_KEY)) !== 'off';
-      await seedDemo(repo);
+      if (!SITE) await seedDemo(repo);
       await this.reload();
       this.ready = true;
     } catch (e) {
@@ -378,6 +380,26 @@ class AppState {
   /** Archive .qcm de quelques QCM (ou de tous). */
   async exportQcm(quizIds: string[] | undefined, solutions: boolean): Promise<Uint8Array> {
     return buildPackage(await this.#contentBundle(quizIds), { kind: 'content', solutions, appVersion: __APP_VERSION__ });
+  }
+
+  /**
+   * Site web (.zip) : lecteur embarqué (web/, construit par `npm run build`) et contenus des QCM choisis,
+   * avec les fiches de leurs modules.
+   */
+  async exportSite(quizIds: string[] | undefined, opts: SiteOptions): Promise<Uint8Array> {
+    const repo = await this.repo();
+    const bundle = await this.#contentBundle(quizIds);
+    const content = siteContent(bundle.quizzes, bundle.categories, await repo.listModules(), opts);
+    const data = await siteDataOf(content, await this.#media(siteMediaHashes(content)), opts, __APP_VERSION__);
+    const list = await fetch('/web/files.json');
+    if (!list.ok) throw new Error(t('io.site.noPlayer'));
+    const player: Record<string, Uint8Array> = {};
+    for (const name of (await list.json()) as string[]) {
+      const r = await fetch(`/web/${name.split('/').map(encodeURIComponent).join('/')}`);
+      if (!r.ok) throw new Error(`web/${name} : ${r.status}`);
+      player[name] = new Uint8Array(await r.arrayBuffer());
+    }
+    return zipSite(fileSafe(opts.title, 'abbon-site'), player, data);
   }
 
   /** Texte GIFT d'un QCM (images incluses en data:). */

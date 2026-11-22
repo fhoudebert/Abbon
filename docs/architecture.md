@@ -213,6 +213,33 @@ Voir [modules.md](modules.md) pour l'usage et le format des sources.
   plus sa source LaTeX comme nom accessible (`mathLabel`), les outils d'audit ne tirant rien du MathML ; texte
   alternatif obligatoire pour une figure ; formule en bloc et tableau larges défilent dans leur bloc.
 
+## Export en site web
+
+Un QCM, un module ou tous les QCM peuvent être exportés en **site web statique**, à déposer par FTP sur un
+hébergement mutualisé (à la racine ou dans un sous-dossier), sans base de données ni réglage du serveur.
+
+- **Lecteur** : la même interface, construite une seconde fois par `vite build --mode site` (`npm run build` enchaîne
+  les deux constructions). `__SITE__` (vite.config.js) vaut alors vrai ; svelte.config.js choisit le routage par
+  fragment (`#/quiz/…`, aucune réécriture d'adresse côté serveur), la sortie `build-site/` et le dossier de travail
+  `.svelte-kit-site/` (transmis aux processus enfants de SvelteKit par `ABBON_SITE_BUILD`). SvelteKit refuse les
+  options de page avec ce routage : `ssr` est retiré de `src/routes/+layout.ts` par un petit greffon Vite.
+  `scripts/site/pack.ts` rend les chemins de `index.html` relatifs, y ajoute `<script src="./donnees.js">`, écrit
+  `files.json` et copie le lecteur dans `build/web/` : il est embarqué dans l'application.
+- **Liens** : `to()` (`lib/site.ts`) préfixe les chemins internes de `#` dans le site ; l'écran courant se lit dans
+  `page.route.id`, valable avec les deux routages. Les écrans d'administration, de réglages et « À propos » ne sont
+  pas proposés dans le site.
+- **Données** : `donnees.js` définit `window.ABBON_SITE` (`SiteData`) : titre, mode examen, identifiant stable et
+  archive `.qcm` en base 64 (module, ou sauvegarde sans historique avec les modules et leurs fiches). Les QCM sont
+  publiés d'office ; en mode examen, leur `solutionVisibility` devient `after_submit` ou `never`.
+- **Stockage** : `data/site.ts`, `SiteRepository` (le stockage en mémoire, relu depuis `donnees.js` à chaque visite),
+  recopie la progression (tentatives, réponses, boîte de révision, points, réglages) dans le stockage local du
+  navigateur, sous `abbon.site.<identifiant>`. L'identifiant dérive du titre et des QCM : une nouvelle version du
+  même site garde la progression. Les copies de QCM des tentatives ne sont pas stockées, mais reconstituées.
+- **Mode examen seulement** : ni entraînement, ni boîte de révision (menu, écran, bouton de la boîte, « Questions à
+  retenir »). Les réponses attendues restent dans `donnees.js` : examen blanc, pas examen surveillé.
+- **Export** : depuis l'application, `app.exportSite` lit `web/files.json` et les fichiers du lecteur, et produit une
+  archive .zip (`interchange/siteExport.ts`, avec un `LISEZMOI.txt`) ; depuis les sources, `npm run module:site`.
+
 ## Limites connues
 
 - Modules : l'historique mis de côté à la désinstallation n'est pas inclus dans la sauvegarde complète ; une

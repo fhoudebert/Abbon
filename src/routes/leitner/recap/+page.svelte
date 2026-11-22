@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { to } from '$lib/site';
   /**
    * Récapitulatif de la boîte de révision (lot 16) : toutes les cartes par compartiment, puis les acquises,
    * avec ou sans les réponses. À imprimer (ou enregistrer en PDF) sur ordinateur, ou à enregistrer en
@@ -102,7 +103,7 @@
     <span class="buttons">
       {#if !android}<button onclick={print}>{t('recap.print')}</button>{/if}
       <button class={android ? '' : 'secondary'} onclick={saveHtml} title={t('recap.htmlHint')}>{t('recap.html')}</button>
-      <a class="button secondary" href="/leitner">{t('common.back')}</a>
+      <a class="button secondary" href={to('/leitner')}>{t('common.back')}</a>
     </span>
   </div>
   {#if message}<p class="message" role="status" data-no-export>{message}</p>{/if}

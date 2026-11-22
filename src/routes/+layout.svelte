@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { asset } from '$app/paths';
+  import { siteData, SITE, to } from '$lib/site';
   import '../app.css';
   import { onMount, type Snippet } from 'svelte';
   import { afterNavigate } from '$app/navigation';
@@ -27,27 +29,39 @@
   });
 
   const langNames: Record<string, string> = { fr: 'Français', en: 'English' };
+
+  /**
+   * Site web exporté : titre, mode examen seul, écrans absents (administration, réglages, à propos).
+   * L'écran courant se lit dans `page.route.id`, valable avec les deux routages (chemin ou fragment).
+   */
+  const site = SITE ? siteData() : null;
+  const SITE_ONLY_ADMIN = /^\/(admin|settings|about|leitner\/new)(\/|$)/;
+  const blocked = $derived(
+    SITE && (SITE_ONLY_ADMIN.test(page.route.id ?? '') || (!!site?.examOnly && (page.route.id ?? '').startsWith('/leitner'))),
+  );
 </script>
 
 <a class="skip" href="#main">{t('a11y.skip')}</a>
 
 <header class="top">
-  <a class="brand" href="/">
-    <img src="/abbon.png" alt="" width="40" height="40" />
+  <a class="brand" href={to('/')}>
+    <img src={asset('/abbon.png')} alt="" width="40" height="40" />
     <span>
-      <strong>{t('app.name')}</strong>
-      <small>{t('app.tagline')}</small>
+      <strong>{site?.title || t('app.name')}</strong>
+      <small>{site ? t('site.tagline') : t('app.tagline')}</small>
     </span>
   </a>
 
   <nav>
-    <a href="/" aria-current={page.url.pathname === '/' ? 'page' : undefined}>{t('nav.home')}</a>
-    <a href="/leitner" aria-current={page.url.pathname === '/leitner' ? 'page' : undefined}>
+    <a href={to('/')} aria-current={page.route.id === '/' ? 'page' : undefined}>{t('nav.home')}</a>
+    {#if !site?.examOnly}<a href={to('/leitner')} aria-current={page.route.id === '/leitner' ? 'page' : undefined}>
       {t('nav.leitner')}{#if dueCount > 0}<span class="count" aria-hidden="true">{dueCount}</span><span class="visually-hidden"> ({t('nav.leitnerDue', { n: dueCount })})</span>{/if}
-    </a>
-    <a href="/admin" aria-current={page.url.pathname.startsWith('/admin') ? 'page' : undefined}>{t('nav.admin')}</a>
-    <a href="/settings" aria-current={page.url.pathname === '/settings' ? 'page' : undefined}>{t('nav.settings')}</a>
-    <a href="/about" aria-current={page.url.pathname === '/about' ? 'page' : undefined}>{t('nav.about')}</a>
+    </a>{/if}
+    {#if !SITE}
+      <a href={to('/admin')} aria-current={page.route.id?.startsWith('/admin') ? 'page' : undefined}>{t('nav.admin')}</a>
+      <a href={to('/settings')} aria-current={page.route.id === '/settings' ? 'page' : undefined}>{t('nav.settings')}</a>
+      <a href={to('/about')} aria-current={page.route.id === '/about' ? 'page' : undefined}>{t('nav.about')}</a>
+    {/if}
   </nav>
 
   <label class="lang">
@@ -63,7 +77,7 @@
 {#if updates.status === 'available' && updates.release && page.url.pathname !== '/settings'}
   <div class="banner" role="status">
     {t('update.banner', { version: updates.release.version })}
-    <a href="/settings#updates">{t('update.see')}</a>
+    <a href={to('/settings#updates')}>{t('update.see')}</a>
   </div>
 {/if}
 
@@ -79,7 +93,14 @@
 </div>
 
 <main id="main" tabindex="-1">
-  {@render children()}
+  {#if SITE && !site}
+    <p>{t('site.noData')}</p>
+  {:else if blocked}
+    <p>{t('site.unavailable')}</p>
+    <p><a class="button" href={to('/')}>{t('nav.home')}</a></p>
+  {:else}
+    {@render children()}
+  {/if}
 </main>
 
 <style>

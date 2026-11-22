@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { examOnly, to } from '$lib/site';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
   import { app } from '$lib/app.svelte';
@@ -30,7 +31,7 @@
     try {
       if (info.resumable) await app.abandon(info.resumable.id);
       const attemptId = await app.startQuiz(quiz.id, mode);
-      await goto(`/attempt/${attemptId}`);
+      await goto(to(`/attempt/${attemptId}`));
     } finally {
       busy = false;
     }
@@ -39,7 +40,7 @@
 
 <svelte:head><title>{quiz ? localize(quiz.title, lang, quiz.languages[0]) : t('app.name')} — Abbon</title></svelte:head>
 
-<a class="back" href="/">← {t('common.back')}</a>
+<a class="back" href={to('/')}>← {t('common.back')}</a>
 
 {#if quiz === undefined}
   <p aria-busy="true">{t('home.loading')}</p>
@@ -58,20 +59,20 @@
         <span>{t('quiz.bestScore', { score: pct(info.bestScore / info.maxScore) })}</span>
       {/if}
     </p>
-    {#if hasSheet}<p><a class="button secondary" href="/sheet/{quiz.categoryId}">{t('sheet.open')}</a></p>{/if}
+    {#if hasSheet}<p><a class="button secondary" href={to(`/sheet/${quiz.categoryId}`)}>{t('sheet.open')}</a></p>{/if}
   </header>
 
   {#if info.resumable}
     <section class="panel resume">
       <p>{t('quiz.inProgressSince', { date: fmtDate(info.resumable.startedAt) })}</p>
       <div class="actions">
-        <a class="button" href="/attempt/{info.resumable.id}">{t('quiz.resume')}</a>
+        <a class="button" href={to(`/attempt/${info.resumable.id}`)}>{t('quiz.resume')}</a>
       </div>
     </section>
   {/if}
 
   <section class="modes">
-    <div class="panel">
+    {#if !examOnly()}<div class="panel">
       <h2>{t('quiz.training')}</h2>
       <p class="muted">{t('quiz.training.hint')}</p>
       <button
@@ -81,7 +82,7 @@
       >
         {info.resumable ? t('quiz.restart') : t('quiz.start')}
       </button>
-    </div>
+    </div>{/if}
     <div class="panel">
       <h2>{t('quiz.exam')}</h2>
       <p class="muted">
@@ -111,7 +112,7 @@
               {pct(a.maxScore ? (a.score ?? 0) / a.maxScore : 0)}
               <span class="muted">({t('result.points', { score: fmtNum(a.score ?? 0), max: fmtNum(a.maxScore ?? 0) })})</span>
             </span>
-            <a href="/attempt/{a.id}/result">{t('quiz.history.result')}</a>
+            <a href={to(`/attempt/${a.id}/result`)}>{t('quiz.history.result')}</a>
           </li>
         {/each}
       </ul>

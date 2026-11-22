@@ -1,8 +1,10 @@
 /**
- * Commandes `module:check` et `module:build` (voir cli.mjs).
+ * Commandes `module:check`, `module:build` et `module:site` (voir cli.mjs).
  */
-import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { join, relative, sep } from 'node:path';
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { dirname, join, relative, sep } from 'node:path';
+import { siteContent, siteDataOf, SITE_README } from '$lib/interchange/siteExport';
+import { siteScript } from '$lib/site';
 import { buildPackage, parsePackage, sha256Hex, sniffMime, type MediaFile } from '$lib/interchange/qcmPackage';
 import { imageTargets } from './markdown';
 import { loadRDKit, moleculeSvg, SMILES_PREFIX } from './molecules';
@@ -78,9 +80,18 @@ function report(name: string, c: Compiled): boolean {
 }
 
 export async function main(argv: string[], root: string): Promise<number> {
-  const [command, ...names] = argv;
-  if (command !== 'check' && command !== 'build') {
-    console.error('usage : module:check [nom…] | module:build [nom…]');
+  const [command, ...rest] = argv;
+  if (command !== 'check' && command !== 'build' && command !== 'site') {
+    console.error('usage : module:check [nom…] | module:build [nom…] | module:site [--examen [--sans-corrige]] [nom…]');
+    return 2;
+  }
+  // Site web : options, puis lecteur construit par `npm run build:site` (build-site/).
+  const examOnly = rest.includes('--examen');
+  const solutionsAtEnd = !rest.includes('--sans-corrige');
+  const names = rest.filter((n) => !n.startsWith('--'));
+  const player = join(root, 'build-site');
+  if (command === 'site' && !existsSync(join(player, 'files.json'))) {
+    console.error('lecteur du site absent : lancer d\'abord « npm run build:site »');
     return 2;
   }
   const modulesDir = join(root, 'modules');
@@ -125,7 +136,7 @@ export async function main(argv: string[], root: string): Promise<number> {
     }
     ids.set(c.manifest.id, name);
     ok &&= good;
-    if (!good || command !== 'build') continue;
+    if (!good || command === 'check') continue;
 
     const now = new Date(c.quizzes[0]?.createdAt ?? 0); // date de publication : fichier reproductible
     const media = new Map<string, MediaFile>();
@@ -142,6 +153,23 @@ export async function main(argv: string[], root: string): Promise<number> {
     if (back.problems.length || !back.module || back.quizzes.length !== c.quizzes.length) {
       console.log(`  ERREUR  le fichier produit n'est pas relu correctement : ${JSON.stringify(back.problems)}`);
       ok = false;
+      continue;
+    }
+    if (command === 'site') {
+      const title = c.manifest.title.fr ?? Object.values(c.manifest.title)[0] ?? name;
+      const opts = { title, examOnly, solutionsAtEnd };
+      const installed = [{ manifest: c.manifest, installedAt: now.toISOString(), updatedAt: now.toISOString() }];
+      const content = siteContent(back.quizzes, back.categories, installed, opts);
+      const data = await siteDataOf(content, back.media, opts, appVersion);
+      const dir = join(root, 'dist', 'sites', name);
+      rmSync(dir, { recursive: true, force: true });
+      for (const f of JSON.parse(readFileSync(join(player, 'files.json'), 'utf8')) as string[]) {
+        mkdirSync(dirname(join(dir, f)), { recursive: true });
+        copyFileSync(join(player, f), join(dir, f));
+      }
+      writeFileSync(join(dir, 'donnees.js'), siteScript(data));
+      writeFileSync(join(dir, 'LISEZMOI.txt'), SITE_README);
+      console.log(`  → ${relative(root, dir)}/ (site web${examOnly ? ', examen seulement' : ''})`);
       continue;
     }
     const out = join(root, 'dist', 'modules');

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { to } from '$lib/site';
   import { app, type QuizEntry } from '$lib/app.svelte';
   import { categoryTree, withDescendants } from '$lib/domain/categories';
   import QuizCard from '$lib/components/QuizCard.svelte';
@@ -62,7 +63,7 @@
               <strong>{t('home.dueToday', { n: due })}</strong>
               {#if app.showRewards && !dayDone}<span class="muted"> · {t('home.dayBonus', { n: POINTS.day })}</span>{/if}
             </p>
-            <a class="button" href="/leitner">{t('home.review')}</a>
+            <a class="button" href={to('/leitner')}>{t('home.review')}</a>
           {:else}
             <p>{app.showRewards && dayDone ? t('home.dayDone') : t('home.nothingDue')}</p>
           {/if}

@@ -19,13 +19,30 @@ const katexWoff2Only = {
   },
 };
 
+/**
+ * Site web (routage par fragment) : SvelteKit y refuse les options de page. `ssr = false`, nécessaire à
+ * l'application (page de repli sans rendu serveur), est retiré de src/routes/+layout.ts pour cette construction
+ * (il y est écrit `Boolean(false)` : l'analyse statique de SvelteKit se rabat alors sur le module transformé).
+ */
+const siteWithoutPageOptions = {
+  name: "abbon-site-page-options",
+  enforce: "pre",
+  /** @param {string} code @param {string} id */
+  transform(code, id) {
+    if (!/src[\\/]routes[\\/]\+layout\.ts$/.test(id)) return null;
+    return code.replace(/^export const ssr = Boolean\(false\);$/m, "");
+  },
+};
+
 // https://vite.dev/config/
-export default defineConfig(() => ({
-  plugins: [katexWoff2Only, sveltekit()],
+export default defineConfig(({ mode }) => ({
+  plugins: [katexWoff2Only, ...(mode === "site" ? [siteWithoutPageOptions] : []), sveltekit()],
   // MathLive (≈ 800 Ko) forme un morceau à part, chargé seulement à l'ouverture de l'éditeur visuel.
   build: { chunkSizeWarningLimit: 900 },
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
+    // Site web exporté : `vite build --mode site` (voir svelte.config.js et src/lib/site.ts).
+    __SITE__: JSON.stringify(mode === "site"),
   },
   test: {
     include: ["src/**/*.test.ts", "scripts/**/*.test.ts"],

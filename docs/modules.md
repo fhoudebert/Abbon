@@ -8,7 +8,14 @@ décrit dans [format-qcm/README.md](format-qcm/README.md#modules).
 ```sh
 npm run module:check                    # vérifie tous les modules (ou : npm run module:check anglais-verbes)
 npm run module:build                    # vérifie puis écrit dist/modules/Abbon-<nom>-<version>.qcm
+npm run build:site                      # construit le lecteur du site web (build-site/), une fois
+npm run module:site maths-specialite    # site web du module dans dist/sites/maths-specialite/
+npm run module:site -- --examen [--sans-corrige] anglais-grammaire   # site en mode examen seulement
 ```
+
+Le site web d'un module se dépose tel quel sur un hébergement statique, même mutualisé (voir
+[architecture.md](architecture.md#export-en-site-web)). L'application produit le même site pour n'importe quel QCM,
+module ou non : *Administration › Exporter › Site web*.
 
 La CI lance les deux à chaque push ; les fichiers `.qcm` sont joints aux releases GitHub. Dans l'application :
 *Administration › Importer*, qui propose aussi le lien de téléchargement.

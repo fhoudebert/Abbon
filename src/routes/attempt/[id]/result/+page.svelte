@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { examOnly, to } from '$lib/site';
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
@@ -21,7 +22,7 @@
 
   onMount(async () => {
     await session.load(id);
-    if (session.attempt?.status === 'in_progress') goto(`/attempt/${id}`, { replaceState: true });
+    if (session.attempt?.status === 'in_progress') goto(to(`/attempt/${id}`), { replaceState: true });
   });
 
   const lang = $derived(i18n.lang);
@@ -51,7 +52,7 @@
     busy = true;
     try {
       const newId = await app.startQuiz(quiz.id, attempt.mode, onlyMissed ? missed : undefined);
-      await goto(`/attempt/${newId}`);
+      await goto(to(`/attempt/${newId}`));
     } finally {
       busy = false;
     }
@@ -65,7 +66,7 @@
 {:else if !quiz || !attempt || !result}
   <p aria-busy="true">{t('home.loading')}</p>
 {:else}
-  <a class="back" href="/quiz/{quiz.id}">← {localize(quiz.title, lang, fallback)}</a>
+  <a class="back" href={to(`/quiz/${quiz.id}`)}>← {localize(quiz.title, lang, fallback)}</a>
 
   <section class="panel summary {result.passed ? 'passed' : 'failed'}">
     <h1>{t('result.title')}</h1>
@@ -80,7 +81,7 @@
     {#if attemptPoints}<p class="gain">{t('result.quizPoints', { n: attemptPoints })}</p>{/if}
     <div class="actions">
       {#if solution}
-        <a class="button" href="/attempt/{id}/review">{t('result.review')}</a>
+        <a class="button" href={to(`/attempt/${id}/review`)}>{t('result.review')}</a>
       {/if}
       {#if missed.length > 0 && missed.length < Object.keys(result.perQuestion).length}
         <button class="secondary" disabled={busy} onclick={() => retry(true)}>
@@ -96,7 +97,7 @@
     {/if}
   </section>
 
-  {#if missedQuestions.length}
+  {#if missedQuestions.length && !examOnly()}
     <section class="panel keep" aria-labelledby="keep-title">
       <h2 id="keep-title">{t('result.keep.title')}</h2>
       <p class="muted">{t('result.keep.intro')}</p>

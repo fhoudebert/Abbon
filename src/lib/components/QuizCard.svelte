@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { to } from '$lib/site';
   import type { QuizEntry } from '$lib/app.svelte';
   import { localize } from '$lib/domain/text';
   import { i18n, pct, t } from '$lib/i18n/index.svelte';
@@ -23,7 +24,7 @@
     <p class="category">{localize(entry.category.name, lang)}</p>
   {/if}
   <h3 lang={quiz.title[lang] ? lang : fallback}>
-    <a class="title" href="/quiz/{quiz.id}">{localize(quiz.title, lang, fallback)}</a>
+    <a class="title" href={to(`/quiz/${quiz.id}`)}>{localize(quiz.title, lang, fallback)}</a>
   </h3>
   {#if quiz.description}
     <p class="desc">{localize(quiz.description, lang, fallback)}</p>

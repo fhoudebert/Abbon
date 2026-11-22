@@ -4,6 +4,8 @@
  *
  *   npm run module:check [nom…]     vérifie les sources (toutes par défaut)
  *   npm run module:build [nom…]     vérifie puis écrit dist/modules/Abbon-<nom>-<version>.qcm
+ *   npm run module:site [--examen [--sans-corrige]] [nom…]
+ *                                   site web dans dist/sites/<nom>/ (après npm run build:site)
  *
  * Le code est celui de l'application (schémas et écriture du format .qcm) : il est chargé par Vite,
  * qui résout l'alias `$lib` et le TypeScript, sans étape de compilation séparée.
@@ -20,6 +22,7 @@ const server = await createServer({
   resolve: { alias: { $lib: fileURLToPath(new URL('../../src/lib', import.meta.url)) } },
   server: { middlewareMode: true, hmr: false, ws: false, watch: null },
   optimizeDeps: { noDiscovery: true, include: [] },
+  define: { __SITE__: 'false' },
 });
 let code = 1;
 try {

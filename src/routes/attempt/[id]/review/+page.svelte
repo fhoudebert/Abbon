@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { to } from '$lib/site';
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
@@ -53,10 +54,10 @@
 {:else if !quiz || !attempt || !result}
   <p aria-busy="true">{t('home.loading')}</p>
 {:else}
-  <a class="back" href="/attempt/{id}/result">← {t('result.title')}</a>
+  <a class="back" href={to(`/attempt/${id}/result`)}>← {t('result.title')}</a>
   <div class="head">
     <h1>{t('review.title')} — {localize(quiz.title, lang, fallback)}</h1>
-    {#if hasSheet}<a class="button secondary" href="/sheet/{quiz.categoryId}">{t('sheet.open')}</a>{/if}
+    {#if hasSheet}<a class="button secondary" href={to(`/sheet/${quiz.categoryId}`)}>{t('sheet.open')}</a>{/if}
     <label class="toggle">
       <input type="checkbox" bind:checked={onlyErrors} />
       {t('review.onlyErrors')}

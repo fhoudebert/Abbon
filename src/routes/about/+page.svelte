@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { asset } from '$app/paths';
   import { isTauri } from '@tauri-apps/api/core';
   import { app } from '$lib/app.svelte';
   import { t } from '$lib/i18n/index.svelte';
@@ -12,7 +13,7 @@
 
 <h1>{t('about.title')}</h1>
 
-<img src="/abbon.png" alt="" width="96" height="96" />
+<img src={asset('/abbon.png')} alt="" width="96" height="96" />
 
 <dl>
   <dt>{t('about.version')}</dt>

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { to } from '$lib/site';
   import { onDestroy, onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
@@ -64,7 +65,7 @@
 
   // Fin de tentative (bouton Terminer ou temps écoulé) → récapitulatif.
   $effect(() => {
-    if (attempt && attempt.status !== 'in_progress') goto(`/attempt/${id}/result`, { replaceState: true });
+    if (attempt && attempt.status !== 'in_progress') goto(to(`/attempt/${id}/result`), { replaceState: true });
   });
 
   /** Application en arrière-plan (Android, fenêtre réduite) : le chrono s'arrête. */
@@ -80,7 +81,7 @@
 
   async function quit() {
     await session.stopClock();
-    await goto('/');
+    await goto(to('/'));
   }
 
   async function primary() {
@@ -136,7 +137,7 @@
   <p aria-busy="true">{t('home.loading')}</p>
 {:else}
   <div class="top">
-    <a class="back" href="/quiz/{quiz.id}" onclick={(e) => { e.preventDefault(); session.stopClock().then(() => goto(`/quiz/${quiz.id}`)); }}>
+    <a class="back" href={to(`/quiz/${quiz.id}`)} onclick={(e) => { e.preventDefault(); session.stopClock().then(() => goto(to(`/quiz/${quiz.id}`))); }}>
       ← {localize(quiz.title, lang, fallback)}
     </a>
     <span class="mode">{attempt.mode === 'exam' ? t('quiz.exam') : t('quiz.training')}</span>

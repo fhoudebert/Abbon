@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build",
+    "build": "vite build && vite build --mode site && node scripts/site/pack.ts",
+    "build:app": "vite build",
     "preview": "vite preview",
     "prepare": "svelte-kit sync || echo ''",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
@@ -17,6 +18,8 @@
     "a11y": "python3 scripts/a11y/audit.py",
     "module:check": "node scripts/modules/cli.mjs check",
     "module:build": "node scripts/modules/cli.mjs build",
+    "module:site": "node scripts/modules/cli.mjs site",
+    "build:site": "vite build --mode site && node scripts/site/pack.ts",
     "android:apk": "bash scripts/android/build-apk.sh"
   },
   "license": "MIT",
