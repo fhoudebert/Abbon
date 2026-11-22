@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { to } from '$lib/site';
   import type { QuizEntry } from '$lib/app.svelte';
   import { localize } from '$lib/domain/text';
   import { i18n, pct, t } from '$lib/i18n/index.svelte';
@@ -14,7 +15,7 @@
     info.progress === 'in_progress' ? t('quiz.resume') : info.progress === 'done' ? t('quiz.retry') : t('quiz.start'),
   );
   /** Reprendre va directement à la question ; sinon la fiche du QCM (choix du mode). */
-  const href = $derived(info.resumable ? `/attempt/${info.resumable.id}` : `/quiz/${quiz.id}`);
+  const href = $derived(to(info.resumable ? `/attempt/${info.resumable.id}` : `/quiz/${quiz.id}`));
   const ratio = (score?: number) => (info.maxScore ? (score ?? 0) / info.maxScore : 0);
 </script>
 
@@ -23,7 +24,7 @@
     <p class="category">{localize(entry.category.name, lang)}</p>
   {/if}
   <h3 lang={quiz.title[lang] ? lang : fallback}>
-    <a class="title" href="/quiz/{quiz.id}">{localize(quiz.title, lang, fallback)}</a>
+    <a class="title" href={to(`/quiz/${quiz.id}`)}>{localize(quiz.title, lang, fallback)}</a>
   </h3>
   {#if quiz.description}
     <p class="desc">{localize(quiz.description, lang, fallback)}</p>

@@ -1,4 +1,5 @@
 import { invoke, isTauri } from '@tauri-apps/api/core';
+import { SITE } from '$lib/site';
 import { MemoryRepository } from './memory';
 import type { Repository } from './repository';
 import { SqliteRepository, type SqlDriver } from './sqlite';
@@ -8,13 +9,14 @@ export const DB_URL = 'sqlite:abbon.db';
 
 let repo: Promise<Repository> | null = null;
 
-/** Ouvre le stockage une seule fois : SQLite sous Tauri, mémoire dans un navigateur. */
+/** Ouvre le stockage une seule fois : SQLite sous Tauri, mémoire dans un navigateur, stockage local dans le site web. */
 export function getRepository(): Promise<Repository> {
   repo ??= open();
   return repo;
 }
 
 async function open(): Promise<Repository> {
+  if (SITE) return (await import('./site')).openSite();
   if (!isTauri()) return new MemoryRepository();
   const { default: Database } = await import('@tauri-apps/plugin-sql');
   // Le chargement applique les migrations déclarées côté Rust.

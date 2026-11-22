@@ -1,7 +1,9 @@
 <script lang="ts">
+  import { asset } from '$app/paths';
+  import { examOnly, siteData, SITE, to } from '$lib/site';
   import '../app.css';
   import { onMount, type Snippet } from 'svelte';
-  import { afterNavigate } from '$app/navigation';
+  import { afterNavigate, goto } from '$app/navigation';
   import { page } from '$app/state';
   import { app } from '$lib/app.svelte';
   import { prefs } from '$lib/prefs.svelte';
@@ -15,7 +17,21 @@
   /** Questions de la boîte de révision à revoir maintenant (pastille du menu). */
   const dueCount = $derived(app.ready ? app.dueCount() : 0);
 
+  /**
+   * Site web : filet de sécurité pour un lien interne écrit sans `to()` (« /quiz/… ») : le serveur ne
+   * connaît que index.html et répondrait 404. Le clic est ramené au routage par fragment.
+   */
+  function siteLinks(e: MouseEvent) {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    const a = (e.target as Element | null)?.closest?.('a[href]');
+    const href = a?.getAttribute('href') ?? '';
+    if (!href.startsWith('/') || href.startsWith('//') || a?.hasAttribute('download') || a?.getAttribute('target')) return;
+    e.preventDefault();
+    void goto(`#${href}`);
+  }
+
   onMount(async () => {
+    if (SITE) document.addEventListener('click', siteLinks, true);
     await app.init();
     await prefs.load();
     void updates.init(); // vérification éventuelle, sans bloquer l'affichage
@@ -27,27 +43,39 @@
   });
 
   const langNames: Record<string, string> = { fr: 'Français', en: 'English' };
+
+  /**
+   * Site web exporté : titre, mode examen seul, écrans absents (administration, réglages, à propos).
+   * L'écran courant se lit dans `page.route.id`, valable avec les deux routages (chemin ou fragment).
+   */
+  const site = SITE ? siteData() : null;
+  const SITE_ONLY_ADMIN = /^\/(admin|settings|about|leitner\/new)(\/|$)/;
+  const blocked = $derived(
+    SITE && (SITE_ONLY_ADMIN.test(page.route.id ?? '') || (examOnly() && (page.route.id ?? '').startsWith('/leitner'))),
+  );
 </script>
 
 <a class="skip" href="#main">{t('a11y.skip')}</a>
 
 <header class="top">
-  <a class="brand" href="/">
-    <img src="/abbon.png" alt="" width="40" height="40" />
+  <a class="brand" href={to('/')}>
+    <img src={asset('/abbon.png')} alt="" width="40" height="40" />
     <span>
-      <strong>{t('app.name')}</strong>
-      <small>{t('app.tagline')}</small>
+      <strong>{site?.title || t('app.name')}</strong>
+      <small>{site ? t('site.tagline') : t('app.tagline')}</small>
     </span>
   </a>
 
   <nav>
-    <a href="/" aria-current={page.url.pathname === '/' ? 'page' : undefined}>{t('nav.home')}</a>
-    <a href="/leitner" aria-current={page.url.pathname === '/leitner' ? 'page' : undefined}>
+    <a href={to('/')} aria-current={page.route.id === '/' ? 'page' : undefined}>{t('nav.home')}</a>
+    {#if !examOnly()}<a href={to('/leitner')} aria-current={page.route.id === '/leitner' ? 'page' : undefined}>
       {t('nav.leitner')}{#if dueCount > 0}<span class="count" aria-hidden="true">{dueCount}</span><span class="visually-hidden"> ({t('nav.leitnerDue', { n: dueCount })})</span>{/if}
-    </a>
-    <a href="/admin" aria-current={page.url.pathname.startsWith('/admin') ? 'page' : undefined}>{t('nav.admin')}</a>
-    <a href="/settings" aria-current={page.url.pathname === '/settings' ? 'page' : undefined}>{t('nav.settings')}</a>
-    <a href="/about" aria-current={page.url.pathname === '/about' ? 'page' : undefined}>{t('nav.about')}</a>
+    </a>{/if}
+    {#if !SITE}
+      <a href={to('/admin')} aria-current={page.route.id?.startsWith('/admin') ? 'page' : undefined}>{t('nav.admin')}</a>
+      <a href={to('/settings')} aria-current={page.route.id === '/settings' ? 'page' : undefined}>{t('nav.settings')}</a>
+      <a href={to('/about')} aria-current={page.route.id === '/about' ? 'page' : undefined}>{t('nav.about')}</a>
+    {/if}
   </nav>
 
   <label class="lang">
@@ -63,7 +91,7 @@
 {#if updates.status === 'available' && updates.release && page.url.pathname !== '/settings'}
   <div class="banner" role="status">
     {t('update.banner', { version: updates.release.version })}
-    <a href="/settings#updates">{t('update.see')}</a>
+    <a href={to('/settings#updates')}>{t('update.see')}</a>
   </div>
 {/if}
 
@@ -79,7 +107,14 @@
 </div>
 
 <main id="main" tabindex="-1">
-  {@render children()}
+  {#if SITE && !site}
+    <p>{t('site.noData')}</p>
+  {:else if blocked}
+    <p>{t('site.unavailable')}</p>
+    <p><a class="button" href={to('/')}>{t('nav.home')}</a></p>
+  {:else}
+    {@render children()}
+  {/if}
 </main>
 
 <style>

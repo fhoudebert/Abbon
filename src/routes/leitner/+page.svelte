@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { SITE, to } from '$lib/site';
   import { app, MY_CARDS_ID } from '$lib/app.svelte';
   import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
   import QuestionPlayer from '$lib/components/QuestionPlayer.svelte';
@@ -136,8 +137,8 @@
   <p class="muted intro">{t('leitner.intro')}</p>
 
   <p class="tools">
-    <a class="button secondary" href="/leitner/new">+ {t('leitner.newCard')}</a>
-    {#if app.cards.length}<a class="button secondary" href="/leitner/recap">{t('leitner.recap')}</a>{/if}
+    {#if !SITE}<a class="button secondary" href={to('/leitner/new')}>+ {t('leitner.newCard')}</a>{/if}
+    {#if app.cards.length}<a class="button secondary" href={to('/leitner/recap')}>{t('leitner.recap')}</a>{/if}
   </p>
 
   {#if app.cards.length === 0}

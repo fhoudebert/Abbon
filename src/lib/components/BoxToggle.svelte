@@ -2,6 +2,7 @@
   import { app } from '$lib/app.svelte';
   import type { Question, Quiz } from '$lib/domain/types';
   import { t } from '$lib/i18n/index.svelte';
+  import { examOnly } from '$lib/site';
 
   /** Met une question dans la boîte de révision (Leitner), ou l'en retire. */
   let {
@@ -17,10 +18,12 @@
   const inBox = $derived(app.inBox(question.id));
 </script>
 
+{#if !examOnly()}
 <button class="ghost box" aria-pressed={inBox} title={t('leitner.toggleHint')} onclick={() => app.toggleCard(quiz, question, failed)}>
   <span aria-hidden="true">{inBox ? '▣' : '▢'}</span>
   {t('leitner.toggle')}
 </button>
+{/if}
 
 <style>
   .box {

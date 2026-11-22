@@ -451,6 +451,19 @@ jobs:
         with: { node-version: 26 }
       - uses: actions/download-artifact@v8
         with: { path: dist, merge-multiple: true }
+      - name: Paquets à plat dans dist/ (Linux et Windows arrivent dans des sous-dossiers)
+        # upload-artifact garde l'arborescence sous le dossier commun le plus profond : les artefacts Linux
+        # contiennent deb/, rpm/ et appimage/, ceux de Windows msi/ et nsis/. Or « files: dist/* » et
+        # build-site.ts ne prennent que les fichiers placés directement dans dist/.
+        run: |
+          find dist -mindepth 2 -type f -exec mv -n -t dist {} +
+          find dist -mindepth 1 -type d -empty -delete
+          ls -l dist
+          missing=0
+          for pattern in '*.deb' '*.rpm' '*.AppImage' '*.msi' '*.exe' '*.dmg' '*.apk'; do
+            if ! compgen -G "dist/$pattern" > /dev/null; then echo "::error::aucun paquet $pattern dans dist/"; missing=1; fi
+          done
+          exit $missing
       - name: Modules de contenu (.qcm joints à la release)
         run: |
           npm ci

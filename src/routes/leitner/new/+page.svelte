@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { to } from '$lib/site';
   /**
    * Nouvelle carte personnelle : une question saisie ici rejoint le QCM « Mes cartes de révision » et entre
    * au compartiment 1 de la boîte, après les cartes déjà saisies (lot 16).
@@ -42,7 +43,7 @@
       if (another) {
         saved++;
         question = newQuestion(question.type, 0);
-      } else await goto('/leitner');
+      } else await goto(to('/leitner'));
     } finally {
       busy = false;
     }
@@ -68,7 +69,7 @@
 {/key}
 
 <div class="actions">
-  <a class="button secondary" href="/leitner">{t('common.cancel')}</a>
+  <a class="button secondary" href={to('/leitner')}>{t('common.cancel')}</a>
   <button class="secondary" disabled={busy} onclick={() => save(true)}>{t('custom.saveNext')}</button>
   <button disabled={busy} onclick={() => save(false)}>{t('custom.save')}</button>
 </div>
