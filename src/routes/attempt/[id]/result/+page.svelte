@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { examOnly, to } from '$lib/site';
+  import { examOnly, serverGrading, to } from '$lib/site';
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
@@ -28,7 +28,7 @@
   const lang = $derived(i18n.lang);
   const quiz = $derived(session.quiz);
   const attempt = $derived(session.attempt);
-  const result = $derived(quiz && attempt ? resultOf(quiz, attempt, Object.values(session.answers)) : null);
+  const result = $derived(quiz && attempt ? resultOf(quiz, attempt, Object.values(session.answers), serverGrading()) : null);
   const solution = $derived(quiz && attempt && result ? canSeeSolution(quiz, attempt, result.passed) : false);
   const missed = $derived(result ? missedQuestionIds(result) : []);
   const fallback = $derived(quiz?.languages[0]);

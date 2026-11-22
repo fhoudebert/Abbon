@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { to } from '$lib/site';
+  import { serverGrading, to } from '$lib/site';
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
@@ -23,7 +23,7 @@
   const lang = $derived(i18n.lang);
   const quiz = $derived(session.quiz);
   const attempt = $derived(session.attempt);
-  const result = $derived(quiz && attempt ? resultOf(quiz, attempt, Object.values(session.answers)) : null);
+  const result = $derived(quiz && attempt ? resultOf(quiz, attempt, Object.values(session.answers), serverGrading()) : null);
   const fallback = $derived(quiz?.languages[0]);
   const hasSheet = $derived(!!app.sheetOf(quiz?.categoryId));
 
@@ -33,7 +33,7 @@
     const a = session.attempt;
     if (!q || !a) return;
     // Corrigé non autorisé (tentative en cours, QCM sans corrigé ou pas encore réussi) : retour au résultat.
-    if (!canSeeSolution(q, a, resultOf(q, a, Object.values(session.answers)).passed)) {
+    if (!canSeeSolution(q, a, resultOf(q, a, Object.values(session.answers), serverGrading()).passed)) {
       goto(a.status === 'in_progress' ? `/attempt/${id}` : `/attempt/${id}/result`, { replaceState: true });
     }
   });

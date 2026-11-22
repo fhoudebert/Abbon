@@ -10,8 +10,13 @@ import {
   quizOf,
   remainingSec,
   toggleChoice,
+  type Finished,
 } from '$lib/domain/session';
 import type { Answer, Attempt, Choice, Question, Quiz } from '$lib/domain/types';
+import { finishWithGrade, GradeError, gradeOnServer, withSolutions } from '$lib/exam/client';
+import type { GradeResponse } from '$lib/exam/types';
+import { t } from '$lib/i18n/index.svelte';
+import { serverGrading } from '$lib/site';
 
 /** Intervalle d'enregistrement du chrono, en secondes. */
 const PERSIST_EVERY = 5;
@@ -163,8 +168,30 @@ export class AttemptSession {
     try {
       if (this.#timer) clearInterval(this.#timer);
       this.#timer = null;
-      const done = finishAttempt(this.quiz, $state.snapshot(this.attempt) as Attempt, Object.values($state.snapshot(this.answers)));
+      const attempt = $state.snapshot(this.attempt) as Attempt;
+      const answers = Object.values($state.snapshot(this.answers)) as Answer[];
       const repo = await app.repo();
+      let done: Finished;
+      if (serverGrading()) {
+        // Examen corrigé par le serveur : la note (et le corrigé, si permis) vient de examen/corriger.php.
+        let grade: GradeResponse;
+        try {
+          grade = await gradeOnServer(this.quiz, attempt, answers);
+        } catch (e) {
+          this.error = t(e instanceof GradeError && e.reason === 'network' ? 'site.grade.network' : 'site.grade.server');
+          if (this.remaining !== 0) this.startClock();
+          return false;
+        }
+        this.error = null;
+        if (grade.solutions) {
+          const site = repo as Partial<{ addSolutions(quizId: string, s: NonNullable<GradeResponse['solutions']>): Promise<void> }>;
+          await site.addSolutions?.(this.quiz.id, grade.solutions);
+          this.quiz = withSolutions(this.quiz, grade.solutions);
+        }
+        done = finishWithGrade(this.quiz, attempt, answers, grade);
+      } else {
+        done = finishAttempt(this.quiz, attempt, answers);
+      }
       for (const ans of done.answers) await repo.saveAnswer(done.attempt.id, ans);
       await repo.saveAttempt({ ...done.attempt, quizSnapshot: undefined });
       this.attempt = done.attempt;

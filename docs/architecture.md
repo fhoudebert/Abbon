@@ -242,9 +242,36 @@ hébergement mutualisé (à la racine ou dans un sous-dossier), sans base de don
 - **Modes** : entraînement et examen (au choix du visiteur), entraînement seulement (pas de panneau Examen), ou examen
   seulement : ni entraînement, ni boîte de révision (menu, écran, bouton de la boîte, « Questions à retenir ») ; le
   corrigé y est appliqué au chargement (`solutionVisibility` : `after_submit` ou `never`). Les réponses attendues
-  restent dans `donnees.js` : examen blanc, pas examen surveillé.
+  restent dans `donnees.js` : examen blanc, pas examen surveillé (sauf correction par le serveur, ci-dessous).
 - **Export** : depuis l'application, `app.exportSite` lit `web/files.json` et les fichiers du lecteur, et produit une
   archive .zip (`interchange/siteExport.ts`, avec un `LISEZMOI.txt`) ; depuis les sources, `npm run module:site`.
+
+### Examen corrigé par le serveur (PHP)
+
+Option de l'export en examen seulement (case « Correction par le serveur », `module:site --serveur`) : le site
+d'entraînement reste purement statique, l'examen dépend de PHP (7.4 ou plus récent, présent sur la plupart des
+hébergements mutualisés ; ni base de données ni fichier écrit).
+
+- **Ce qui est publié** (`exam/publish.ts`, `publicQuiz`) : les QCM passés par `stripSolutions` (ni bonnes cases, ni
+  formes acceptées, ni valeur, ni formule attendue, ni explications, ni retours ; listes des trous triées), sans
+  fiches de révision. Restent le verso des cartes recto-verso et, pour les expressions, les **points de test**
+  (`expected.samples`) : le lecteur y évalue la formule de l'élève (`expressionValues`), le serveur compare aux valeurs
+  de la formule attendue (`expressionSamples`), mêmes points et même tolérance que `sameExpression`. `SiteData.server`
+  force l'examen seulement, quoi que dise `reglages.js`.
+- **Dossier `examen/`** (`exam/server.ts`) : `corriger.php` (notation, copie de `domain/scoring.ts` : choix unique ou
+  multiples, tout ou rien ou partiel, réponses courtes, numériques, trous, cartes, expressions), `solutions.php` (le
+  corrigé en JSON base 64 ; ouvert directement, il répond 404) et un `.htaccess` (pas de liste des fichiers,
+  `solutions.php` refusé par Apache).
+- **Correction** : à « Terminer », `AttemptSession.finish` envoie la tentative (`exam/client.ts`, `gradeRequest` :
+  questions, cases, textes, valeurs des formules) en POST JSON à `examen/corriger.php`, qui renvoie la note par
+  question, et le corrigé si `reglages.js` dit `corrige: "fin"` (le script relit ce fichier à chaque correction ; la
+  décision est prise côté serveur). La tentative est close avec ces notes (`finishWithGrade`) ; le récapitulatif et le
+  corrigé les relisent sans recorriger (`resultOf(…, stored)`). Le corrigé reçu complète le QCM (`withSolutions`) et
+  est gardé dans la progression du visiteur. Serveur muet ou sans PHP : message, la tentative reste ouverte.
+- **Parité** : `exam/exam.test.ts` note les mêmes réponses (justes, fausses, approchées) avec l'application et avec
+  `php` (si installé), question par question.
+- **Limites** : un élève peut repasser l'examen (progression dans son navigateur) et, avec `corrige: "fin"`, faire
+  circuler le corrigé reçu ; les copies ne sont pas collectées ; le chrono reste mesuré par le navigateur.
 
 ## Limites connues
 

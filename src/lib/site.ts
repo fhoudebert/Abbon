@@ -27,6 +27,11 @@ export interface SiteData {
   solutions?: SiteSolutions;
   /** Premiers exports : examen seulement. */
   examOnly?: boolean;
+  /**
+   * Examen corrigé par le serveur : le paquet ne contient pas les réponses, `examen/corriger.php` note les
+   * tentatives (lib/exam). Le site est alors en examen seulement.
+   */
+  server?: boolean;
   /** Archive .qcm (module ou sauvegarde sans historique), en base 64. */
   package: string;
 }
@@ -69,11 +74,12 @@ const SOLUTION_NAMES: Record<string, SiteSolutions> = { fin: 'end', end: 'end', 
  * Réglages du site : ceux de `reglages.js` s'ils sont lisibles, sinon ceux choisis à l'export.
  * Une valeur inconnue est ignorée (la valeur de l'export s'applique).
  */
-export function resolveSettings(data: Pick<SiteData, 'modes' | 'solutions' | 'examOnly'> | null, override?: unknown): SiteSettings {
+export function resolveSettings(data: Pick<SiteData, 'modes' | 'solutions' | 'examOnly' | 'server'> | null, override?: unknown): SiteSettings {
   const o = (override && typeof override === 'object' ? override : {}) as { modes?: unknown; corrige?: unknown };
   const norm = (v: unknown) => (typeof v === 'string' ? v.trim().toLowerCase() : '');
   return {
-    modes: MODE_NAMES[norm(o.modes)] ?? data?.modes ?? (data?.examOnly ? 'exam' : 'both'),
+    // Corrigé par le serveur : sans réponses dans le site, l'entraînement est impossible.
+    modes: data?.server ? 'exam' : (MODE_NAMES[norm(o.modes)] ?? data?.modes ?? (data?.examOnly ? 'exam' : 'both')),
     solutions: SOLUTION_NAMES[norm(o.corrige)] ?? data?.solutions ?? 'end',
   };
 }
@@ -85,21 +91,30 @@ export function siteSettings(): SiteSettings {
 
 /** Site en mode examen seulement : ni entraînement, ni boîte de révision. */
 export const examOnly = () => SITE && siteSettings().modes === 'exam';
+/** Examen corrigé par le serveur (PHP) : les tentatives sont notées par `examen/corriger.php`. */
+export const serverGrading = () => SITE && !!siteData()?.server;
 /** Site en mode entraînement seulement : pas d'examen. */
 export const trainingOnly = () => SITE && siteSettings().modes === 'training';
 
 const MODE_LABELS: Record<SiteModes, string> = { both: 'les-deux', training: 'entrainement', exam: 'examen' };
 
 /** Texte de `reglages.js`, commenté pour être modifié à la main après l'export. */
-export const settingsScript = (s: SiteSettings) => `// Réglages du site Abbon : modifiables après l'export, sans rien reconstruire.
+export const settingsScript = (s: SiteSettings, server = false) => `// Réglages du site Abbon : modifiables après l'export, sans rien reconstruire.
 // Enregistrer ce fichier (encodage UTF-8), le redéposer, puis recharger la page dans le navigateur.
 window.ABBON_SITE_SETTINGS = {
-  // Modes proposés aux visiteurs :
+${
+  server
+    ? `  // Examen corrigé par le serveur : le site ne contient pas les réponses, il est en examen seulement.
+  modes: "examen",
+  // Corrigé de l'examen : "fin" (renvoyé par le serveur après l'envoi des réponses) ou "jamais".
+  // Le serveur (examen/corriger.php) relit ce fichier à chaque correction.`
+    : `  // Modes proposés aux visiteurs :
   //   "les-deux"      entraînement (correction à chaque question, boîte de révision) et examen ;
   //   "entrainement"  entraînement seulement ;
   //   "examen"        examen seulement (ni entraînement ni boîte de révision).
   modes: "${MODE_LABELS[s.modes]}",
-  // Corrigé de l'examen : "fin" (après l'envoi des réponses) ou "jamais".
+  // Corrigé de l'examen : "fin" (après l'envoi des réponses) ou "jamais".`
+}
   corrige: "${s.solutions === 'end' ? 'fin' : 'jamais'}",
 };
 `;

@@ -2,6 +2,8 @@ import { b64ToBytes, bytesToB64 } from '$lib/data/bytes';
 import type { LeitnerCard } from '$lib/domain/leitner';
 import type { Reward } from '$lib/domain/rewards';
 import type { Answer, Attempt, InstalledModule } from '$lib/domain/types';
+import { withSolutions } from '$lib/exam/client';
+import type { QuestionSolution } from '$lib/exam/types';
 import { parsePackage } from '$lib/interchange/qcmPackage';
 import { resolveSettings, siteData, siteSettings, type SiteData, type SiteSettings } from '$lib/site';
 import { MemoryRepository } from './memory';
@@ -14,6 +16,8 @@ export interface SiteProgress {
   cards: LeitnerCard[];
   rewards: Reward[];
   settings: Record<string, string>;
+  /** Examen corrigé par le serveur : corrigés reçus après l'envoi des copies, par QCM puis question. */
+  solutions?: Record<string, Record<string, QuestionSolution>>;
 }
 
 export const progressKey = (siteId: string) => `abbon.site.${siteId}`;
@@ -31,6 +35,7 @@ export function readProgress(storage: Pick<Storage, 'getItem'> | null, siteId: s
       cards: Array.isArray(p.cards) ? p.cards : [],
       rewards: Array.isArray(p.rewards) ? p.rewards : [],
       settings: p.settings && typeof p.settings === 'object' ? p.settings : {},
+      solutions: p.solutions && typeof p.solutions === 'object' ? p.solutions : {},
     };
   } catch {
     return empty;
@@ -53,6 +58,7 @@ function browserStorage(): Storage | null {
 export class SiteRepository extends MemoryRepository {
   #timer: ReturnType<typeof setTimeout> | null = null;
   #ready = false;
+  #solutions: Record<string, Record<string, QuestionSolution>> = {};
 
   constructor(
     private readonly siteId: string,
@@ -66,13 +72,14 @@ export class SiteRepository extends MemoryRepository {
     const p = await parsePackage(b64ToBytes(data.package));
     const now = new Date().toISOString();
     const modules: InstalledModule[] = p.modules ?? (p.module ? [{ manifest: p.module, installedAt: now, updatedAt: now }] : []);
+    const saved = readProgress(this.storage, this.siteId);
+    this.#solutions = saved.solutions ?? {};
     const quizzes = p.quizzes.map((q) => ({
-      ...q,
+      ...(this.#solutions[q.id] ? withSolutions(q, this.#solutions[q.id]) : q),
       status: 'published' as const,
       ...(settings.modes === 'exam' ? { solutionVisibility: settings.solutions === 'end' ? ('after_submit' as const) : ('never' as const) } : {}),
     }));
     const byId = new Map(quizzes.map((q) => [q.id, q]));
-    const saved = readProgress(this.storage, this.siteId);
     await this.replaceAll({
       categories: p.categories,
       quizzes,
@@ -105,12 +112,28 @@ export class SiteRepository extends MemoryRepository {
       cards: await this.listCards(),
       rewards: await this.listRewards(),
       settings,
+      solutions: this.#solutions,
     };
     try {
       this.storage.setItem(progressKey(this.siteId), JSON.stringify(progress));
     } catch {
       /* stockage plein ou refusé : la progression ne dure que le temps de la visite */
     }
+  }
+
+  /**
+   * Examen corrigé par le serveur : ajoute le corrigé reçu au QCM et aux tentatives qui en gardent une copie ;
+   * il est conservé avec la progression du visiteur.
+   */
+  async addSolutions(quizId: string, solutions: Record<string, QuestionSolution>) {
+    this.#solutions[quizId] = { ...this.#solutions[quizId], ...solutions };
+    const quiz = await this.getQuiz(quizId);
+    if (quiz) await this.saveQuiz(withSolutions(quiz, solutions));
+    for (const { id } of await this.listAttempts(quizId)) {
+      const a = await this.getAttempt(id);
+      if (a?.quizSnapshot) await super.saveAttempt({ ...a, quizSnapshot: withSolutions(a.quizSnapshot, solutions) });
+    }
+    this.#persist();
   }
 
   override async saveAttempt(attempt: Attempt) {

@@ -17,6 +17,7 @@
   let siteTitle = $state('');
   let modes = $state<SiteModes>('both');
   let solutionsAtEnd = $state(true);
+  let server = $state(false);
   const module = $derived(quiz?.moduleId ? app.moduleOf(quiz.moduleId) : undefined);
   const moduleTitle = $derived(module ? localize(module.manifest.title, i18n.lang) : '');
   let solutions = $state(true);
@@ -32,6 +33,7 @@
     scope = 'quiz';
     modes = 'both';
     solutionsAtEnd = true;
+    server = false;
     siteTitle = q ? localize(q.title, i18n.lang, q.languages[0]) || t('admin.untitled') : t('io.site.defaultTitle');
     solutions = true;
     lang = q?.languages.includes(i18n.lang) ? i18n.lang : (q?.languages[0] ?? i18n.lang);
@@ -48,7 +50,7 @@
       if (format === 'site') {
         const ids = quiz ? (scope === 'module' && quiz.moduleId ? app.quizzes.filter((q) => q.moduleId === quiz!.moduleId).map((q) => q.id) : [quiz.id]) : undefined;
         const name = siteTitle.trim() || t('io.site.defaultTitle');
-        const bytes = await app.exportSite(ids, { title: name, modes, solutions: solutionsAtEnd ? 'end' : 'never' });
+        const bytes = await app.exportSite(ids, { title: name, modes, solutions: solutionsAtEnd ? 'end' : 'never', server: modes === 'exam' && server });
         path = await saveFile(`${fileSafe(name, 'abbon-site')}-site.zip`, bytes, [{ name: 'ZIP', extensions: ['zip'] }]);
       } else if (format === 'gift' && quiz) {
         const text = await app.exportGift(quiz.id, lang);
@@ -106,6 +108,10 @@
       <label class="check">
         <input type="checkbox" bind:checked={solutionsAtEnd} />
         <span>{t('io.site.solutionsAtEnd')}</span>
+      </label>
+      <label class="check">
+        <input type="checkbox" bind:checked={server} />
+        <span>{t('io.site.server')}<br /><small class="muted">{server ? t('io.site.server.hint') : t('io.site.readable')}</small></span>
       </label>
     {/if}
   {:else if format === 'qcm'}

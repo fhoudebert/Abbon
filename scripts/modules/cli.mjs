@@ -4,8 +4,9 @@
  *
  *   npm run module:check [nom…]     vérifie les sources (toutes par défaut)
  *   npm run module:build [nom…]     vérifie puis écrit dist/modules/Abbon-<nom>-<version>.qcm
- *   npm run module:site [--entrainement | --examen [--sans-corrige]] [nom…]
- *                                   site web dans dist/sites/<nom>/ (après npm run build:site)
+ *   npm run module:site [--entrainement | --examen [--sans-corrige] [--serveur]] [nom…]
+ *                                   site web dans dist/sites/<nom>/ (après npm run build:site) ;
+ *                                   --serveur : examen corrigé par le serveur (PHP), sans réponses dans le site
  *
  * Le code est celui de l'application (schémas et écriture du format .qcm) : il est chargé par Vite,
  * qui résout l'alias `$lib` et le TypeScript, sans étape de compilation séparée.

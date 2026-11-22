@@ -5,11 +5,14 @@
 import { strToU8, zipSync } from 'fflate';
 import { bytesToB64 } from '$lib/data/bytes';
 import type { Category, InstalledModule, Quiz } from '$lib/domain/types';
+import { publicQuiz } from '$lib/exam/publish';
 import { settingsScript, siteScript, type SiteData, type SiteSettings } from '$lib/site';
 import { buildPackage, categoriesFor, quizMedia, sha256Hex, sheetMedia, type MediaFile } from './qcmPackage';
 
 export interface SiteOptions extends SiteSettings {
   title: string;
+  /** Examen corrigé par le serveur (PHP) : site sans réponses ni fiches, examen seulement (lib/exam). */
+  server?: boolean;
 }
 
 /** QCM, catégories et modules (fiches) restreints à ce qui est exporté. */
@@ -40,10 +43,22 @@ export function siteContent(
   return { quizzes: out, categories, modules };
 }
 
-/** Empreintes des images à joindre (QCM et fiches). */
-export const siteMediaHashes = (content: ReturnType<typeof siteContent>) => [
-  ...new Set([...quizMedia(content.quizzes), ...sheetMedia(content.modules.map((m) => m.manifest))]),
+/** Empreintes des images à joindre (QCM et fiches ; pas de fiches dans un examen corrigé par le serveur). */
+export const siteMediaHashes = (content: ReturnType<typeof siteContent>, server = false) => [
+  ...new Set([...quizMedia(content.quizzes), ...(server ? [] : sheetMedia(content.modules.map((m) => m.manifest)))]),
 ];
+
+/**
+ * Contenu publié dans un examen corrigé par le serveur : QCM sans réponses (`publicQuiz`), modules sans
+ * fiches (elles donnent souvent les réponses).
+ */
+export function serverContent(content: ReturnType<typeof siteContent>): ReturnType<typeof siteContent> {
+  return {
+    ...content,
+    quizzes: content.quizzes.map(publicQuiz),
+    modules: content.modules.map((m) => ({ ...m, manifest: { ...m.manifest, sheets: undefined } })),
+  };
+}
 
 /** Identifiant stable : la progression d'un visiteur survit à une nouvelle version du même site. */
 export async function siteIdOf(title: string, quizIds: readonly string[]): Promise<string> {
@@ -58,8 +73,9 @@ export async function siteDataOf(
   opts: SiteOptions,
   appVersion: string,
 ): Promise<SiteData> {
+  const published = opts.server ? serverContent(content) : content;
   const pkg = buildPackage(
-    { ...content, media, attempts: [], answers: [], settings: {}, cards: [], rewards: [] },
+    { ...published, media, attempts: [], answers: [], settings: {}, cards: [], rewards: [] },
     { kind: 'backup', solutions: true, appVersion },
   );
   return {
@@ -67,8 +83,9 @@ export async function siteDataOf(
     version: 1,
     id: await siteIdOf(opts.title, content.quizzes.map((q) => q.id)),
     title: opts.title,
-    modes: opts.modes,
+    modes: opts.server ? 'exam' : opts.modes,
     solutions: opts.solutions,
+    ...(opts.server ? { server: true } : {}),
     package: bytesToB64(pkg),
   };
 }
@@ -84,7 +101,9 @@ Ce dossier est un site web complet, sans base de données ni programme côté se
 
 Aucun réglage du serveur n'est nécessaire. Les réponses et la progression de chaque visiteur restent dans
 son propre navigateur : rien n'est envoyé au serveur. Les réponses attendues figurent dans donnees.js :
-ce site convient à l'entraînement et aux examens blancs, pas à un examen surveillé.
+ce site convient à l'entraînement et aux examens blancs, pas à un examen surveillé. Pour un examen dont les
+réponses ne figurent pas dans les fichiers, exporter en « Examen seulement » avec « Correction par le serveur
+(PHP) ».
 
 Modes proposés (entraînement, examen ou les deux) et corrigé de l'examen : fichier reglages.js, à modifier
 avec un éditeur de texte puis à redéposer ; les explications sont dans le fichier.
@@ -93,15 +112,41 @@ Pour mettre le site à jour, exporter de nouveau depuis Abbon avec le même titr
 la progression des visiteurs est conservée. Garder son reglages.js si on l'a modifié.
 `;
 
-/** Archive du site : `dossier/…` (lecteur, données, mode d'emploi). */
-export function zipSite(folder: string, player: Record<string, Uint8Array>, data: SiteData): Uint8Array {
+export const SITE_SERVER_README = `Site Abbon — examen corrigé par le serveur
+==========================================
+
+Ce dossier est un site d'examen : les réponses attendues ne sont pas dans les fichiers lus par le
+navigateur. Le corrigé est dans examen/solutions.php, et examen/corriger.php note chaque copie.
+
+Il faut un hébergement avec PHP 7.4 ou plus récent (c'est le cas de la plupart des hébergements
+mutualisés). Ni base de données ni réglage particulier ; aucun fichier n'est écrit sur le serveur.
+
+1. Déposer tout le contenu du dossier (index.html, donnees.js, reglages.js, examen/, _app/…) par FTP ou par
+   le gestionnaire de fichiers de l'hébergeur, à la racine du site ou dans un sous-dossier (/examen-svt/).
+   Le dossier examen/ contient un fichier caché .htaccess : le déposer aussi.
+2. Ouvrir l'adresse correspondante dans un navigateur et passer un QCM pour vérifier que la note s'affiche.
+   Sans PHP (ou en ouvrant index.html depuis son disque), le site affiche que la correction est impossible.
+
+Corrigé : fichier reglages.js, ligne corrige ("fin" : renvoyé par le serveur après l'envoi des réponses ;
+"jamais" : la note seule). Le serveur relit ce fichier à chaque correction.
+
+Limites : un élève peut repasser l'examen (sa progression reste dans son navigateur), et, avec le corrigé
+"fin", communiquer les réponses une fois sa copie envoyée. Le site ne collecte pas les copies.
+
+Pour mettre le site à jour, exporter de nouveau depuis Abbon avec le même titre et remplacer les fichiers,
+y compris examen/solutions.php.
+`;
+
+/** Archive du site : `dossier/…` (lecteur, données, mode d'emploi, fichiers en plus : examen/…). */
+export function zipSite(folder: string, player: Record<string, Uint8Array>, data: SiteData, extra: Record<string, string> = {}): Uint8Array {
   const files: Record<string, Uint8Array> = {};
   for (const [name, bytes] of Object.entries(player)) {
     if (name === 'files.json' || name === 'donnees.js' || name === 'reglages.js') continue;
     files[`${folder}/${name}`] = bytes;
   }
   files[`${folder}/donnees.js`] = strToU8(siteScript(data));
-  files[`${folder}/reglages.js`] = strToU8(settingsScript({ modes: data.modes ?? 'both', solutions: data.solutions ?? 'end' }));
-  files[`${folder}/LISEZMOI.txt`] = strToU8(SITE_README);
+  files[`${folder}/reglages.js`] = strToU8(settingsScript({ modes: data.modes ?? 'both', solutions: data.solutions ?? 'end' }, !!data.server));
+  files[`${folder}/LISEZMOI.txt`] = strToU8(data.server ? SITE_SERVER_README : SITE_README);
+  for (const [name, text] of Object.entries(extra)) files[`${folder}/${name}`] = strToU8(text);
   return zipSync(files, { level: 6 });
 }

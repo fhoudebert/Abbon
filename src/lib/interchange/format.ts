@@ -91,6 +91,8 @@ export const ExpectedSchema = z.object({
   /** Expression : formule attendue (LaTeX), égale à une constante près si `constant`. */
   latex: z.string().max(1000).optional(),
   constant: z.boolean().optional(),
+  /** Expression, site corrigé par le serveur : points de test publiés (les valeurs attendues restent sur le serveur). */
+  samples: z.array(z.record(z.string(), z.number())).max(64).optional(),
 });
 
 export const QuestionSchema = z.object({

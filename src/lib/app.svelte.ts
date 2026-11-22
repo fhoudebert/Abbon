@@ -390,7 +390,7 @@ class AppState {
     const repo = await this.repo();
     const bundle = await this.#contentBundle(quizIds);
     const content = siteContent(bundle.quizzes, bundle.categories, await repo.listModules());
-    const data = await siteDataOf(content, await this.#media(siteMediaHashes(content)), opts, __APP_VERSION__);
+    const data = await siteDataOf(content, await this.#media(siteMediaHashes(content, opts.server)), opts, __APP_VERSION__);
     const list = await fetch('/web/files.json');
     if (!list.ok) throw new Error(t('io.site.noPlayer'));
     const player: Record<string, Uint8Array> = {};
@@ -399,7 +399,8 @@ class AppState {
       if (!r.ok) throw new Error(`web/${name} : ${r.status}`);
       player[name] = new Uint8Array(await r.arrayBuffer());
     }
-    return zipSite(fileSafe(opts.title, 'abbon-site'), player, data);
+    const extra = opts.server ? (await import('$lib/exam/server')).examFiles(content.quizzes, opts.solutions) : {};
+    return zipSite(fileSafe(opts.title, 'abbon-site'), player, data, extra);
   }
 
   /** Texte GIFT d'un QCM (images incluses en data:). */

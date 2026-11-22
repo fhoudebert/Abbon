@@ -166,10 +166,25 @@ export function finishAttempt(quiz: Quiz, attempt: Attempt, answers: readonly An
   };
 }
 
-/** Recalcule le résultat d'une tentative terminée (récapitulatif, corrigé). */
-export function resultOf(quiz: Quiz, attempt: Attempt, answers: readonly Answer[]): QuizResult {
+/**
+ * Recalcule le résultat d'une tentative terminée (récapitulatif, corrigé). `stored` : reprend les notes
+ * enregistrées avec les réponses, sans corriger (examen d'un site corrigé par le serveur, sans réponses).
+ */
+export function resultOf(quiz: Quiz, attempt: Attempt, answers: readonly Answer[], stored = false): QuizResult {
   const questions = questionsOf(quiz, attempt);
   const byQuestion = new Map(answers.map((a) => [a.questionId, a]));
+  if (stored) {
+    const perQuestion = Object.fromEntries(
+      questions.map((q) => {
+        const a = byQuestion.get(q.id);
+        return [q.id, { points: a?.points ?? 0, correct: a?.correct === true }];
+      }),
+    );
+    const score = Math.round(Object.values(perQuestion).reduce((s, r) => s + r.points, 0) * 100) / 100;
+    const maxScore = questions.reduce((s, q) => s + q.points, 0);
+    const ratio = maxScore > 0 ? score / maxScore : 0;
+    return { score, maxScore, ratio, passed: ratio >= quiz.passThreshold, perQuestion };
+  }
   const selected = Object.fromEntries(questions.map((q) => [q.id, given(byQuestion.get(q.id))]));
   return scoreQuiz(questions, selected, quiz.scoring, quiz.passThreshold);
 }
