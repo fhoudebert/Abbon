@@ -3,12 +3,12 @@ import { describe, expect, it } from 'vitest';
 import { demoCategories, demoModule, demoQuizzes } from '$lib/data/seed';
 import { progressKey, readProgress, SiteRepository } from '$lib/data/site';
 import type { InstalledModule } from '$lib/domain/types';
-import { siteScript } from '$lib/site';
+import { resolveSettings, settingsScript, siteScript } from '$lib/site';
 import { siteContent, siteDataOf, siteIdOf, zipSite } from './siteExport';
 
 const installed: InstalledModule[] = [{ manifest: demoModule, installedAt: 'x', updatedAt: 'x' }];
 const inModule = demoQuizzes.filter((q) => demoModule.quizzes.includes(q.id));
-const opts = { title: 'Mon site', examOnly: false, solutionsAtEnd: true };
+const opts = { title: 'Mon site', modes: 'both', solutions: 'end' } as const;
 
 /** Stockage local factice. */
 function memoryStorage() {
@@ -19,7 +19,7 @@ function memoryStorage() {
 describe('export en site web', () => {
   it('ne garde que les QCM choisis, leurs catégories et les fiches de leur module', () => {
     const one = inModule[0];
-    const c = siteContent([{ ...one, status: 'draft' }], demoCategories, installed, opts);
+    const c = siteContent([{ ...one, status: 'draft' }], demoCategories, installed);
     expect(c.quizzes.map((q) => q.id)).toEqual([one.id]);
     expect(c.quizzes[0].status).toBe('published');
     expect(c.categories.map((x) => x.id)).toContain(one.categoryId);
@@ -28,14 +28,39 @@ describe('export en site web', () => {
     for (const id of Object.keys(c.modules[0].manifest.sheets ?? {})) expect(c.categories.map((x) => x.id)).toContain(id);
     // QCM hors module : pas de module joint.
     const other = demoQuizzes.find((q) => !demoModule.quizzes.includes(q.id))!;
-    expect(siteContent([other], demoCategories, installed, opts).modules).toEqual([]);
+    expect(siteContent([other], demoCategories, installed).modules).toEqual([]);
   });
 
-  it('mode examen : corrigé à la fin, ou jamais', () => {
-    const at = siteContent(inModule, demoCategories, installed, { examOnly: true, solutionsAtEnd: true });
-    const never = siteContent(inModule, demoCategories, installed, { examOnly: true, solutionsAtEnd: false });
-    expect(at.quizzes.every((q) => q.solutionVisibility === 'after_submit')).toBe(true);
-    expect(never.quizzes.every((q) => q.solutionVisibility === 'never')).toBe(true);
+  it('modes et corrigé : réglages de l’export, remplacés par reglages.js', () => {
+    const data = { modes: 'both', solutions: 'end' } as const;
+    expect(resolveSettings(data)).toEqual({ modes: 'both', solutions: 'end' });
+    expect(resolveSettings(data, { modes: 'examen', corrige: 'jamais' })).toEqual({ modes: 'exam', solutions: 'never' });
+    expect(resolveSettings(data, { modes: ' Entrainement ' })).toEqual({ modes: 'training', solutions: 'end' });
+    expect(resolveSettings(data, { modes: 'n’importe quoi', corrige: 42 })).toEqual(data);
+    // Premiers exports : examOnly seulement.
+    expect(resolveSettings({ examOnly: true })).toEqual({ modes: 'exam', solutions: 'end' });
+    expect(resolveSettings(null)).toEqual({ modes: 'both', solutions: 'end' });
+  });
+
+  it('reglages.js produit est relu à l’identique', () => {
+    for (const s of [{ modes: 'both', solutions: 'end' }, { modes: 'training', solutions: 'end' }, { modes: 'exam', solutions: 'never' }] as const) {
+      const w: { ABBON_SITE_SETTINGS?: unknown } = {};
+      new Function('window', settingsScript(s))(w);
+      expect(resolveSettings({ modes: 'both', solutions: 'end' }, w.ABBON_SITE_SETTINGS)).toEqual(s);
+    }
+  });
+
+  it('examen seul : le corrigé s’applique au chargement', async () => {
+    const content = siteContent(inModule, demoCategories, installed);
+    const data = await siteDataOf(content, new Map(), opts, '0.2.0');
+    for (const [solutions, visibility] of [['end', 'after_submit'], ['never', 'never']] as const) {
+      const repo = new SiteRepository(data.id, null);
+      await repo.load(data, { modes: 'exam', solutions });
+      expect((await repo.getQuiz(inModule[0].id))?.solutionVisibility).toBe(visibility);
+    }
+    const free = new SiteRepository(data.id, null);
+    await free.load(data, { modes: 'training', solutions: 'never' });
+    expect((await free.getQuiz(inModule[0].id))?.solutionVisibility).toBe(inModule[0].solutionVisibility);
   });
 
   it('identifiant stable, indépendant de l’ordre des QCM', async () => {
@@ -44,13 +69,13 @@ describe('export en site web', () => {
   });
 
   it('donnees.js ne peut pas fermer la balise script', () => {
-    const js = siteScript({ format: 'abbon-site', version: 1, id: 'i', title: '</script><b>', examOnly: false, package: '' });
+    const js = siteScript({ format: 'abbon-site', version: 1, id: 'i', title: '</script><b>', modes: 'both', package: '' });
     expect(js).not.toContain('</script>');
     expect(js.startsWith('window.ABBON_SITE = ')).toBe(true);
   });
 
   it('le site relit ses contenus, et la progression survit à un rechargement', async () => {
-    const content = siteContent(inModule, demoCategories, installed, opts);
+    const content = siteContent(inModule, demoCategories, installed);
     const data = await siteDataOf(content, new Map(), opts, '0.2.0');
     const storage = memoryStorage();
 
@@ -86,11 +111,12 @@ describe('export en site web', () => {
   });
 
   it('archive : lecteur, données et mode d’emploi dans un dossier', async () => {
-    const content = siteContent(inModule, demoCategories, installed, opts);
+    const content = siteContent(inModule, demoCategories, installed);
     const data = await siteDataOf(content, new Map(), opts, '0.2.0');
     const zip = zipSite('Mon-site', { 'index.html': new Uint8Array([1]), 'files.json': new Uint8Array([2]), '_app/a.js': new Uint8Array([3]) }, data);
     const files = unzipSync(zip);
-    expect(Object.keys(files).sort()).toEqual(['Mon-site/LISEZMOI.txt', 'Mon-site/_app/a.js', 'Mon-site/donnees.js', 'Mon-site/index.html']);
+    expect(Object.keys(files).sort()).toEqual(['Mon-site/LISEZMOI.txt', 'Mon-site/_app/a.js', 'Mon-site/donnees.js', 'Mon-site/index.html', 'Mon-site/reglages.js']);
+    expect(strFromU8(files['Mon-site/reglages.js'])).toContain('modes: "les-deux"');
     expect(strFromU8(files['Mon-site/donnees.js'])).toContain('"format":"abbon-site"');
   });
 });

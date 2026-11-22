@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { examOnly, to } from '$lib/site';
+  import { examOnly, to, trainingOnly } from '$lib/site';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
   import { app } from '$lib/app.svelte';
@@ -83,7 +83,7 @@
         {info.resumable ? t('quiz.restart') : t('quiz.start')}
       </button>
     </div>{/if}
-    <div class="panel">
+    {#if !trainingOnly()}<div class="panel">
       <h2>{t('quiz.exam')}</h2>
       <p class="muted">
         {quiz.timeLimitSec
@@ -97,7 +97,7 @@
       >
         {info.resumable ? t('quiz.restart') : t('quiz.start')}
       </button>
-    </div>
+    </div>{/if}
   </section>
 
   <section>

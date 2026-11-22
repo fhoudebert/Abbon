@@ -5,15 +5,11 @@
 import { strToU8, zipSync } from 'fflate';
 import { bytesToB64 } from '$lib/data/bytes';
 import type { Category, InstalledModule, Quiz } from '$lib/domain/types';
-import { siteScript, type SiteData } from '$lib/site';
+import { settingsScript, siteScript, type SiteData, type SiteSettings } from '$lib/site';
 import { buildPackage, categoriesFor, quizMedia, sha256Hex, sheetMedia, type MediaFile } from './qcmPackage';
 
-export interface SiteOptions {
+export interface SiteOptions extends SiteSettings {
   title: string;
-  /** Examen seulement : ni entraînement, ni boîte de révision. */
-  examOnly: boolean;
-  /** Examen seulement : corrigé affiché à la fin (sinon jamais). */
-  solutionsAtEnd: boolean;
 }
 
 /** QCM, catégories et modules (fiches) restreints à ce qui est exporté. */
@@ -21,13 +17,10 @@ export function siteContent(
   quizzes: readonly Quiz[],
   allCategories: readonly Category[],
   installed: readonly InstalledModule[],
-  opts: Pick<SiteOptions, 'examOnly' | 'solutionsAtEnd'>,
 ) {
-  const out: Quiz[] = quizzes.map((q) => ({
-    ...q,
-    status: 'published',
-    ...(opts.examOnly ? { solutionVisibility: opts.solutionsAtEnd ? 'after_submit' : 'never' } : {}),
-  }));
+  // Les modes et le corrigé ne sont pas inscrits dans les QCM : ils s'appliquent au chargement du site
+  // (lib/data/site.ts), pour rester modifiables dans reglages.js.
+  const out: Quiz[] = quizzes.map((q) => ({ ...q, status: 'published' }));
   const ids = new Set(out.map((q) => q.id));
   const categories = categoriesFor(out, allCategories);
   const catIds = new Set(categories.map((c) => c.id));
@@ -74,7 +67,8 @@ export async function siteDataOf(
     version: 1,
     id: await siteIdOf(opts.title, content.quizzes.map((q) => q.id)),
     title: opts.title,
-    examOnly: opts.examOnly,
+    modes: opts.modes,
+    solutions: opts.solutions,
     package: bytesToB64(pkg),
   };
 }
@@ -92,18 +86,22 @@ Aucun réglage du serveur n'est nécessaire. Les réponses et la progression de 
 son propre navigateur : rien n'est envoyé au serveur. Les réponses attendues figurent dans donnees.js :
 ce site convient à l'entraînement et aux examens blancs, pas à un examen surveillé.
 
+Modes proposés (entraînement, examen ou les deux) et corrigé de l'examen : fichier reglages.js, à modifier
+avec un éditeur de texte puis à redéposer ; les explications sont dans le fichier.
+
 Pour mettre le site à jour, exporter de nouveau depuis Abbon avec le même titre et remplacer les fichiers :
-la progression des visiteurs est conservée.
+la progression des visiteurs est conservée. Garder son reglages.js si on l'a modifié.
 `;
 
 /** Archive du site : `dossier/…` (lecteur, données, mode d'emploi). */
 export function zipSite(folder: string, player: Record<string, Uint8Array>, data: SiteData): Uint8Array {
   const files: Record<string, Uint8Array> = {};
   for (const [name, bytes] of Object.entries(player)) {
-    if (name === 'files.json' || name === 'donnees.js') continue;
+    if (name === 'files.json' || name === 'donnees.js' || name === 'reglages.js') continue;
     files[`${folder}/${name}`] = bytes;
   }
   files[`${folder}/donnees.js`] = strToU8(siteScript(data));
+  files[`${folder}/reglages.js`] = strToU8(settingsScript({ modes: data.modes ?? 'both', solutions: data.solutions ?? 'end' }));
   files[`${folder}/LISEZMOI.txt`] = strToU8(SITE_README);
   return zipSync(files, { level: 6 });
 }

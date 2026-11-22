@@ -3,7 +3,7 @@ import type { LeitnerCard } from '$lib/domain/leitner';
 import type { Reward } from '$lib/domain/rewards';
 import type { Answer, Attempt, InstalledModule } from '$lib/domain/types';
 import { parsePackage } from '$lib/interchange/qcmPackage';
-import { siteData, type SiteData } from '$lib/site';
+import { resolveSettings, siteData, siteSettings, type SiteData, type SiteSettings } from '$lib/site';
 import { MemoryRepository } from './memory';
 import type { AnswerRow } from './repository';
 
@@ -61,12 +61,16 @@ export class SiteRepository extends MemoryRepository {
     super();
   }
 
-  /** Charge les contenus du site et la progression du visiteur. */
-  async load(data: SiteData) {
+  /** Charge les contenus du site et la progression du visiteur ; en examen seul, applique le réglage du corrigé. */
+  async load(data: SiteData, settings: SiteSettings = resolveSettings(data)) {
     const p = await parsePackage(b64ToBytes(data.package));
     const now = new Date().toISOString();
     const modules: InstalledModule[] = p.modules ?? (p.module ? [{ manifest: p.module, installedAt: now, updatedAt: now }] : []);
-    const quizzes = p.quizzes.map((q) => ({ ...q, status: 'published' as const }));
+    const quizzes = p.quizzes.map((q) => ({
+      ...q,
+      status: 'published' as const,
+      ...(settings.modes === 'exam' ? { solutionVisibility: settings.solutions === 'end' ? ('after_submit' as const) : ('never' as const) } : {}),
+    }));
     const byId = new Map(quizzes.map((q) => [q.id, q]));
     const saved = readProgress(this.storage, this.siteId);
     await this.replaceAll({
@@ -144,6 +148,6 @@ export class SiteRepository extends MemoryRepository {
 export async function openSite(): Promise<SiteRepository> {
   const data = siteData();
   const repo = new SiteRepository(data?.id ?? 'sans-donnees');
-  if (data) await repo.load(data);
+  if (data) await repo.load(data, siteSettings());
   return repo;
 }

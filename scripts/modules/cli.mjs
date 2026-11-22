@@ -4,7 +4,7 @@
  *
  *   npm run module:check [nom…]     vérifie les sources (toutes par défaut)
  *   npm run module:build [nom…]     vérifie puis écrit dist/modules/Abbon-<nom>-<version>.qcm
- *   npm run module:site [--examen [--sans-corrige]] [nom…]
+ *   npm run module:site [--entrainement | --examen [--sans-corrige]] [nom…]
  *                                   site web dans dist/sites/<nom>/ (après npm run build:site)
  *
  * Le code est celui de l'application (schémas et écriture du format .qcm) : il est chargé par Vite,

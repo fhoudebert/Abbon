@@ -31,7 +31,7 @@ Leur contenu est repris tel quel dans les notes de version (page de télécharge
 
 - Mises à jour depuis les releases GitHub : sans site de téléchargement, l'application (AppImage comprise) lit la dernière release publiée ; l'adresse d'un dépôt GitHub est acceptée dans les paramètres.
 - Module « Anglais : grammaire et pièges des francophones », version pilote : prépositions, temps, verbes, faux amis et structures, du niveau B1 au C1 (TOEIC, Cambridge), 150 questions et 5 fiches de révision.
-- Export en site web : un QCM, un module ou tous les QCM deviennent un site complet, à déposer par FTP sur un hébergement même mutualisé, sans base de données. La progression de chaque visiteur reste dans son navigateur ; boîte de révision comprise ; mode examen seulement en option.
+- Export en site web : un QCM, un module ou tous les QCM deviennent un site complet, à déposer par FTP sur un hébergement même mutualisé, sans base de données. La progression de chaque visiteur reste dans son navigateur, boîte de révision comprise. Modes proposés au choix : entraînement et examen, entraînement seulement, examen seulement ; modifiables après l'export dans reglages.js.
 ### en
 - Content modules: a `.qcm` file is installed, updated and removed as a whole; its quizzes are protected (“Duplicate to edit” makes a personal copy).
 - Revision sheets per category, from the quiz page and from the answers.
@@ -57,7 +57,7 @@ Leur contenu est repris tel quel dans les notes de version (page de télécharge
 - Review box: intervals of 1, 2, 4, 8 and 16 days; a question answered right in the last compartment is learnt and leaves the schedule; at the end of a quiz, tick the missed questions to put them in the box.
 - Updates from GitHub releases: without a download website, the app (AppImage included) reads the latest published release; a GitHub repository address is accepted in the settings.
 - “English: grammar and traps for French speakers” module, pilot version (explanations in French): prepositions, tenses, verbs, false friends and sentence structure, from B1 to C1 (TOEIC, Cambridge), 150 questions and 5 revision sheets.
-- Website export: a quiz, a module or all quizzes become a complete website to upload by FTP to any host, including shared hosting, with no database. Each visitor’s progress stays in their browser, review box included; optional exam-only mode.
+- Website export: a quiz, a module or all quizzes become a complete website to upload by FTP to any host, including shared hosting, with no database. Each visitor’s progress stays in their browser, review box included. Modes offered: practice and exam, practice only, or exam only; can be changed after export in reglages.js.
 
 ## 0.1.0
 

@@ -30,7 +30,7 @@ function walk(dir: string): string[] {
 }
 const files = walk(SITE)
   .map((p) => relative(SITE, p).split(sep).join('/'))
-  .filter((f) => f !== 'files.json' && f !== 'donnees.js')
+  .filter((f) => f !== 'files.json' && f !== 'donnees.js' && f !== 'reglages.js')
   .sort();
 writeFileSync(join(SITE, 'files.json'), JSON.stringify(files, null, 1));
 

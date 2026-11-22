@@ -22,6 +22,7 @@ describe('index.html du site web', () => {
     expect(out).toContain('href="./_app/immutable/entry/start.js"');
     expect(out).toContain('import("./_app/immutable/entry/app.js")');
     expect(out).not.toMatch(/(href|src)="\/[^/]|import\("\//);
+    expect(out.indexOf('<script src="./reglages.js"></script>')).toBeLessThan(out.indexOf('<script src="./donnees.js"></script>'));
     expect(out.indexOf('<script src="./donnees.js"></script>')).toBeLessThan(out.indexOf('</head>'));
   });
 });

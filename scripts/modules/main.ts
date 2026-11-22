@@ -4,7 +4,7 @@
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, sep } from 'node:path';
 import { siteContent, siteDataOf, SITE_README } from '$lib/interchange/siteExport';
-import { siteScript } from '$lib/site';
+import { settingsScript, siteScript } from '$lib/site';
 import { buildPackage, parsePackage, sha256Hex, sniffMime, type MediaFile } from '$lib/interchange/qcmPackage';
 import { imageTargets } from './markdown';
 import { loadRDKit, moleculeSvg, SMILES_PREFIX } from './molecules';
@@ -82,12 +82,12 @@ function report(name: string, c: Compiled): boolean {
 export async function main(argv: string[], root: string): Promise<number> {
   const [command, ...rest] = argv;
   if (command !== 'check' && command !== 'build' && command !== 'site') {
-    console.error('usage : module:check [nom…] | module:build [nom…] | module:site [--examen [--sans-corrige]] [nom…]');
+    console.error('usage : module:check [nom…] | module:build [nom…] | module:site [--entrainement | --examen [--sans-corrige]] [nom…]');
     return 2;
   }
   // Site web : options, puis lecteur construit par `npm run build:site` (build-site/).
-  const examOnly = rest.includes('--examen');
-  const solutionsAtEnd = !rest.includes('--sans-corrige');
+  const modes = rest.includes('--examen') ? 'exam' : rest.includes('--entrainement') ? 'training' : 'both';
+  const solutions = rest.includes('--sans-corrige') ? 'never' : 'end';
   const names = rest.filter((n) => !n.startsWith('--'));
   const player = join(root, 'build-site');
   if (command === 'site' && !existsSync(join(player, 'files.json'))) {
@@ -157,9 +157,9 @@ export async function main(argv: string[], root: string): Promise<number> {
     }
     if (command === 'site') {
       const title = c.manifest.title.fr ?? Object.values(c.manifest.title)[0] ?? name;
-      const opts = { title, examOnly, solutionsAtEnd };
+      const opts = { title, modes, solutions } as const;
       const installed = [{ manifest: c.manifest, installedAt: now.toISOString(), updatedAt: now.toISOString() }];
-      const content = siteContent(back.quizzes, back.categories, installed, opts);
+      const content = siteContent(back.quizzes, back.categories, installed);
       const data = await siteDataOf(content, back.media, opts, appVersion);
       const dir = join(root, 'dist', 'sites', name);
       rmSync(dir, { recursive: true, force: true });
@@ -168,8 +168,10 @@ export async function main(argv: string[], root: string): Promise<number> {
         copyFileSync(join(player, f), join(dir, f));
       }
       writeFileSync(join(dir, 'donnees.js'), siteScript(data));
+      writeFileSync(join(dir, 'reglages.js'), settingsScript(opts));
       writeFileSync(join(dir, 'LISEZMOI.txt'), SITE_README);
-      console.log(`  → ${relative(root, dir)}/ (site web${examOnly ? ', examen seulement' : ''})`);
+      const label = { both: 'entraînement et examen', training: 'entraînement seulement', exam: 'examen seulement' }[modes];
+      console.log(`  → ${relative(root, dir)}/ (site web, ${label})`);
       continue;
     }
     const out = join(root, 'dist', 'modules');

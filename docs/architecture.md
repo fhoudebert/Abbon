@@ -229,14 +229,20 @@ hébergement mutualisé (à la racine ou dans un sous-dossier), sans base de don
   `page.route.id`, valable avec les deux routages. Les écrans d'administration, de réglages et « À propos » ne sont
   pas proposés dans le site.
 - **Données** : `donnees.js` définit `window.ABBON_SITE` (`SiteData`) : titre, mode examen, identifiant stable et
-  archive `.qcm` en base 64 (module, ou sauvegarde sans historique avec les modules et leurs fiches). Les QCM sont
-  publiés d'office ; en mode examen, leur `solutionVisibility` devient `after_submit` ou `never`.
+  archive `.qcm` en base 64 (module, ou sauvegarde sans historique avec les modules et leurs fiches), modes et
+  corrigé choisis à l'export. Les QCM sont publiés d'office.
+- **Réglages modifiables après l'export** : `reglages.js`, chargé avant `donnees.js`, définit
+  `window.ABBON_SITE_SETTINGS` en français commenté (`modes: "les-deux" | "entrainement" | "examen"`,
+  `corrige: "fin" | "jamais"`). `resolveSettings` (`lib/site.ts`) le préfère aux choix de l'export et ignore une
+  valeur inconnue ; fichier absent (premiers exports) : choix de l'export.
 - **Stockage** : `data/site.ts`, `SiteRepository` (le stockage en mémoire, relu depuis `donnees.js` à chaque visite),
   recopie la progression (tentatives, réponses, boîte de révision, points, réglages) dans le stockage local du
   navigateur, sous `abbon.site.<identifiant>`. L'identifiant dérive du titre et des QCM : une nouvelle version du
   même site garde la progression. Les copies de QCM des tentatives ne sont pas stockées, mais reconstituées.
-- **Mode examen seulement** : ni entraînement, ni boîte de révision (menu, écran, bouton de la boîte, « Questions à
-  retenir »). Les réponses attendues restent dans `donnees.js` : examen blanc, pas examen surveillé.
+- **Modes** : entraînement et examen (au choix du visiteur), entraînement seulement (pas de panneau Examen), ou examen
+  seulement : ni entraînement, ni boîte de révision (menu, écran, bouton de la boîte, « Questions à retenir ») ; le
+  corrigé y est appliqué au chargement (`solutionVisibility` : `after_submit` ou `never`). Les réponses attendues
+  restent dans `donnees.js` : examen blanc, pas examen surveillé.
 - **Export** : depuis l'application, `app.exportSite` lit `web/files.json` et les fichiers du lecteur, et produit une
   archive .zip (`interchange/siteExport.ts`, avec un `LISEZMOI.txt`) ; depuis les sources, `npm run module:site`.
 

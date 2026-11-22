@@ -4,7 +4,8 @@
  * La même interface est construite une seconde fois avec `vite build --mode site` : routage par fragment
  * (`#/quiz/…`), chemins relatifs, sans administration. Les contenus arrivent par `donnees.js`, qui définit
  * `window.ABBON_SITE` avant le chargement de l'application ; la progression du visiteur reste dans son
- * navigateur (stockage local). Voir docs/architecture.md, « Export en site web ».
+ * navigateur (stockage local). `reglages.js`, facultatif et modifiable à la main après l'export, définit
+ * `window.ABBON_SITE_SETTINGS` : modes proposés et corrigé de l'examen. Voir docs/architecture.md, « Export en site web ».
  */
 
 /** Vrai dans la construction du site web, faux dans l'application. */
@@ -20,8 +21,12 @@ export interface SiteData {
   /** Identifiant stable du site : clé de la progression dans le navigateur. */
   id: string;
   title: string;
-  /** Mode examen seulement : pas d'entraînement ni de boîte de révision. */
-  examOnly: boolean;
+  /** Modes proposés (absent dans les premiers exports : voir `examOnly`). */
+  modes?: SiteModes;
+  /** Examen : corrigé à la fin, ou jamais. */
+  solutions?: SiteSolutions;
+  /** Premiers exports : examen seulement. */
+  examOnly?: boolean;
   /** Archive .qcm (module ou sauvegarde sans historique), en base 64. */
   package: string;
 }
@@ -38,8 +43,66 @@ export function siteData(): SiteData | null {
   return isSiteData(d) ? d : null;
 }
 
+/** Modes proposés : entraînement et examen, entraînement seulement (avec la boîte de révision), examen seulement. */
+export type SiteModes = 'both' | 'training' | 'exam';
+export type SiteSolutions = 'end' | 'never';
+
+/** Réglages effectifs du site. */
+export interface SiteSettings {
+  modes: SiteModes;
+  solutions: SiteSolutions;
+}
+
+/** Valeurs acceptées dans `reglages.js` (en français, pour une modification à la main) et en interne. */
+const MODE_NAMES: Record<string, SiteModes> = {
+  'les-deux': 'both',
+  both: 'both',
+  entrainement: 'training',
+  entraînement: 'training',
+  training: 'training',
+  examen: 'exam',
+  exam: 'exam',
+};
+const SOLUTION_NAMES: Record<string, SiteSolutions> = { fin: 'end', end: 'end', jamais: 'never', never: 'never' };
+
+/**
+ * Réglages du site : ceux de `reglages.js` s'ils sont lisibles, sinon ceux choisis à l'export.
+ * Une valeur inconnue est ignorée (la valeur de l'export s'applique).
+ */
+export function resolveSettings(data: Pick<SiteData, 'modes' | 'solutions' | 'examOnly'> | null, override?: unknown): SiteSettings {
+  const o = (override && typeof override === 'object' ? override : {}) as { modes?: unknown; corrige?: unknown };
+  const norm = (v: unknown) => (typeof v === 'string' ? v.trim().toLowerCase() : '');
+  return {
+    modes: MODE_NAMES[norm(o.modes)] ?? data?.modes ?? (data?.examOnly ? 'exam' : 'both'),
+    solutions: SOLUTION_NAMES[norm(o.corrige)] ?? data?.solutions ?? 'end',
+  };
+}
+
+export function siteSettings(): SiteSettings {
+  const w = typeof window === 'undefined' ? {} : (window as { ABBON_SITE_SETTINGS?: unknown });
+  return resolveSettings(siteData(), w.ABBON_SITE_SETTINGS);
+}
+
 /** Site en mode examen seulement : ni entraînement, ni boîte de révision. */
-export const examOnly = () => !!siteData()?.examOnly;
+export const examOnly = () => SITE && siteSettings().modes === 'exam';
+/** Site en mode entraînement seulement : pas d'examen. */
+export const trainingOnly = () => SITE && siteSettings().modes === 'training';
+
+const MODE_LABELS: Record<SiteModes, string> = { both: 'les-deux', training: 'entrainement', exam: 'examen' };
+
+/** Texte de `reglages.js`, commenté pour être modifié à la main après l'export. */
+export const settingsScript = (s: SiteSettings) => `// Réglages du site Abbon : modifiables après l'export, sans rien reconstruire.
+// Enregistrer ce fichier (encodage UTF-8), le redéposer, puis recharger la page dans le navigateur.
+window.ABBON_SITE_SETTINGS = {
+  // Modes proposés aux visiteurs :
+  //   "les-deux"      entraînement (correction à chaque question, boîte de révision) et examen ;
+  //   "entrainement"  entraînement seulement ;
+  //   "examen"        examen seulement (ni entraînement ni boîte de révision).
+  modes: "${MODE_LABELS[s.modes]}",
+  // Corrigé de l'examen : "fin" (après l'envoi des réponses) ou "jamais".
+  corrige: "${s.solutions === 'end' ? 'fin' : 'jamais'}",
+};
+`;
 
 /** Texte de `donnees.js`. Le JSON est échappé pour ne jamais fermer la balise script. */
 export const siteScript = (data: SiteData) =>

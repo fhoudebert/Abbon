@@ -389,7 +389,7 @@ class AppState {
   async exportSite(quizIds: string[] | undefined, opts: SiteOptions): Promise<Uint8Array> {
     const repo = await this.repo();
     const bundle = await this.#contentBundle(quizIds);
-    const content = siteContent(bundle.quizzes, bundle.categories, await repo.listModules(), opts);
+    const content = siteContent(bundle.quizzes, bundle.categories, await repo.listModules());
     const data = await siteDataOf(content, await this.#media(siteMediaHashes(content)), opts, __APP_VERSION__);
     const list = await fetch('/web/files.json');
     if (!list.ok) throw new Error(t('io.site.noPlayer'));

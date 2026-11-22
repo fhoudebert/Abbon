@@ -1,6 +1,6 @@
 <script lang="ts">
   import { asset } from '$app/paths';
-  import { siteData, SITE, to } from '$lib/site';
+  import { examOnly, siteData, SITE, to } from '$lib/site';
   import '../app.css';
   import { onMount, type Snippet } from 'svelte';
   import { afterNavigate, goto } from '$app/navigation';
@@ -51,7 +51,7 @@
   const site = SITE ? siteData() : null;
   const SITE_ONLY_ADMIN = /^\/(admin|settings|about|leitner\/new)(\/|$)/;
   const blocked = $derived(
-    SITE && (SITE_ONLY_ADMIN.test(page.route.id ?? '') || (!!site?.examOnly && (page.route.id ?? '').startsWith('/leitner'))),
+    SITE && (SITE_ONLY_ADMIN.test(page.route.id ?? '') || (examOnly() && (page.route.id ?? '').startsWith('/leitner'))),
   );
 </script>
 
@@ -68,7 +68,7 @@
 
   <nav>
     <a href={to('/')} aria-current={page.route.id === '/' ? 'page' : undefined}>{t('nav.home')}</a>
-    {#if !site?.examOnly}<a href={to('/leitner')} aria-current={page.route.id === '/leitner' ? 'page' : undefined}>
+    {#if !examOnly()}<a href={to('/leitner')} aria-current={page.route.id === '/leitner' ? 'page' : undefined}>
       {t('nav.leitner')}{#if dueCount > 0}<span class="count" aria-hidden="true">{dueCount}</span><span class="visually-hidden"> ({t('nav.leitnerDue', { n: dueCount })})</span>{/if}
     </a>{/if}
     {#if !SITE}

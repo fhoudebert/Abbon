@@ -6,6 +6,7 @@
   import { fileSafe, saveFile } from '$lib/files';
   import { i18n, t } from '$lib/i18n/index.svelte';
   import { languageName } from '$lib/i18n/languages';
+  import type { SiteModes } from '$lib/site';
 
   /** Export d'un QCM (.qcm, GIFT ou site web) ou de tous les QCM (.qcm ou site web). */
   let dialog: HTMLDialogElement;
@@ -14,7 +15,7 @@
   // Site web : étendue (ce QCM ou tout son module), titre, mode examen.
   let scope = $state<'quiz' | 'module'>('quiz');
   let siteTitle = $state('');
-  let examOnly = $state(false);
+  let modes = $state<SiteModes>('both');
   let solutionsAtEnd = $state(true);
   const module = $derived(quiz?.moduleId ? app.moduleOf(quiz.moduleId) : undefined);
   const moduleTitle = $derived(module ? localize(module.manifest.title, i18n.lang) : '');
@@ -29,7 +30,7 @@
     quiz = q;
     format = 'qcm';
     scope = 'quiz';
-    examOnly = false;
+    modes = 'both';
     solutionsAtEnd = true;
     siteTitle = q ? localize(q.title, i18n.lang, q.languages[0]) || t('admin.untitled') : t('io.site.defaultTitle');
     solutions = true;
@@ -47,7 +48,7 @@
       if (format === 'site') {
         const ids = quiz ? (scope === 'module' && quiz.moduleId ? app.quizzes.filter((q) => q.moduleId === quiz!.moduleId).map((q) => q.id) : [quiz.id]) : undefined;
         const name = siteTitle.trim() || t('io.site.defaultTitle');
-        const bytes = await app.exportSite(ids, { title: name, examOnly, solutionsAtEnd });
+        const bytes = await app.exportSite(ids, { title: name, modes, solutions: solutionsAtEnd ? 'end' : 'never' });
         path = await saveFile(`${fileSafe(name, 'abbon-site')}-site.zip`, bytes, [{ name: 'ZIP', extensions: ['zip'] }]);
       } else if (format === 'gift' && quiz) {
         const text = await app.exportGift(quiz.id, lang);
@@ -92,11 +93,16 @@
       {t('io.site.title')}
       <input type="text" bind:value={siteTitle} maxlength="120" />
     </label>
-    <label class="check">
-      <input type="checkbox" bind:checked={examOnly} />
-      <span>{t('io.site.examOnly')}<br /><small class="muted">{t('io.site.examOnly.hint')}</small></span>
-    </label>
-    {#if examOnly}
+    <fieldset>
+      <legend>{t('io.site.modes')}</legend>
+      <label><input type="radio" bind:group={modes} value="both" /> {t('io.site.modes.both')}</label>
+      <label><input type="radio" bind:group={modes} value="training" /> {t('io.site.modes.training')}</label>
+      <label>
+        <input type="radio" bind:group={modes} value="exam" />
+        <span>{t('io.site.modes.exam')}<br /><small class="muted">{t('io.site.examOnly.hint')}</small></span>
+      </label>
+    </fieldset>
+    {#if modes === 'exam'}
       <label class="check">
         <input type="checkbox" bind:checked={solutionsAtEnd} />
         <span>{t('io.site.solutionsAtEnd')}</span>
