@@ -34,6 +34,7 @@ Leur contenu est repris tel quel dans les notes de version (page de télécharge
 - Export en site web : un QCM, un module ou tous les QCM deviennent un site complet, à déposer par FTP sur un hébergement même mutualisé, sans base de données. La progression de chaque visiteur reste dans son navigateur, boîte de révision comprise. Modes proposés au choix : entraînement et examen, entraînement seulement, examen seulement ; modifiables après l'export dans reglages.js.
 - Questionnaires publiés à part, sur https://fhoudebert.github.io/abbon/questionnaires/ (par langue et par rubrique) : lien dans « À propos » et sur la page d'import ; pages index produites par `npm run module:catalogue`. L'application se construit et se publie sans eux.
 - Modules « Espagnol : pièges des francophones » (31 questions : faux amis, grammaire et conjugaison, expressions) et « Histoire : dates insolites ou méconnues » (33 questions, de la domestication des animaux au premier iPhone), en version pilote, avec leurs fiches de révision.
+- Module « Enseignement scientifique, terminale générale », en version pilote : un QCM d'entraînement par thème du programme (climat, énergies, histoire du vivant), 36 questions et leurs fiches de révision.
 ### en
 - Content modules: a `.qcm` file is installed, updated and removed as a whole; its quizzes are protected (“Duplicate to edit” makes a personal copy).
 - Revision sheets per category, from the quiz page and from the answers.
@@ -62,6 +63,7 @@ Leur contenu est repris tel quel dans les notes de version (page de télécharge
 - Website export: a quiz, a module or all quizzes become a complete website to upload by FTP to any host, including shared hosting, with no database. Each visitor’s progress stays in their browser, review box included. Modes offered: practice and exam, practice only, or exam only; can be changed after export in reglages.js.
 - Quizzes published separately at https://fhoudebert.github.io/abbon/questionnaires/ (by language and topic): link in “About” and on the import page; index pages produced by `npm run module:catalogue`. The app is built and released without them.
 - “Spanish: traps for French speakers” (31 questions) and “History: unusual or little-known dates” (33 questions) modules, pilot versions with revision sheets (French only).
+- “Enseignement scientifique” (French final-year general science) module, pilot version: one practice quiz per syllabus theme, 36 questions with revision sheets (French only).
 
 ## 0.1.0
 

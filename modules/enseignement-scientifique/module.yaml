@@ -1,0 +1,28 @@
+# Module « Enseignement scientifique, terminale générale » — tronc commun, programme 2019 révisé en 2023.
+# Questionnaire d'entraînement : un QCM par thème du programme.
+# Format des sources : docs/modules.md. Vérifier : npm run module:check ; construire : npm run module:build
+
+id: org.abbon.enseignement-scientifique
+version: 0.1.0
+date: 2026-11-22
+title:
+  fr: "Enseignement scientifique, terminale générale"
+description:
+  fr: "Entraînement sur les trois thèmes du tronc commun : science, climat et société ; le futur des énergies ; une histoire du vivant (biodiversité, évolution, démographie, intelligence artificielle). Version pilote : 36 questions et leurs fiches de révision."
+level: terminale
+license: CC-BY-NC-SA-4.0
+authors: [Abbon]
+homepage: https://github.com/fhoudebert/Abbon
+languages: [fr]
+requires:
+  app: ">=0.2.0"
+defaults:
+  passThreshold: 0.6
+
+categories:
+  - id: climat
+    name: { fr: "Science, climat et société" }
+  - id: energies
+    name: { fr: "Le futur des énergies" }
+  - id: vivant
+    name: { fr: "Une histoire du vivant" }
