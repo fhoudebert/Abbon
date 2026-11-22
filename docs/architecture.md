@@ -288,10 +288,25 @@ hébergements mutualisés ; ni base de données ni fichier écrit).
   est publié »), le lecteur redemande la correction (`action: "corrige"`, rien n'est enregistré, `fetchCorrection`) :
   publiée, elle note les réponses gardées (`withDetail`) et ajoute le corrigé. `"fin"` : tout de suite ; `"jamais"` :
   note et détail, jamais le corrigé. Sans serveur, `"enseignant"` vaut `"jamais"`.
+- **Ouverture et durée** : l'examen est fermé tant que le surveillant ne l'ouvre pas dans `enseignant.php`, avec un
+  code d'accès et une durée facultatifs (`copies/ouverture.php`). Le lecteur demande l'état (`action: "etat"` :
+  ouvert, code demandé, durée ; jamais le code) avant de proposer « Commencer », puis enregistre le début
+  (`action: "debut"`, `startOnServer`) : refusé si l'examen est fermé ou le code faux, sinon noté dans
+  `copies/debuts.php` avec l'heure du serveur, qui renvoie la durée allouée (celle de l'ouverture, sinon celle du
+  QCM) ; le lecteur la garde comme `timeLimitSec` (`SiteRepository.setTimeLimit`, compte à rebours et envoi
+  automatique). Une copie sans début enregistré est refusée (`debut`) ; une copie au-delà de la durée plus
+  `ABBON_GRACE` (60 s), mesurée par le serveur, est marquée `horsDelai`, une copie reçue examen fermé
+  `apresFermeture`. L'espace enseignant liste les élèves en cours (débuts sans copie), signale plusieurs copies au
+  même nom pour un QCM et supprime les copies (case de confirmation). Une seule copie par QCM : le lecteur ne
+  propose ni « Recommencer » ni « Refaire les erreurs ». `abbon_traiter` regroupe ces demandes (testable sans
+  serveur web).
+- **Seuil** : `seuil: "50"` dans `reglages.js` (`resolveThreshold`) remplace le seuil de chaque QCM du site, au
+  chargement et, avec la correction par le serveur, dans `corriger.php` (`abbon_seuil`).
 - **Parité** : `exam/exam.test.ts` note les mêmes réponses (justes, fausses, approchées) avec l'application et avec
   `php` (si installé), question par question.
-- **Limites** : un élève peut repasser l'examen (chaque copie est gardée, datée), se déclarer sous un autre nom et,
-  avec `corrige: "fin"`, faire circuler le corrigé reçu ; le chrono reste mesuré par le navigateur. Les noms sont des
+- **Limites** : un élève peut se déclarer sous un autre nom ou, en vidant son navigateur, commencer une seconde
+  copie tant que l'examen est ouvert (signalée si le nom est le même) ; avec `corrige: "fin"`, faire circuler le
+  corrigé reçu. Les noms sont des
   données personnelles : `LISEZMOI.txt` invite à ne garder les copies que le temps nécessaire.
 
 ## Limites connues

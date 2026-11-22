@@ -3,6 +3,8 @@
  * Abbon — espace enseignant d'un examen corrigé par le serveur.
  *
  * Ouvrir examen/enseignant.php dans un navigateur et saisir le mot de passe de config.php :
+ *  - examen : l'ouvrir (avec un code d'accès et une durée, facultatifs) puis le fermer ; les élèves ne peuvent
+ *    commencer que lorsqu'il est ouvert, avec le bon code ; élèves en cours ;
  *  - corrigé : avec corrige: "enseignant" dans reglages.js, le publier (ou le retirer) QCM par QCM, quand le temps
  *    de l'épreuve est écoulé ; les élèves voient alors le détail par question et le corrigé ;
  *  - copies : liste (nom, classe ou groupe, QCM, note, durée) et téléchargement au format CSV (tableur). Les copies
@@ -60,10 +62,51 @@ $quizTitles = array();
 if (is_array($solutions) && isset($solutions['quizzes'])) {
   foreach ($solutions['quizzes'] as $id => $q) $quizTitles[$id] = isset($q['title']) ? $q['title'] : $id;
 }
-$published = abbon_publication(__DIR__ . '/copies');
+$dir = __DIR__ . '/copies';
+$published = abbon_publication($dir);
 $notice = '';
+$noticeError = false;
+$cannotWrite = 'Impossible d\'écrire dans le dossier examen/copies/ : vérifier ses droits d\'écriture.';
 $action = isset($_POST['action']) ? (string) $_POST['action'] : '';
-if ($ok && $corrige === 'enseignant' && $action !== '') {
+
+// Ouverture et fermeture de l'examen.
+$ouverture = abbon_ouverture($dir);
+if ($ok && ($action === 'ouvrir' || $action === 'fermer')) {
+  $next = $ouverture;
+  if ($action === 'ouvrir') {
+    $next['ouvert'] = true;
+    $next['code'] = abbon_texte(isset($_POST['code']) ? $_POST['code'] : '', 30);
+    $d = isset($_POST['duree']) ? trim((string) $_POST['duree']) : '';
+    $next['duree'] = preg_match('/^\d{1,3}$/', $d) && (int) $d > 0 ? (int) $d : null;
+    $next['depuis'] = gmdate('Y-m-d\TH:i:s\Z');
+    $next['ferme'] = null;
+  } else {
+    $next['ouvert'] = false;
+    $next['ferme'] = gmdate('Y-m-d\TH:i:s\Z');
+  }
+  if (abbon_ecrire_etat($dir, 'ouverture', $next)) {
+    $ouverture = $next;
+    $notice = $action === 'ouvrir' ? 'Examen ouvert.' : 'Examen fermé : plus personne ne peut commencer.';
+  } else {
+    $notice = $cannotWrite;
+    $noticeError = true;
+  }
+}
+
+// Suppression des copies (et des débuts), après confirmation.
+if ($ok && $action === 'supprimer-copies') {
+  if (empty($_POST['confirmer'])) {
+    $notice = 'Cocher « Je confirme » pour supprimer les copies.';
+    $noticeError = true;
+  } else {
+    $gone = true;
+    foreach (array('copies.php', 'debuts.php') as $f) if (is_file($dir . '/' . $f) && !@unlink($dir . '/' . $f)) $gone = false;
+    $notice = $gone ? 'Copies supprimées.' : $cannotWrite;
+    $noticeError = !$gone;
+  }
+}
+
+if ($ok && $corrige === 'enseignant' && in_array($action, array('publier', 'retirer', 'publier-tout', 'retirer-tout'), true)) {
   $target = isset($_POST['cible']) ? (string) $_POST['cible'] : '';
   $next = $published;
   if ($action === 'publier' && isset($quizTitles[$target])) $next[$target] = gmdate('Y-m-d\TH:i:s\Z');
@@ -71,16 +114,41 @@ if ($ok && $corrige === 'enseignant' && $action !== '') {
   elseif ($action === 'publier-tout') { foreach ($quizTitles as $id => $t) if (!isset($next[$id])) $next[$id] = gmdate('Y-m-d\TH:i:s\Z'); }
   elseif ($action === 'retirer-tout') $next = array();
   if ($next !== $published) {
-    if (abbon_publier(__DIR__ . '/copies', $next)) {
+    if (abbon_publier($dir, $next)) {
       $notice = count($next) > count($published) ? 'Corrigé publié.' : 'Corrigé retiré.';
       $published = $next;
     } else {
-      $notice = 'Impossible d\'écrire dans le dossier examen/copies/ : vérifier ses droits d\'écriture.';
+      $notice = $cannotWrite;
+      $noticeError = true;
     }
   }
 }
 
-$copies = $ok ? abbon_lire_copies(__DIR__ . '/copies') : array();
+$copies = $ok ? abbon_lire_copies($dir) : array();
+$debuts = $ok ? abbon_lire_copies($dir, 'debuts.php') : array();
+
+// Remarques : hors délai, rendue après la fermeture, plusieurs copies au même nom pour un QCM.
+$parNom = array();
+foreach ($copies as $c) {
+  $k = $c['qcm'] . "\n" . mb_strtolower($c['nom'], 'UTF-8');
+  $parNom[$k] = isset($parNom[$k]) ? $parNom[$k] + 1 : 1;
+}
+function abbon_remarques($c, $parNom) {
+  $r = array();
+  if (!empty($c['horsDelai'])) $r[] = 'hors délai';
+  if (!empty($c['apresFermeture'])) $r[] = 'après la fermeture';
+  $k = $c['qcm'] . "\n" . mb_strtolower($c['nom'], 'UTF-8');
+  if ($c['nom'] !== '' && $parNom[$k] > 1) $r[] = $parNom[$k] . ' copies à ce nom';
+  return implode(', ', $r);
+}
+// Élèves en cours : commencé, pas de copie rendue.
+$rendues = array();
+foreach ($copies as $c) $rendues[$c['id']] = true;
+$enCours = array_values(array_filter($debuts, function ($d) use ($rendues) { return !isset($rendues[$d['id']]); }));
+/** Durée d'une copie : mesurée par le serveur (début enregistré → copie reçue), sinon celle du navigateur. */
+function abbon_duree_copie($c) {
+  return isset($c['dureeServeur']) ? $c['dureeServeur'] : $c['duree'];
+}
 $titles = array();
 foreach ($copies as $c) $titles[$c['qcm']] = $c['titre'];
 asort($titles);
@@ -90,11 +158,11 @@ if ($filtre !== '') $copies = array_values(array_filter($copies, function ($c) u
 if ($ok && isset($_POST['format']) && $_POST['format'] === 'csv') {
   header('Content-Type: text/csv; charset=utf-8');
   header('Content-Disposition: attachment; filename="copies-' . date('Y-m-d') . '.csv"');
-  $rows = array(array('Date', 'Nom', 'Classe ou groupe', 'QCM', 'Note', 'Sur', 'Pourcentage', 'Réussi', 'Durée', 'Identifiant'));
+  $rows = array(array('Date', 'Nom', 'Classe ou groupe', 'QCM', 'Note', 'Sur', 'Pourcentage', 'Réussi', 'Durée', 'Remarques', 'Identifiant'));
   foreach ($copies as $c) {
     $rows[] = array(
       abbon_date($c['date']), $c['nom'], $c['groupe'], $c['titre'], abbon_nombre($c['note']), abbon_nombre($c['sur']),
-      $c['sur'] > 0 ? abbon_nombre(100 * $c['note'] / $c['sur']) : '', $c['reussi'] ? 'oui' : 'non', abbon_duree($c['duree']), $c['id'],
+      $c['sur'] > 0 ? abbon_nombre(100 * $c['note'] / $c['sur']) : '', $c['reussi'] ? 'oui' : 'non', abbon_duree(abbon_duree_copie($c)), abbon_remarques($c, $parNom), $c['id'],
     );
   }
   echo "\xEF\xBB\xBF"; // UTF-8 reconnu par les tableurs
@@ -129,6 +197,10 @@ header('Content-Type: text/html; charset=utf-8');
   h2 { font-size: 1.2rem; margin-top: 2rem; }
   form.inline { display: inline; margin: 0; }
   .ok { color: var(--accent); font-weight: 600; }
+  .state { font-size: 1.1rem; }
+  .code { font-size: 2rem; font-weight: 700; letter-spacing: 0.1em; font-family: ui-monospace, monospace; }
+  label.check { flex-direction: row; align-items: center; font-weight: 400; }
+  .warn { color: var(--bad); }
 </style>
 </head>
 <body>
@@ -140,12 +212,50 @@ header('Content-Type: text/html; charset=utf-8');
   <?php if ($given !== ''): ?><p class="error" role="alert">Mot de passe incorrect.</p><?php endif; ?>
   <form method="post">
     <label>Mot de passe <input type="password" name="motdepasse" autocomplete="current-password" required autofocus></label>
-    <button type="submit">Afficher les copies</button>
+    <button type="submit">Se connecter</button>
   </form>
   <p class="muted">Le mot de passe est dans le fichier examen/config.php (voir LISEZMOI.txt).</p>
 <?php else: ?>
+  <?php if ($notice !== ''): ?><p class="<?= $noticeError ? 'error' : 'ok' ?>" role="status"><?= h($notice) ?></p><?php endif; ?>
+  <h2>Examen</h2>
+  <?php if ($ouverture['ouvert']): ?>
+    <p class="state"><strong>Ouvert</strong> depuis <?= h(abbon_date($ouverture['depuis'])) ?><?= $ouverture['duree'] ? ' — durée : ' . (int) $ouverture['duree'] . ' min' : '' ?>.</p>
+    <?php if ($ouverture['code'] !== ''): ?><p>Code d'accès à donner aux élèves : <span class="code"><?= h($ouverture['code']) ?></span></p><?php else: ?><p class="muted">Sans code d'accès : toute personne qui connaît l'adresse du site peut commencer.</p><?php endif; ?>
+    <form method="post">
+      <input type="hidden" name="motdepasse" value="<?= h($given) ?>">
+      <button type="submit" name="action" value="fermer">Fermer l'examen</button>
+    </form>
+    <p class="muted">Fermé, l'examen n'accepte plus de nouveaux élèves ; les copies en cours restent acceptées, marquées « après la fermeture ».</p>
+  <?php else: ?>
+    <p class="state"><strong>Fermé</strong><?= $ouverture['ferme'] ? ' depuis ' . h(abbon_date($ouverture['ferme'])) : '' ?> : aucun élève ne peut commencer.</p>
+    <form method="post">
+      <input type="hidden" name="motdepasse" value="<?= h($given) ?>">
+      <label>Code d'accès (facultatif) <input type="text" name="code" maxlength="30" value="<?= h($ouverture['code']) ?>" autocomplete="off"></label>
+      <label>Durée en minutes (facultatif) <input type="number" name="duree" min="1" max="999" value="<?= $ouverture['duree'] ? (int) $ouverture['duree'] : '' ?>"></label>
+      <button type="submit" name="action" value="ouvrir">Ouvrir l'examen</button>
+    </form>
+    <p class="muted">Sans durée, celle de chaque QCM s'applique s'il en a une. Une copie rendue après la durée (plus une minute de marge) est marquée « hors délai ».</p>
+  <?php endif; ?>
+  <?php if ($enCours): ?>
+    <p><?= count($enCours) ?> élève<?= count($enCours) > 1 ? 's' : '' ?> en cours (commencé, copie pas encore rendue) :</p>
+    <div class="table" tabindex="0" role="region" aria-label="Élèves en cours">
+    <table>
+      <thead><tr><th scope="col">Nom</th><th scope="col">Classe ou groupe</th><th scope="col">QCM</th><th scope="col">Commencé à</th></tr></thead>
+      <tbody>
+      <?php foreach ($enCours as $d): ?>
+        <tr>
+          <td><?= $d['nom'] !== '' ? h($d['nom']) : '<span class="muted">(sans nom)</span>' ?></td>
+          <td><?= h($d['groupe']) ?></td>
+          <td><?= h(isset($quizTitles[$d['qcm']]) ? $quizTitles[$d['qcm']] : $d['qcm']) ?></td>
+          <td><?= h(date('H:i', $d['t'])) ?></td>
+        </tr>
+      <?php endforeach; ?>
+      </tbody>
+    </table>
+    </div>
+  <?php endif; ?>
+
   <h2>Corrigé</h2>
-  <?php if ($notice !== ''): ?><p class="<?= strpos($notice, 'Impossible') === 0 ? 'error' : 'ok' ?>" role="status"><?= h($notice) ?></p><?php endif; ?>
   <?php if ($corrige === 'enseignant'): ?>
     <p>Tant que le corrigé d'un QCM n'est pas publié, les élèves ne voient que leur note. Une fois publié, ils voient le
       détail par question et le corrigé (y compris ceux qui ont déjà rendu leur copie, en revenant sur leur résultat).</p>
@@ -205,7 +315,7 @@ header('Content-Type: text/html; charset=utf-8');
   <?php if ($copies): ?>
   <div class="table" tabindex="0" role="region" aria-label="Copies">
   <table>
-    <thead><tr><th scope="col">Date</th><th scope="col">Nom</th><th scope="col">Classe ou groupe</th><th scope="col">QCM</th><th scope="col">Note</th><th scope="col">%</th><th scope="col">Réussi</th><th scope="col">Durée</th></tr></thead>
+    <thead><tr><th scope="col">Date</th><th scope="col">Nom</th><th scope="col">Classe ou groupe</th><th scope="col">QCM</th><th scope="col">Note</th><th scope="col">%</th><th scope="col">Réussi</th><th scope="col">Durée</th><th scope="col">Remarques</th></tr></thead>
     <tbody>
     <?php foreach ($copies as $c): ?>
       <tr>
@@ -216,12 +326,20 @@ header('Content-Type: text/html; charset=utf-8');
         <td class="num"><?= h(abbon_nombre($c['note'])) ?> / <?= h(abbon_nombre($c['sur'])) ?></td>
         <td class="num"><?= $c['sur'] > 0 ? h(abbon_nombre(100 * $c['note'] / $c['sur'])) : '' ?></td>
         <td><?= $c['reussi'] ? 'oui' : 'non' ?></td>
-        <td class="num"><?= h(abbon_duree($c['duree'])) ?></td>
+        <td class="num"><?= h(abbon_duree(abbon_duree_copie($c))) ?></td>
+        <td class="warn"><?= h(abbon_remarques($c, $parNom)) ?></td>
       </tr>
     <?php endforeach; ?>
     </tbody>
   </table>
   </div>
+  <p class="muted">Durée : mesurée par le serveur, du début de l'examen à la copie rendue.</p>
+  <form method="post">
+    <input type="hidden" name="motdepasse" value="<?= h($given) ?>">
+    <label class="check"><input type="checkbox" name="confirmer" value="1"> Je confirme</label>
+    <button type="submit" name="action" value="supprimer-copies" class="secondary">Supprimer toutes les copies</button>
+  </form>
+  <p class="muted">Pensez à télécharger le CSV avant. Les noms des élèves sont des données personnelles : ne les gardez que le temps nécessaire.</p>
   <?php endif; ?>
 <?php endif; ?>
 </main>

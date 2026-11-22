@@ -5,7 +5,7 @@ import type { Answer, Attempt, InstalledModule } from '$lib/domain/types';
 import { withSolutions } from '$lib/exam/client';
 import type { QuestionSolution } from '$lib/exam/types';
 import { parsePackage } from '$lib/interchange/qcmPackage';
-import { resolveSettings, siteData, siteSettings, type SiteData, type SiteSettings } from '$lib/site';
+import { resolveSettings, siteData, siteSettings, siteThreshold, type SiteData, type SiteSettings } from '$lib/site';
 import { MemoryRepository } from './memory';
 import type { AnswerRow } from './repository';
 
@@ -16,6 +16,8 @@ export interface SiteProgress {
   cards: LeitnerCard[];
   rewards: Reward[];
   settings: Record<string, string>;
+  /** Examen corrigé par le serveur : durée fixée par le surveillant à l'ouverture, par QCM (secondes). */
+  limits?: Record<string, number>;
   /** Examen corrigé par le serveur : corrigés reçus après l'envoi des copies, par QCM puis question. */
   solutions?: Record<string, Record<string, QuestionSolution>>;
 }
@@ -36,6 +38,7 @@ export function readProgress(storage: Pick<Storage, 'getItem'> | null, siteId: s
       rewards: Array.isArray(p.rewards) ? p.rewards : [],
       settings: p.settings && typeof p.settings === 'object' ? p.settings : {},
       solutions: p.solutions && typeof p.solutions === 'object' ? p.solutions : {},
+      limits: p.limits && typeof p.limits === 'object' ? p.limits : {},
     };
   } catch {
     return empty;
@@ -59,6 +62,7 @@ export class SiteRepository extends MemoryRepository {
   #timer: ReturnType<typeof setTimeout> | null = null;
   #ready = false;
   #solutions: Record<string, Record<string, QuestionSolution>> = {};
+  #limits: Record<string, number> = {};
 
   constructor(
     private readonly siteId: string,
@@ -68,15 +72,19 @@ export class SiteRepository extends MemoryRepository {
   }
 
   /** Charge les contenus du site et la progression du visiteur ; en examen seul, applique le réglage du corrigé. */
-  async load(data: SiteData, settings: SiteSettings = resolveSettings(data)) {
+  async load(data: SiteData, settings: SiteSettings = resolveSettings(data), threshold: number | null = null) {
     const p = await parsePackage(b64ToBytes(data.package));
     const now = new Date().toISOString();
     const modules: InstalledModule[] = p.modules ?? (p.module ? [{ manifest: p.module, installedAt: now, updatedAt: now }] : []);
     const saved = readProgress(this.storage, this.siteId);
     this.#solutions = saved.solutions ?? {};
+    this.#limits = saved.limits ?? {};
     const quizzes = p.quizzes.map((q) => ({
       ...(this.#solutions[q.id] ? withSolutions(q, this.#solutions[q.id]) : q),
       status: 'published' as const,
+      // reglages.js : seuil commun à tout le site ; durée fixée par le surveillant (examen corrigé par le serveur).
+      ...(threshold !== null ? { passThreshold: threshold } : {}),
+      ...(this.#limits[q.id] ? { timeLimitSec: this.#limits[q.id] } : {}),
       // « teacher » : corrigé publié par l'enseignant, seulement avec la correction par le serveur (lib/exam).
       ...(settings.modes === 'exam'
         ? { solutionVisibility: settings.solutions === 'end' || (settings.solutions === 'teacher' && data.server) ? ('after_submit' as const) : ('never' as const) }
@@ -116,6 +124,7 @@ export class SiteRepository extends MemoryRepository {
       rewards: await this.listRewards(),
       settings,
       solutions: this.#solutions,
+      limits: this.#limits,
     };
     try {
       this.storage.setItem(progressKey(this.siteId), JSON.stringify(progress));
@@ -135,6 +144,21 @@ export class SiteRepository extends MemoryRepository {
     for (const { id } of await this.listAttempts(quizId)) {
       const a = await this.getAttempt(id);
       if (a?.quizSnapshot) await super.saveAttempt({ ...a, quizSnapshot: withSolutions(a.quizSnapshot, solutions) });
+    }
+    this.#persist();
+  }
+
+  /** Examen corrigé par le serveur : durée donnée par le serveur au début de la tentative (null : aucune). */
+  async setTimeLimit(quizId: string, sec: number | null) {
+    const quiz = await this.getQuiz(quizId);
+    if (sec) this.#limits[quizId] = sec;
+    else delete this.#limits[quizId];
+    if (quiz && sec && quiz.timeLimitSec !== sec) {
+      await this.saveQuiz({ ...quiz, timeLimitSec: sec });
+      for (const { id } of await this.listAttempts(quizId)) {
+        const a = await this.getAttempt(id);
+        if (a?.quizSnapshot) await super.saveAttempt({ ...a, quizSnapshot: { ...a.quizSnapshot, timeLimitSec: sec } });
+      }
     }
     this.#persist();
   }
@@ -174,6 +198,6 @@ export class SiteRepository extends MemoryRepository {
 export async function openSite(): Promise<SiteRepository> {
   const data = siteData();
   const repo = new SiteRepository(data?.id ?? 'sans-donnees');
-  if (data) await repo.load(data, siteSettings());
+  if (data) await repo.load(data, siteSettings(), siteThreshold());
   return repo;
 }

@@ -102,12 +102,15 @@
       {#if solution}
         <a class="button" href={to(`/attempt/${id}/review`)}>{t('result.review')}</a>
       {/if}
-      {#if missed.length > 0 && missed.length < Object.keys(result.perQuestion).length}
-        <button class="secondary" disabled={busy} onclick={() => retry(true)}>
-          {t('result.retryMissed')} ({missed.length})
-        </button>
+      <!-- Examen corrigé par le serveur : une seule copie par QCM, pas de nouvelle tentative. -->
+      {#if !serverGrading()}
+        {#if missed.length > 0 && missed.length < Object.keys(result.perQuestion).length}
+          <button class="secondary" disabled={busy} onclick={() => retry(true)}>
+            {t('result.retryMissed')} ({missed.length})
+          </button>
+        {/if}
+        <button class="secondary" disabled={busy} onclick={() => retry(false)}>{t('result.retry')}</button>
       {/if}
-      <button class="secondary" disabled={busy} onclick={() => retry(false)}>{t('result.retry')}</button>
     </div>
     {#if locked}
       <p class="muted">{t('site.locked')}</p>

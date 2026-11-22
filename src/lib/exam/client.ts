@@ -114,6 +114,7 @@ export async function gradeOnServer(
     throw new GradeError('server');
   }
   if ((body as { error?: unknown } | null)?.error === 'copie') throw new GradeError('record');
+  if ((body as { error?: unknown } | null)?.error === 'debut') throw new GradeError('start');
   if (!res.ok || !isGradeResponse(body, request.questions)) throw new GradeError('server');
   return body;
 }
@@ -127,9 +128,61 @@ export async function fetchCorrection(quiz: Quiz, attempt: Attempt, answers: rea
   return grade.locked || !grade.perQuestion ? null : grade;
 }
 
+/** POST JSON à corriger.php ; réponse JSON (ou erreur explicite). */
+async function post(body: unknown, fetcher: typeof fetch): Promise<{ ok: boolean; body: Record<string, unknown> | null }> {
+  let res: Response;
+  try {
+    res = await fetcher(GRADER_PATH, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), cache: 'no-store' });
+  } catch {
+    throw new GradeError('network');
+  }
+  try {
+    const json = (await res.json()) as unknown;
+    return { ok: res.ok, body: json && typeof json === 'object' ? (json as Record<string, unknown>) : null };
+  } catch {
+    throw new GradeError('server');
+  }
+}
+
+/** État de l'examen avant de commencer : ouvert, code d'accès demandé, durée fixée par le surveillant (minutes). */
+export interface ExamState {
+  open: boolean;
+  code: boolean;
+  minutes: number | null;
+}
+
+export async function examState(fetcher: typeof fetch = fetch): Promise<ExamState> {
+  const r = await post({ action: 'etat' }, fetcher);
+  if (!r.ok || !r.body || typeof r.body.ouvert !== 'boolean') throw new GradeError('server');
+  return { open: r.body.ouvert, code: r.body.code === true, minutes: typeof r.body.duree === 'number' ? r.body.duree : null };
+}
+
+/**
+ * Début d'une tentative auprès du serveur (examen ouvert, bon code) : il note l'heure, qui fait foi pour la
+ * durée. Renvoie la durée allouée en secondes (null : aucune).
+ */
+export async function startOnServer(
+  quizId: string,
+  attemptId: string,
+  candidate: { name: string; group: string } | undefined,
+  code: string,
+  fetcher: typeof fetch = fetch,
+): Promise<number | null> {
+  const r = await post({ action: 'debut', quiz: quizId, attempt: { id: attemptId }, code, ...(candidate ? { candidate } : {}) }, fetcher);
+  const error = r.body?.error;
+  if (error === 'ferme') throw new GradeError('closed');
+  if (error === 'code') throw new GradeError('code');
+  if (error === 'copie') throw new GradeError('record');
+  if (!r.ok || r.body?.ok !== true) throw new GradeError('server');
+  return typeof r.body.limitSec === 'number' && r.body.limitSec > 0 ? r.body.limitSec : null;
+}
+
 export class GradeError extends Error {
-  /** network : serveur injoignable ; server : pas de correction (PHP absent…) ; record : copie non enregistrée. */
-  constructor(readonly reason: 'network' | 'server' | 'record') {
+  /**
+   * network : serveur injoignable ; server : pas de correction (PHP absent…) ; record : copie non enregistrée ;
+   * closed : examen fermé ; code : mauvais code d'accès ; start : tentative non commencée auprès du serveur.
+   */
+  constructor(readonly reason: 'network' | 'server' | 'record' | 'closed' | 'code' | 'start') {
     super(reason);
   }
 }

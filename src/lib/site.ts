@@ -161,8 +161,21 @@ ${
   // Corrigé de l'examen : "fin" (après l'envoi des réponses) ou "jamais".`
 }
   corrige: "${SOLUTION_LABELS[server ? s.solutions : s.solutions === 'teacher' ? 'never' : s.solutions]}",
+  // Seuil de réussite, en % (par exemple "50"), pour tous les QCM du site ; "" : celui de chaque QCM.${server ? '\n  // Appliqué aussi par le serveur.' : ''}
+  seuil: "",
 };
 `;
+
+/** Seuil de réussite de `reglages.js` (`seuil: "50"`, en %), entre 0,01 et 1 ; null : celui de chaque QCM. */
+export function resolveThreshold(override?: unknown): number | null {
+  const v = (override as { seuil?: unknown } | null)?.seuil;
+  const text = typeof v === 'number' ? String(v) : typeof v === 'string' ? v.trim().replace(',', '.') : '';
+  if (!/^\d{1,3}(\.\d+)?$/.test(text)) return null;
+  const n = Number(text);
+  return n >= 1 && n <= 100 ? n / 100 : null;
+}
+export const siteThreshold = () =>
+  resolveThreshold(typeof window === 'undefined' ? null : (window as { ABBON_SITE_SETTINGS?: unknown }).ABBON_SITE_SETTINGS);
 
 /** Texte de `donnees.js`. Le JSON est échappé pour ne jamais fermer la balise script. */
 export const siteScript = (data: SiteData) =>

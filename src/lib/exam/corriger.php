@@ -175,7 +175,7 @@ function abbon_solution($q) {
  * Renvoie le résultat complet (note, détail par question, corrigé), ou ['error' => code] ; ce que l'élève en
  * reçoit est choisi par abbon_visible.
  */
-function abbon_corriger($solutions, $request) {
+function abbon_corriger($solutions, $request, $seuil = null) {
   if (!is_array($request) || !isset($request['quiz']) || !is_string($request['quiz'])) return array('error' => 'requete');
   if (!isset($solutions['quizzes'][$request['quiz']])) return array('error' => 'qcm');
   $quiz = $solutions['quizzes'][$request['quiz']];
@@ -198,6 +198,7 @@ function abbon_corriger($solutions, $request) {
   if (!$per) return array('error' => 'questions');
   $score = abbon_round2($score);
   $ratio = $max > 0 ? $score / $max : 0;
+  if ($seuil !== null) $quiz['passThreshold'] = $seuil;
   $out = array(
     'score' => $score,
     'maxScore' => $max,
@@ -321,9 +322,9 @@ const ABBON_COPIES_ENTETE = "<?php exit; ?>\n";
  * Ajoute une copie à $dir/copies.php (une ligne JSON par copie ; la première ligne empêche de lire le fichier par
  * le web). Une copie déjà enregistrée (même identifiant de tentative, envoi répété) n'est pas ajoutée deux fois.
  */
-function abbon_enregistrer($dir, $copie) {
+function abbon_enregistrer($dir, $copie, $name = 'copies.php') {
   if (!is_dir($dir) && !@mkdir($dir, 0755, true)) return false;
-  $file = $dir . '/copies.php';
+  $file = $dir . '/' . $name;
   $h = @fopen($file, 'c+');
   if (!$h) return false;
   $ok = false;
@@ -346,9 +347,9 @@ function abbon_enregistrer($dir, $copie) {
   return $ok;
 }
 
-/** Copies enregistrées, de la plus récente à la plus ancienne. */
-function abbon_lire_copies($dir) {
-  $file = $dir . '/copies.php';
+/** Copies (ou débuts : debuts.php) enregistrées, de la plus récente à la plus ancienne. */
+function abbon_lire_copies($dir, $name = 'copies.php') {
+  $file = $dir . '/' . $name;
   if (!is_readable($file)) return array();
   $out = array();
   foreach (file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $i => $line) {
@@ -357,6 +358,129 @@ function abbon_lire_copies($dir) {
     if (is_array($c) && isset($c['id'])) $out[] = $c;
   }
   return array_reverse($out);
+}
+
+// ---- Ouverture de l'examen, débuts, seuil ------------------------------------------------------------
+
+/** Petit état JSON gardé dans copies/<nom>.php (illisible par le web) ; tableau vide s'il est absent. */
+function abbon_etat($dir, $name) {
+  $file = $dir . '/' . $name . '.php';
+  if (!is_readable($file)) return array();
+  $lines = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+  $data = json_decode(isset($lines[1]) ? $lines[1] : '', true);
+  return is_array($data) ? $data : array();
+}
+
+function abbon_ecrire_etat($dir, $name, $data) {
+  if (!is_dir($dir) && !@mkdir($dir, 0755, true)) return false;
+  $json = json_encode((object) $data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+  return @file_put_contents($dir . '/' . $name . '.php', ABBON_COPIES_ENTETE . $json . "\n", LOCK_EX) !== false;
+}
+
+/** Ouverture : ['ouvert' => bool, 'code' => '', 'duree' => minutes ou null, 'depuis' => date, 'ferme' => date]. Fermé par défaut. */
+function abbon_ouverture($dir) {
+  $o = abbon_etat($dir, 'ouverture');
+  return array(
+    'ouvert' => !empty($o['ouvert']),
+    'code' => isset($o['code']) && is_string($o['code']) ? $o['code'] : '',
+    'duree' => isset($o['duree']) && is_int($o['duree']) && $o['duree'] > 0 ? $o['duree'] : null,
+    'depuis' => isset($o['depuis']) ? $o['depuis'] : null,
+    'ferme' => isset($o['ferme']) ? $o['ferme'] : null,
+  );
+}
+
+/** Code d'accès comparé sans tenir compte des majuscules ni des espaces. */
+function abbon_meme_code($a, $b) {
+  $n = function ($s) { return mb_strtolower(preg_replace('/\s+/u', '', (string) $s), 'UTF-8'); };
+  return hash_equals($n($a), $n($b));
+}
+
+/** Durée allouée (secondes) : celle de l'ouverture, sinon celle du QCM, sinon aucune (null). */
+function abbon_limite($ouverture, $quiz) {
+  if ($ouverture['duree']) return $ouverture['duree'] * 60;
+  return isset($quiz['timeLimitSec']) && is_int($quiz['timeLimitSec']) && $quiz['timeLimitSec'] > 0 ? $quiz['timeLimitSec'] : null;
+}
+
+/** Délai de grâce (secondes) avant de signaler une copie « hors délai » : envoi, réseau. */
+const ABBON_GRACE = 60;
+
+/** Début enregistré d'une tentative, ou null. */
+function abbon_debut($dir, $id) {
+  foreach (abbon_lire_copies($dir, 'debuts.php') as $d) if ($d['id'] === $id) return $d;
+  return null;
+}
+
+/** Seuil de réussite de reglages.js (seuil: "60", en %), ou null : celui de chaque QCM. */
+function abbon_seuil($file = null) {
+  $v = abbon_reglage('seuil', $file);
+  if ($v === null || !preg_match('/^\d{1,3}([.,]\d+)?$/', $v)) return null;
+  $n = (float) str_replace(',', '.', $v);
+  return $n >= 1 && $n <= 100 ? $n / 100 : null;
+}
+
+/** Identifiant de tentative envoyé par le lecteur, ou null s'il est absent ou illisible. */
+function abbon_tentative($request) {
+  $a = isset($request['attempt']) && is_array($request['attempt']) ? $request['attempt'] : array();
+  return isset($a['id']) && is_string($a['id']) && preg_match('/^[A-Za-z0-9_-]{1,64}$/', $a['id']) ? $a['id'] : null;
+}
+
+/**
+ * Traite une demande du lecteur et renvoie [statut HTTP, réponse] : état de l'examen (« etat »), début d'une
+ * tentative (« debut »), corrigé redemandé (« corrige ») ou copie à corriger (sans action).
+ * $dir : dossier copies/ ; $reglages : chemin de reglages.js (null : celui du site) ; $now : pour les tests.
+ */
+function abbon_traiter($solutions, $request, $dir, $reglages = null, $now = null) {
+  $action = isset($request['action']) && is_string($request['action']) ? $request['action'] : '';
+  $ouverture = abbon_ouverture($dir);
+
+  // État de l'examen, avant de commencer : ouvert ou non, code demandé ou non (jamais le code lui-même).
+  if ($action === 'etat') {
+    return array(200, array('ouvert' => $ouverture['ouvert'], 'code' => $ouverture['code'] !== '', 'duree' => $ouverture['duree']));
+  }
+  $quizId = isset($request['quiz']) && is_string($request['quiz']) ? $request['quiz'] : '';
+  if (!isset($solutions['quizzes'][$quizId])) return array(400, array('error' => 'qcm'));
+  $quiz = $solutions['quizzes'][$quizId];
+  $id = abbon_tentative($request);
+
+  // Début d'une tentative : examen ouvert, bon code ; l'heure du serveur fait foi pour la durée.
+  if ($action === 'debut') {
+    if ($id === null) return array(400, array('error' => 'requete'));
+    if (!$ouverture['ouvert']) return array(403, array('error' => 'ferme'));
+    if ($ouverture['code'] !== '' && !abbon_meme_code($ouverture['code'], isset($request['code']) ? $request['code'] : '')) {
+      sleep(1);
+      return array(403, array('error' => 'code'));
+    }
+    $c = isset($request['candidate']) && is_array($request['candidate']) ? $request['candidate'] : array();
+    $debut = array('id' => $id, 't' => $now === null ? time() : $now, 'qcm' => $quizId, 'nom' => abbon_texte(isset($c['name']) ? $c['name'] : '', 100), 'groupe' => abbon_texte(isset($c['group']) ? $c['group'] : '', 60));
+    if (!abbon_enregistrer($dir, $debut, 'debuts.php')) return array(500, array('error' => 'copie'));
+    return array(200, array('ok' => true, 'limitSec' => abbon_limite($ouverture, $quiz)));
+  }
+
+  $out = abbon_corriger($solutions, $request, abbon_seuil($reglages));
+  if (isset($out['error'])) return array(400, $out);
+  $corrige = abbon_corrige(isset($solutions['corrige']) ? $solutions['corrige'] : 'enseignant', $reglages);
+  $published = isset(abbon_publication($dir)[$quizId]);
+  $visible = abbon_visible($out, $corrige, $published);
+  // Demande du corrigé après coup (« Vérifier ») : rien n'est enregistré.
+  if ($action === 'corrige') return array(200, $visible);
+
+  // Copie : seulement pour une tentative commencée auprès du serveur (examen ouvert, bon code).
+  $debut = $id === null ? null : abbon_debut($dir, $id);
+  if ($debut === null) return array(403, array('error' => 'debut'));
+  if (abbon_collecte($reglages)) {
+    $now = $now === null ? time() : $now;
+    $copie = abbon_copie($solutions, $request, $out, $now);
+    $limit = abbon_limite($ouverture, $quiz);
+    $copie['debut'] = gmdate('Y-m-d\TH:i:s\Z', $debut['t']);
+    $copie['dureeServeur'] = $now - $debut['t'];
+    $copie['horsDelai'] = $limit !== null && $now - $debut['t'] > $limit + ABBON_GRACE;
+    $copie['apresFermeture'] = !$ouverture['ouvert'];
+    // Copie non enregistrée (dossier copies/ non accessible en écriture…) : l'élève est prévenu, sa tentative
+    // reste ouverte et pourra être renvoyée.
+    if (!abbon_enregistrer($dir, $copie)) return array(500, array('error' => 'copie'));
+    $visible['recorded'] = true;
+  }
+  return array(200, $visible);
 }
 
 if (!defined('ABBON_CORRIGER_BIBLIOTHEQUE')) {
@@ -374,18 +498,6 @@ if (!defined('ABBON_CORRIGER_BIBLIOTHEQUE')) {
   if (!is_array($request)) $reply(400, array('error' => 'requete'));
   $solutions = require __DIR__ . '/solutions.php';
   if (!is_array($solutions) || !isset($solutions['quizzes'])) $reply(500, array('error' => 'solutions'));
-  $out = abbon_corriger($solutions, $request);
-  if (isset($out['error'])) $reply(400, $out);
-  $corrige = abbon_corrige(isset($solutions['corrige']) ? $solutions['corrige'] : 'enseignant');
-  $published = isset(abbon_publication(__DIR__ . '/copies')[$request['quiz']]);
-  $visible = abbon_visible($out, $corrige, $published);
-  // Demande du corrigé après coup (« Vérifier ») : rien n'est enregistré.
-  if (isset($request['action']) && $request['action'] === 'corrige') $reply(200, $visible);
-  if (abbon_collecte()) {
-    // Copie non enregistrée (dossier copies/ non accessible en écriture…) : l'élève est prévenu, sa tentative
-    // reste ouverte et pourra être renvoyée.
-    if (!abbon_enregistrer(__DIR__ . '/copies', abbon_copie($solutions, $request, $out))) $reply(500, array('error' => 'copie'));
-    $visible['recorded'] = true;
-  }
-  $reply(200, $visible);
+  list($status, $data) = abbon_traiter($solutions, $request, __DIR__ . '/copies');
+  $reply($status, $data);
 }

@@ -129,7 +129,17 @@ mutualisés). Ni base de données ni réglage particulier.
    Sans PHP (ou en ouvrant index.html depuis son disque), le site affiche que la correction est impossible.
 
 Espace enseignant : ouvrir examen/enseignant.php dans un navigateur (par exemple
-https://exemple.fr/examen-svt/examen/enseignant.php) et saisir le mot de passe de examen/config.php.
+https://exemple.fr/examen-svt/examen/enseignant.php) et saisir le mot de passe de examen/config.php. Utiliser
+de préférence une adresse en https (le mot de passe passe par un formulaire).
+
+Déroulement : l'examen est fermé tant que le surveillant ne l'a pas ouvert. Dans l'espace enseignant, « Ouvrir
+l'examen », avec un code d'accès (facultatif, à écrire au tableau) et une durée en minutes (facultative ; sinon
+celle de chaque QCM, s'il en a une). Les élèves ne peuvent commencer que pendant l'ouverture, avec le bon code ; le
+serveur note l'heure de début de chacun, et la liste des élèves en cours s'affiche. À la fin, « Fermer l'examen » :
+plus personne ne peut commencer ; une copie rendue ensuite reste acceptée, marquée « après la fermeture ». Une
+copie rendue après la durée (plus une minute de marge), mesurée par le serveur, est marquée « hors délai ». Chaque
+élève ne rend qu'une copie par QCM (le site ne propose pas de recommencer) ; plusieurs copies au même nom sont
+signalées.
 
 Corrigé : par défaut (corrige: "enseignant"), l'élève qui rend sa copie ne voit que sa note. Quand le temps de
 l'épreuve est écoulé, publier le corrigé de chaque QCM dans l'espace enseignant (bouton « Publier ») : les élèves
@@ -140,19 +150,19 @@ Copies : avant l'examen, chaque élève indique son nom (et, s'il le souhaite, s
 copie corrigée est gardée sur le serveur, dans examen/copies/copies.php (illisible par le web), et s'affiche dans
 l'espace enseignant ; la liste se télécharge au format CSV (tableur). Le serveur doit pouvoir écrire dans le
 dossier examen/copies/ (c'est le cas par défaut chez la plupart des hébergeurs ; sinon, lui donner les droits
-d'écriture, 755 ou 775, avec le client FTP). Pour repartir de zéro, supprimer examen/copies/copies.php (et
-examen/copies/publication.php pour retirer tous les corrigés publiés). Les noms des élèves sont des données
+d'écriture, 755 ou 775, avec le client FTP). Pour repartir de zéro : « Supprimer toutes les copies » dans
+l'espace enseignant (après avoir téléchargé le CSV). Les noms des élèves sont des données
 personnelles : ne garder les copies que le temps nécessaire, et informer les élèves.
 
 Réglages (fichier reglages.js, relu par le serveur à chaque correction) :
 - corrige : "enseignant" (publié dans l'espace enseignant), "fin" (dès que l'élève rend sa copie) ou "jamais"
   (la note et le détail par question, jamais le corrigé) ;
-- copies : "oui" (nom demandé, copies gardées) ou "non" (rien n'est gardé sur le serveur).
+- copies : "oui" (nom demandé, copies gardées) ou "non" (rien n'est gardé sur le serveur) ;
+- seuil : seuil de réussite en % pour tous les QCM (par exemple "50") ; "" : celui de chaque QCM.
 
-Limites : un élève peut repasser l'examen (chaque copie est gardée, avec sa date) et indiquer un autre nom que le
-sien ; une fois le corrigé publié (ou avec corrige: "fin"), les réponses peuvent circuler : repasser l'examen
-après la publication n'a plus de sens. Le chronomètre est mesuré par
-le navigateur.
+Limites : un élève peut indiquer un autre nom que le sien, ou, en vidant les données de son navigateur, commencer
+une seconde copie tant que l'examen est ouvert (signalée si le nom est le même) ; une fois le corrigé publié (ou
+avec corrige: "fin"), les réponses peuvent circuler : fermer l'examen avant de publier le corrigé.
 
 Pour mettre le site à jour, exporter de nouveau depuis Abbon avec le même titre et remplacer les fichiers, y
 compris examen/solutions.php, mais pas le dossier examen/copies/ (les copies déjà reçues) ; garder son

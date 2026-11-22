@@ -17,8 +17,8 @@ import { resultOf } from '$lib/domain/session';
 import type { Answer, Attempt, InstalledModule, Question, Quiz } from '$lib/domain/types';
 import { parsePackage } from '$lib/interchange/qcmPackage';
 import { siteContent, siteDataOf, zipSite } from '$lib/interchange/siteExport';
-import { parseCandidate, resolveCollect, resolveSettings, settingsScript } from '$lib/site';
-import { detailLocked, finishWithGrade, gradeRequest, isGradeResponse, withDetail, withSolutions } from './client';
+import { parseCandidate, resolveCollect, resolveSettings, resolveThreshold, settingsScript } from '$lib/site';
+import { detailLocked, examState, finishWithGrade, gradeOnServer, gradeRequest, isGradeResponse, startOnServer, withDetail, withSolutions } from './client';
 import { publicQuiz, serverSolutions, solutionsPhp } from './publish';
 import { CORRIGER_PHP, ENSEIGNANT_PHP, examFiles, newPassword } from './server';
 import type { GradeRequest, GradeResponse } from './types';
@@ -379,8 +379,8 @@ echo json_encode(array('corrige' => abbon_corrige('fin', $reglages), 'collecte' 
       expect(html).toContain('&lt;b&gt;');
       expect(html).not.toContain('<b>');
       const csv = view({ motdepasse: 'Secret23abcd', format: 'csv' });
-      expect(csv.split('\r\n')[0]).toBe('﻿"Date";"Nom";"Classe ou groupe";"QCM";"Note";"Sur";"Pourcentage";"Réussi";"Durée";"Identifiant"');
-      expect(csv).toContain(`"'=HYPERLINK(""x"") Ada <b>";"TG2";"Examen";"2";"19";"10,53";"non";"0:00";"a1"`);
+      expect(csv.split('\r\n')[0]).toBe('﻿"Date";"Nom";"Classe ou groupe";"QCM";"Note";"Sur";"Pourcentage";"Réussi";"Durée";"Remarques";"Identifiant"');
+      expect(csv).toContain(`"'=HYPERLINK(""x"") Ada <b>";"TG2";"Examen";"2";"19";"10,53";"non";"0:00";"";"a1"`);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -471,5 +471,137 @@ describe('corrigé publié par l’enseignant : lecteur', () => {
       await repo.load(data, resolveSettings(data));
       expect((await repo.getQuiz(quiz.id))?.solutionVisibility).toBe(visibility);
     }
+  });
+
+  it('ouverture, code d’accès, début enregistré, hors délai, après fermeture, seuil, suppression', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'abbon-php-'));
+    try {
+      for (const [f, text] of Object.entries(examFiles([{ ...quiz, timeLimitSec: 600 }], 'teacher', 'Secret23abcd'))) {
+        mkdirSync(dirname(join(dir, f)), { recursive: true });
+        writeFileSync(join(dir, f), text);
+      }
+      writeFileSync(join(dir, 'reglages.js'), settingsScript({ modes: 'exam', solutions: 'teacher' }, true).replace('seuil: ""', 'seuil: "5"'));
+      const pub = publicQuiz(quiz);
+      const copy = (id: string, name: string) => ({
+        ...gradeRequest(pub, { ...attempt, id }, [answer('q0', { selected: ['c1'] })], { name, group: '' }),
+      });
+      // Demandes successives, avec l'heure simulée du serveur.
+      const steps: [number, Record<string, unknown>][] = [
+        [1000, { action: 'etat' }],
+        [1000, { action: 'debut', quiz: quiz.id, attempt: { id: 'a1' }, code: '' }],
+        [1000, { ...copy('a1', 'Ada') }],
+        [1000, { action: 'OUVRIR' }],
+        [1000, { action: 'etat' }],
+        [1000, { action: 'debut', quiz: quiz.id, attempt: { id: 'a1' }, code: 'faux' }],
+        [1000, { action: 'debut', quiz: quiz.id, attempt: { id: 'a1' }, code: ' b7 x ', candidate: { name: 'Ada', group: 'TG2' } }],
+        [1000, { action: 'debut', quiz: quiz.id, attempt: { id: 'a2' }, code: 'B7X', candidate: { name: 'Ada', group: 'TG2' } }],
+        [1000, { action: 'debut', quiz: quiz.id, attempt: { id: 'a3' }, code: 'B7X', candidate: { name: 'Bob', group: '' } }],
+        [1500, { ...copy('a1', 'Ada') }], // 500 s : dans les temps (durée du QCM : 600 s)
+        [1700, { ...copy('a2', 'Ada') }], // 700 s : hors délai (600 s + 60 s de marge)
+        [1700, { action: 'FERMER' }],
+        [1000, { action: 'debut', quiz: quiz.id, attempt: { id: 'a4' }, code: 'B7X' }],
+      ];
+      writeFileSync(join(dir, 'etapes.json'), JSON.stringify(steps));
+      writeFileSync(
+        join(dir, 'test.php'),
+        `<?php
+define('ABBON_CORRIGER_BIBLIOTHEQUE', true);
+require __DIR__ . '/examen/corriger.php';
+$solutions = require __DIR__ . '/examen/solutions.php';
+$dir = __DIR__ . '/examen/copies';
+$out = array();
+foreach (json_decode(file_get_contents(__DIR__ . '/etapes.json'), true) as $step) {
+  list($now, $r) = $step;
+  if (isset($r['action']) && $r['action'] === 'OUVRIR') { $out[] = abbon_ecrire_etat($dir, 'ouverture', array('ouvert' => true, 'code' => 'B7X', 'duree' => null)); continue; }
+  if (isset($r['action']) && $r['action'] === 'FERMER') { $out[] = abbon_ecrire_etat($dir, 'ouverture', array('ouvert' => false, 'code' => 'B7X')); continue; }
+  $out[] = abbon_traiter($solutions, $r, $dir, __DIR__ . '/reglages.js', $now);
+}
+$out[] = abbon_lire_copies($dir);
+echo json_encode($out, JSON_UNESCAPED_UNICODE);
+`,
+      );
+      const r = JSON.parse(execFileSync('php', [join(dir, 'test.php')]).toString());
+      expect(r[0]).toEqual([200, { ouvert: false, code: false, duree: null }]); // fermé par défaut
+      expect(r[1]).toEqual([403, { error: 'ferme' }]);
+      expect(r[2]).toEqual([403, { error: 'debut' }]); // copie sans début : refusée
+      expect(r[4]).toEqual([200, { ouvert: true, code: true, duree: null }]); // le code n'est jamais renvoyé
+      expect(r[5]).toEqual([403, { error: 'code' }]);
+      expect(r[6]).toEqual([200, { ok: true, limitSec: 600 }]); // code sans majuscules ni espaces
+      expect(r[7][0]).toBe(200);
+      // Seuil de reglages.js (5 %) : 1 point sur 19 suffit ; corrigé pas publié : la note seule.
+      expect(r[9]).toEqual([200, { score: 1, maxScore: 19, ratio: 1 / 19, passed: true, locked: true, recorded: true }]);
+      expect(r[10][0]).toBe(200);
+      expect(r[12]).toEqual([403, { error: 'ferme' }]);
+      const copies = r[13];
+      expect(copies.map((c: { id: string }) => c.id)).toEqual(['a2', 'a1']);
+      expect(copies[1]).toMatchObject({ dureeServeur: 500, horsDelai: false, apresFermeture: false, debut: '1970-01-01T00:16:40Z' });
+      expect(copies[0]).toMatchObject({ dureeServeur: 700, horsDelai: true });
+
+      // Espace enseignant : en cours, remarques, ouverture avec durée, suppression confirmée.
+      const view = (post: Record<string, string>) => {
+        writeFileSync(join(dir, 'vue.php'), `<?php $_POST = json_decode(${JSON.stringify(JSON.stringify(post))}, true); include __DIR__ . '/examen/enseignant.php';`);
+        return execFileSync('php', [join(dir, 'vue.php')]).toString();
+      };
+      const html = view({ motdepasse: 'Secret23abcd' });
+      expect(html).toContain('<strong>Fermé</strong>');
+      expect(html).toContain('1 élève en cours');
+      expect(html).toContain('Bob');
+      expect(html).toContain('hors délai, 2 copies à ce nom');
+      expect(html).toContain('8:20'); // durée mesurée par le serveur (500 s)
+      const opened = view({ motdepasse: 'Secret23abcd', action: 'ouvrir', code: '<K9>', duree: '45' });
+      expect(opened).toContain('Examen ouvert.');
+      expect(opened).toContain('durée : 45 min');
+      expect(opened).toContain('&lt;K9&gt;');
+      expect(view({ action: 'fermer' })).not.toContain('Examen fermé');
+      expect(view({ motdepasse: 'Secret23abcd', action: 'supprimer-copies' })).toContain('Cocher « Je confirme »');
+      const cleared = view({ motdepasse: 'Secret23abcd', action: 'supprimer-copies', confirmer: '1' });
+      expect(cleared).toContain('Copies supprimées.');
+      expect(cleared).toContain('0 copie,');
+      expect(cleared).not.toContain('élève en cours');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('ouverture, durée et seuil : lecteur', () => {
+  it('seuil de reglages.js', () => {
+    expect(resolveThreshold({ seuil: '50' })).toBe(0.5);
+    expect(resolveThreshold({ seuil: ' 62,5 ' })).toBe(0.625);
+    expect(resolveThreshold({ seuil: 75 })).toBe(0.75);
+    for (const v of ['', '0', '101', 'abc', null]) expect(resolveThreshold({ seuil: v })).toBeNull();
+    expect(resolveThreshold(null)).toBeNull();
+    expect(settingsScript({ modes: 'both', solutions: 'end' })).toContain('seuil: ""');
+  });
+
+  it('seuil appliqué au chargement ; durée donnée par le serveur gardée avec la progression', async () => {
+    const data = await siteDataOf(siteContent([quiz], [], []), new Map(), { title: 'T', modes: 'exam', solutions: 'teacher', server: true }, '0.2.0');
+    const m = new Map<string, string>();
+    const storage = { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v) };
+    const repo = new SiteRepository(data.id, storage);
+    await repo.load(data, resolveSettings(data), 0.4);
+    expect((await repo.getQuiz(quiz.id))?.passThreshold).toBe(0.4);
+    await repo.saveAttempt({ ...attempt, quizSnapshot: await repo.getQuiz(quiz.id) });
+    await repo.setTimeLimit(quiz.id, 2700);
+    expect((await repo.getQuiz(quiz.id))?.timeLimitSec).toBe(2700);
+    expect((await repo.getAttempt(attempt.id))?.quizSnapshot?.timeLimitSec).toBe(2700);
+    await repo.flush();
+    const again = new SiteRepository(data.id, storage);
+    await again.load(data, resolveSettings(data));
+    expect((await again.getQuiz(quiz.id))?.timeLimitSec).toBe(2700);
+    expect((await again.getQuiz(quiz.id))?.passThreshold).toBe(0.5);
+  });
+
+  it('demandes au serveur : état, début, erreurs', async () => {
+    const reply = (status: number, body: unknown) => (async () => new Response(JSON.stringify(body), { status })) as unknown as typeof fetch;
+    expect(await examState(reply(200, { ouvert: true, code: true, duree: 45 }))).toEqual({ open: true, code: true, minutes: 45 });
+    expect(await startOnServer('q', 'a', undefined, 'X', reply(200, { ok: true, limitSec: 600 }))).toBe(600);
+    expect(await startOnServer('q', 'a', undefined, 'X', reply(200, { ok: true, limitSec: null }))).toBeNull();
+    for (const [error, reason] of [['ferme', 'closed'], ['code', 'code'], ['copie', 'record']] as const) {
+      await expect(startOnServer('q', 'a', undefined, '', reply(403, { error }))).rejects.toMatchObject({ reason });
+    }
+    await expect(gradeOnServer(quiz, attempt, [], undefined, reply(403, { error: 'debut' }))).rejects.toMatchObject({ reason: 'start' });
+    const html = (async () => new Response('<?php', { status: 200 })) as unknown as typeof fetch;
+    await expect(examState(html)).rejects.toMatchObject({ reason: 'server' });
   });
 });

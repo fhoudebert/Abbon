@@ -37,6 +37,8 @@ export interface ServerSolutions {
     {
       /** Titre affiché dans la liste des copies. */
       title: string;
+      /** Durée du QCM (secondes), si elle est fixée : contrôlée par le serveur. */
+      timeLimitSec: number | null;
       scoring: Quiz['scoring'];
       passThreshold: number;
       questions: Record<string, Record<string, unknown>>;
@@ -67,7 +69,7 @@ export function serverSolutions(quizzes: readonly Quiz[], solutions: SiteSolutio
       questions[q.id] = entry;
     }
     const title = quiz.title[quiz.languages[0]] ?? Object.values(quiz.title)[0] ?? quiz.id;
-    out.quizzes[quiz.id] = { title, scoring: quiz.scoring, passThreshold: quiz.passThreshold, questions };
+    out.quizzes[quiz.id] = { title, timeLimitSec: quiz.timeLimitSec ?? null, scoring: quiz.scoring, passThreshold: quiz.passThreshold, questions };
   }
   return out;
 }
