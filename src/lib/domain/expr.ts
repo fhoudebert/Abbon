@@ -525,3 +525,40 @@ export function expressionProblem(latex: string, opts: CompareOptions = {}): str
     return err instanceof ExprError ? err.message : String(err);
   }
 }
+
+// ---- Correction côté serveur (examen d'un site web, voir lib/exam) ----------
+
+/**
+ * Points de test d'une expression attendue et valeurs qu'elle y prend (null hors de son domaine) : les points
+ * sont publiés avec la question, les valeurs restent sur le serveur. Mêmes points que `sameExpression`.
+ */
+export function expressionSamples(expected: string, opts: CompareOptions = {}): { samples: Record<string, number>[]; values: (number | null)[]; hasVars: boolean } {
+  const e = parseExpr(opts.constant ? stripConstant(expected) : expected);
+  const vars = variablesOf(e);
+  const samples = vars.length ? samplePoints(vars, expected) : [{}];
+  const values = samples.map((p) => {
+    const v = evaluate(e, p);
+    return Number.isFinite(v) ? v : null;
+  });
+  return { samples, values, hasVars: vars.length > 0 };
+}
+
+/**
+ * Valeurs de la formule de l'élève aux points de test (null hors de son domaine), ou null si elle est
+ * illisible ou emploie une variable absente des points.
+ */
+export function expressionValues(given: string, samples: readonly Record<string, number>[], opts: CompareOptions = {}): (number | null)[] | null {
+  let g: Expr;
+  try {
+    const rhs = rightHandSide(given);
+    g = parseExpr(opts.constant ? stripConstant(rhs) : rhs);
+  } catch {
+    return null;
+  }
+  const known = new Set(Object.keys(samples[0] ?? {}));
+  if (variablesOf(g).some((v) => !known.has(v))) return null;
+  return samples.map((p) => {
+    const v = evaluate(g, p);
+    return Number.isFinite(v) ? v : null;
+  });
+}

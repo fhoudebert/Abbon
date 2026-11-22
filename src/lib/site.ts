@@ -27,6 +27,11 @@ export interface SiteData {
   solutions?: SiteSolutions;
   /** Premiers exports : examen seulement. */
   examOnly?: boolean;
+  /**
+   * Examen corrigé par le serveur : le paquet ne contient pas les réponses, `examen/corriger.php` note les
+   * tentatives (lib/exam). Le site est alors en examen seulement.
+   */
+  server?: boolean;
   /** Archive .qcm (module ou sauvegarde sans historique), en base 64. */
   package: string;
 }
@@ -45,7 +50,11 @@ export function siteData(): SiteData | null {
 
 /** Modes proposés : entraînement et examen, entraînement seulement (avec la boîte de révision), examen seulement. */
 export type SiteModes = 'both' | 'training' | 'exam';
-export type SiteSolutions = 'end' | 'never';
+/**
+ * Corrigé de l'examen : à la fin, jamais, ou (examen corrigé par le serveur) quand l'enseignant le publie dans
+ * `examen/enseignant.php` ; sans serveur, « teacher » vaut « never ».
+ */
+export type SiteSolutions = 'end' | 'never' | 'teacher';
 
 /** Réglages effectifs du site. */
 export interface SiteSettings {
@@ -63,17 +72,26 @@ const MODE_NAMES: Record<string, SiteModes> = {
   examen: 'exam',
   exam: 'exam',
 };
-const SOLUTION_NAMES: Record<string, SiteSolutions> = { fin: 'end', end: 'end', jamais: 'never', never: 'never' };
+const SOLUTION_NAMES: Record<string, SiteSolutions> = {
+  fin: 'end',
+  end: 'end',
+  jamais: 'never',
+  never: 'never',
+  enseignant: 'teacher',
+  teacher: 'teacher',
+};
+const SOLUTION_LABELS: Record<SiteSolutions, string> = { end: 'fin', never: 'jamais', teacher: 'enseignant' };
 
 /**
  * Réglages du site : ceux de `reglages.js` s'ils sont lisibles, sinon ceux choisis à l'export.
  * Une valeur inconnue est ignorée (la valeur de l'export s'applique).
  */
-export function resolveSettings(data: Pick<SiteData, 'modes' | 'solutions' | 'examOnly'> | null, override?: unknown): SiteSettings {
+export function resolveSettings(data: Pick<SiteData, 'modes' | 'solutions' | 'examOnly' | 'server'> | null, override?: unknown): SiteSettings {
   const o = (override && typeof override === 'object' ? override : {}) as { modes?: unknown; corrige?: unknown };
   const norm = (v: unknown) => (typeof v === 'string' ? v.trim().toLowerCase() : '');
   return {
-    modes: MODE_NAMES[norm(o.modes)] ?? data?.modes ?? (data?.examOnly ? 'exam' : 'both'),
+    // Corrigé par le serveur : sans réponses dans le site, l'entraînement est impossible.
+    modes: data?.server ? 'exam' : (MODE_NAMES[norm(o.modes)] ?? data?.modes ?? (data?.examOnly ? 'exam' : 'both')),
     solutions: SOLUTION_NAMES[norm(o.corrige)] ?? data?.solutions ?? 'end',
   };
 }
@@ -85,24 +103,93 @@ export function siteSettings(): SiteSettings {
 
 /** Site en mode examen seulement : ni entraînement, ni boîte de révision. */
 export const examOnly = () => SITE && siteSettings().modes === 'exam';
+/** Examen corrigé par le serveur (PHP) : les tentatives sont notées par `examen/corriger.php`. */
+export const serverGrading = () => SITE && !!siteData()?.server;
+
+/**
+ * Examen corrigé par le serveur : copies gardées sur le serveur (nom de l'élève demandé avant l'examen) ?
+ * `reglages.js`, `copies: "oui" | "non"` ; oui par défaut. Le serveur relit le même réglage.
+ */
+export function resolveCollect(data: Pick<SiteData, 'server'> | null, override?: unknown): boolean {
+  if (!data?.server) return false;
+  const v = (override as { copies?: unknown } | null)?.copies;
+  return !(typeof v === 'string' && v.trim().toLowerCase() === 'non');
+}
+export const collectCopies = () =>
+  SITE && resolveCollect(siteData(), typeof window === 'undefined' ? null : (window as { ABBON_SITE_SETTINGS?: unknown }).ABBON_SITE_SETTINGS);
+
+/** Réglage du navigateur : nom et classe de l'élève, rappelés d'un examen à l'autre (JSON `Candidate`). */
+export const CANDIDATE_SETTING = 'exam_candidate';
+export interface Candidate {
+  name: string;
+  group: string;
+}
+export function parseCandidate(raw: string | null | undefined): Candidate {
+  try {
+    const c = JSON.parse(raw ?? '') as Partial<Candidate>;
+    return { name: typeof c.name === 'string' ? c.name : '', group: typeof c.group === 'string' ? c.group : '' };
+  } catch {
+    return { name: '', group: '' };
+  }
+}
 /** Site en mode entraînement seulement : pas d'examen. */
 export const trainingOnly = () => SITE && siteSettings().modes === 'training';
 
 const MODE_LABELS: Record<SiteModes, string> = { both: 'les-deux', training: 'entrainement', exam: 'examen' };
 
 /** Texte de `reglages.js`, commenté pour être modifié à la main après l'export. */
-export const settingsScript = (s: SiteSettings) => `// Réglages du site Abbon : modifiables après l'export, sans rien reconstruire.
+export const settingsScript = (s: SiteSettings, server = false) => `// Réglages du site Abbon : modifiables après l'export, sans rien reconstruire.
 // Enregistrer ce fichier (encodage UTF-8), le redéposer, puis recharger la page dans le navigateur.
 window.ABBON_SITE_SETTINGS = {
-  // Modes proposés aux visiteurs :
+${
+  server
+    ? `  // Examen corrigé par le serveur : le site ne contient pas les réponses, il est en examen seulement.
+  modes: "examen",
+  // Copies gardées sur le serveur : "oui" (nom de l'élève demandé avant l'examen ; copies consultables dans
+  // examen/enseignant.php avec le mot de passe de examen/config.php) ou "non" (note seule, rien n'est gardé).
+  copies: "oui",
+  // Corrigé et détail par question :
+  //   "enseignant"  l'élève voit sa note ; le détail et le corrigé, quand l'enseignant les publie (examen/enseignant.php) ;
+  //   "fin"         dès que l'élève rend sa copie ;
+  //   "jamais"      la note et le détail par question, jamais le corrigé.
+  // Le serveur (examen/corriger.php) relit ce fichier à chaque correction.`
+    : `  // Modes proposés aux visiteurs :
   //   "les-deux"      entraînement (correction à chaque question, boîte de révision) et examen ;
   //   "entrainement"  entraînement seulement ;
   //   "examen"        examen seulement (ni entraînement ni boîte de révision).
   modes: "${MODE_LABELS[s.modes]}",
-  // Corrigé de l'examen : "fin" (après l'envoi des réponses) ou "jamais".
-  corrige: "${s.solutions === 'end' ? 'fin' : 'jamais'}",
+  // Corrigé de l'examen : "fin" (après l'envoi des réponses) ou "jamais".`
+}
+  corrige: "${SOLUTION_LABELS[server ? s.solutions : s.solutions === 'teacher' ? 'never' : s.solutions]}",
+  // Seuil de réussite, en % (par exemple "50"), pour tous les QCM du site ; "" : celui de chaque QCM.${server ? '\n  // Appliqué aussi par le serveur.' : ''}
+  seuil: "",
+  // Tirage au sort : nombre de questions par examen, tirées au hasard pour chaque élève parmi celles du QCM
+  // (par exemple "10") ; "" : toutes les questions.${server ? ' Le tirage est fait par le serveur.' : ''}
+  tirage: "",
 };
 `;
+
+/** Tirage de `reglages.js` (`tirage: "10"`) : nombre de questions par examen ; null : toutes. */
+export function resolveDraw(override?: unknown): number | null {
+  const v = (override as { tirage?: unknown } | null)?.tirage;
+  const text = typeof v === 'number' ? String(v) : typeof v === 'string' ? v.trim() : '';
+  if (!/^\d{1,4}$/.test(text)) return null;
+  const n = Number(text);
+  return n >= 1 ? n : null;
+}
+export const siteDraw = () =>
+  SITE ? resolveDraw(typeof window === 'undefined' ? null : (window as { ABBON_SITE_SETTINGS?: unknown }).ABBON_SITE_SETTINGS) : null;
+
+/** Seuil de réussite de `reglages.js` (`seuil: "50"`, en %), entre 0,01 et 1 ; null : celui de chaque QCM. */
+export function resolveThreshold(override?: unknown): number | null {
+  const v = (override as { seuil?: unknown } | null)?.seuil;
+  const text = typeof v === 'number' ? String(v) : typeof v === 'string' ? v.trim().replace(',', '.') : '';
+  if (!/^\d{1,3}(\.\d+)?$/.test(text)) return null;
+  const n = Number(text);
+  return n >= 1 && n <= 100 ? n / 100 : null;
+}
+export const siteThreshold = () =>
+  resolveThreshold(typeof window === 'undefined' ? null : (window as { ABBON_SITE_SETTINGS?: unknown }).ABBON_SITE_SETTINGS);
 
 /** Texte de `donnees.js`. Le JSON est échappé pour ne jamais fermer la balise script. */
 export const siteScript = (data: SiteData) =>

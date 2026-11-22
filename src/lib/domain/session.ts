@@ -78,6 +78,17 @@ export function startAttempt(quiz: Quiz, mode: AttemptMode, opts: StartOptions =
   };
 }
 
+/**
+ * Tirage de `count` questions au hasard parmi celles du QCM (site web, réglage `tirage`) ; toutes si `count` est
+ * absent ou dépasse leur nombre. Ordre du QCM : `startAttempt` mélange ensuite si le QCM le demande.
+ */
+export function drawQuestionIds(quiz: Quiz, count: number | null, seed: string): string[] {
+  const ids = [...quiz.questions].sort((a, b) => a.position - b.position).map((q) => q.id);
+  if (!count || count >= ids.length) return ids;
+  const kept = new Set(shuffled(ids, `${seed}:tirage`).slice(0, count));
+  return ids.filter((id) => kept.has(id));
+}
+
 /** Le QCM tel qu'il était au démarrage de la tentative (sinon la version actuelle). */
 export function quizOf(attempt: Attempt, current: Quiz | null): Quiz | null {
   return attempt.quizSnapshot ?? current;
@@ -166,10 +177,31 @@ export function finishAttempt(quiz: Quiz, attempt: Attempt, answers: readonly An
   };
 }
 
-/** Recalcule le résultat d'une tentative terminée (récapitulatif, corrigé). */
-export function resultOf(quiz: Quiz, attempt: Attempt, answers: readonly Answer[]): QuizResult {
+/**
+ * Recalcule le résultat d'une tentative terminée (récapitulatif, corrigé). `stored` : reprend les notes
+ * enregistrées avec les réponses, sans corriger (examen d'un site corrigé par le serveur, sans réponses).
+ */
+export function resultOf(quiz: Quiz, attempt: Attempt, answers: readonly Answer[], stored = false): QuizResult {
   const questions = questionsOf(quiz, attempt);
   const byQuestion = new Map(answers.map((a) => [a.questionId, a]));
+  if (stored) {
+    // Détail par question pas encore publié (examen corrigé par le serveur) : la note de la tentative seule.
+    if (attempt.score != null && questions.some((q) => byQuestion.get(q.id)?.points == null)) {
+      const maxScore = attempt.maxScore ?? questions.reduce((s, q) => s + q.points, 0);
+      const ratio = maxScore > 0 ? attempt.score / maxScore : 0;
+      return { score: attempt.score, maxScore, ratio, passed: ratio >= quiz.passThreshold, perQuestion: {} };
+    }
+    const perQuestion = Object.fromEntries(
+      questions.map((q) => {
+        const a = byQuestion.get(q.id);
+        return [q.id, { points: a?.points ?? 0, correct: a?.correct === true }];
+      }),
+    );
+    const score = Math.round(Object.values(perQuestion).reduce((s, r) => s + r.points, 0) * 100) / 100;
+    const maxScore = questions.reduce((s, q) => s + q.points, 0);
+    const ratio = maxScore > 0 ? score / maxScore : 0;
+    return { score, maxScore, ratio, passed: ratio >= quiz.passThreshold, perQuestion };
+  }
   const selected = Object.fromEntries(questions.map((q) => [q.id, given(byQuestion.get(q.id))]));
   return scoreQuiz(questions, selected, quiz.scoring, quiz.passThreshold);
 }

@@ -242,9 +242,86 @@ hébergement mutualisé (à la racine ou dans un sous-dossier), sans base de don
 - **Modes** : entraînement et examen (au choix du visiteur), entraînement seulement (pas de panneau Examen), ou examen
   seulement : ni entraînement, ni boîte de révision (menu, écran, bouton de la boîte, « Questions à retenir ») ; le
   corrigé y est appliqué au chargement (`solutionVisibility` : `after_submit` ou `never`). Les réponses attendues
-  restent dans `donnees.js` : examen blanc, pas examen surveillé.
+  restent dans `donnees.js` : examen blanc, pas examen surveillé (sauf correction par le serveur, ci-dessous).
 - **Export** : depuis l'application, `app.exportSite` lit `web/files.json` et les fichiers du lecteur, et produit une
   archive .zip (`interchange/siteExport.ts`, avec un `LISEZMOI.txt`) ; depuis les sources, `npm run module:site`.
+
+### Examen corrigé par le serveur (PHP)
+
+Option de l'export en examen seulement (case « Correction par le serveur », `module:site --serveur`) : le site
+d'entraînement reste purement statique, l'examen dépend de PHP (7.4 ou plus récent, présent sur la plupart des
+hébergements mutualisés ; ni base de données ni fichier écrit).
+
+- **Ce qui est publié** (`exam/publish.ts`, `publicQuiz`) : les QCM passés par `stripSolutions` (ni bonnes cases, ni
+  formes acceptées, ni valeur, ni formule attendue, ni explications, ni retours ; listes des trous triées), sans
+  fiches de révision. Restent le verso des cartes recto-verso et, pour les expressions, les **points de test**
+  (`expected.samples`) : le lecteur y évalue la formule de l'élève (`expressionValues`), le serveur compare aux valeurs
+  de la formule attendue (`expressionSamples`), mêmes points et même tolérance que `sameExpression`. `SiteData.server`
+  force l'examen seulement, quoi que dise `reglages.js`.
+- **Dossier `examen/`** (`exam/server.ts`) : `corriger.php` (notation, copie de `domain/scoring.ts` : choix unique ou
+  multiples, tout ou rien ou partiel, réponses courtes, numériques, trous, cartes, expressions), `solutions.php` (le
+  corrigé en JSON base 64 ; ouvert directement, il répond 404) et un `.htaccess` (pas de liste des fichiers,
+  `solutions.php` refusé par Apache).
+- **Correction** : à « Terminer », `AttemptSession.finish` envoie la tentative (`exam/client.ts`, `gradeRequest` :
+  questions, cases, textes, valeurs des formules) en POST JSON à `examen/corriger.php`, qui renvoie la note par
+  question, et le corrigé si `reglages.js` dit `corrige: "fin"` (le script relit ce fichier à chaque correction ; la
+  décision est prise côté serveur). La tentative est close avec ces notes (`finishWithGrade`) ; le récapitulatif et le
+  corrigé les relisent sans recorriger (`resultOf(…, stored)`). Le corrigé reçu complète le QCM (`withSolutions`) et
+  est gardé dans la progression du visiteur. Serveur muet ou sans PHP : message, la tentative reste ouverte.
+- **Copies** (réglage `copies: "oui"` de `reglages.js`, par défaut ; `"non"` : rien n'est gardé) : le lecteur demande
+  le nom de l'élève, et sa classe ou son groupe, avant l'examen (`quiz/[id]`, réglage `exam_candidate` du navigateur,
+  rappelé d'un examen à l'autre) et les joint à la demande, avec l'identifiant et la durée de la tentative.
+  `corriger.php` ajoute la copie (date du serveur, nom, note, points et réponses par question) à
+  `examen/copies/copies.php`, une ligne JSON par copie, après une première ligne `<?php exit; ?>` qui la rend
+  illisible par le web (et un `.htaccess` refuse tout le dossier) ; une copie renvoyée (même tentative) n'est pas
+  dupliquée. Échec d'écriture : erreur `copie`, la tentative reste ouverte. `examen/enseignant.php` affiche les copies
+  (filtre par QCM) et les exporte en CSV (point-virgule, UTF-8 avec BOM, formules neutralisées) après saisie du mot de
+  passe de `examen/config.php`, tiré au hasard à l'export (`newPassword`) et affiché par l'application ou par
+  `module:site`. Pas de session : le mot de passe est renvoyé avec chaque formulaire ; un mauvais mot de passe coûte
+  deux secondes.
+- **Corrigé publié par l'enseignant** (`corrige: "enseignant"`, choix par défaut de l'export corrigé par le
+  serveur) : `abbon_visible` ne renvoie que la note (`locked`) tant que le corrigé du QCM n'est pas publié ; la
+  tentative est close sans note par question (`points` null, `detailLocked`), le récapitulatif n'affiche que la note
+  (`resultOf(…, stored)` reprend celle de la tentative) et le corrigé est refusé. L'enseignant publie ou retire le
+  corrigé de chaque QCM dans `examen/enseignant.php` (même mot de passe) ; l'état est dans
+  `examen/copies/publication.php` (protégé comme les copies). Au retour sur son résultat (ou par « Voir si le corrigé
+  est publié »), le lecteur redemande la correction (`action: "corrige"`, rien n'est enregistré, `fetchCorrection`) :
+  publiée, elle note les réponses gardées (`withDetail`) et ajoute le corrigé. `"fin"` : tout de suite ; `"jamais"` :
+  note et détail, jamais le corrigé. Sans serveur, `"enseignant"` vaut `"jamais"`.
+- **Ouverture et durée** : l'examen est fermé tant que le surveillant ne l'ouvre pas dans `enseignant.php`, avec un
+  code d'accès et une durée facultatifs (`copies/ouverture.php`). Le lecteur demande l'état (`action: "etat"` :
+  ouvert, code demandé, durée ; jamais le code) avant de proposer « Commencer », puis enregistre le début
+  (`action: "debut"`, `startOnServer`) : refusé si l'examen est fermé ou le code faux, sinon noté dans
+  `copies/debuts.php` avec l'heure du serveur, qui renvoie la durée allouée (celle de l'ouverture, sinon celle du
+  QCM) ; le lecteur la garde comme `timeLimitSec` (`SiteRepository.setTimeLimit`, compte à rebours et envoi
+  automatique). Une copie sans début enregistré est refusée (`debut`) ; une copie au-delà de la durée plus
+  `ABBON_GRACE` (60 s), mesurée par le serveur, est marquée `horsDelai`, une copie reçue examen fermé
+  `apresFermeture`. L'espace enseignant liste les élèves en cours (débuts sans copie), signale plusieurs copies au
+  même nom pour un QCM et supprime les copies (case de confirmation). Une seule copie par QCM : le lecteur ne
+  propose ni « Recommencer » ni « Refaire les erreurs ». `abbon_traiter` regroupe ces demandes (testable sans
+  serveur web).
+- **Liste de classe, détail, statistiques** : l'enseignant saisit une liste (`copies/classe.php`, une ligne par
+  élève, « Nom Prénom ; Groupe ») ; le début d'une tentative est alors refusé (`nom`) si le nom n'y figure pas,
+  comparé par `abbon_cle_nom` (sans accents, majuscules, ponctuation ni ordre des mots), et la copie prend le nom et
+  le groupe de la liste ; `etat` dit seulement qu'une liste existe (`classe`), sans l'envoyer. L'espace enseignant
+  liste les absents (élèves de la liste sans début), montre le détail d'une copie (réponse de l'élève, réponse
+  attendue et points par question) et, pour un QCM choisi, des statistiques par question (part des copies avec tous
+  les points, points moyens, sans réponse) et un CSV avec une colonne de points par question. Les textes viennent de
+  `display` (`displayOf` : énoncé, choix, réponse attendue en texte), ajouté à chaque question de `solutions.php`.
+- **Tirage** : `tirage: "10"` dans `reglages.js` (désactivé par défaut, `resolveDraw`) : chaque examen pose 10
+  questions tirées au hasard parmi celles du QCM, dans l'ordre du QCM (mélangées s'il le demande). Site statique :
+  tirage par le lecteur (`drawQuestionIds`, `startQuiz(…, onlyQuestionIds)`). Correction par le serveur : tirage
+  au début (`abbon_tirer`), gardé avec le début dans `debuts.php` et renvoyé au lecteur (`restrictAttempt`) ; à
+  la correction, seules ces questions sont notées, quoi qu'envoie le lecteur. Statistiques et CSV comptent chaque
+  question sur les copies qui l'ont reçue.
+- **Seuil** : `seuil: "50"` dans `reglages.js` (`resolveThreshold`) remplace le seuil de chaque QCM du site, au
+  chargement et, avec la correction par le serveur, dans `corriger.php` (`abbon_seuil`).
+- **Parité** : `exam/exam.test.ts` note les mêmes réponses (justes, fausses, approchées) avec l'application et avec
+  `php` (si installé), question par question.
+- **Limites** : un élève peut se déclarer sous un autre nom ou, en vidant son navigateur, commencer une seconde
+  copie tant que l'examen est ouvert (signalée si le nom est le même) ; avec `corrige: "fin"`, faire circuler le
+  corrigé reçu. Les noms sont des
+  données personnelles : `LISEZMOI.txt` invite à ne garder les copies que le temps nécessaire.
 
 ## Limites connues
 

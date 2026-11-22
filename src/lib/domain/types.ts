@@ -71,6 +71,8 @@ export interface ExpectedAnswer {
   latex?: string;
   /** Expression : égale à une constante près (primitives) ; « + C » est alors accepté dans la réponse. */
   constant?: boolean;
+  /** Expression, site corrigé par le serveur : points de test où l'élève évalue sa formule (lib/exam). */
+  samples?: Record<string, number>[];
 }
 export type ScoringRule = 'all_or_nothing' | 'partial';
 export type SolutionVisibility = 'never' | 'after_submit' | 'after_pass';

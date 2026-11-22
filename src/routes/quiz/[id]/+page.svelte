@@ -1,10 +1,11 @@
 <script lang="ts">
-  import { examOnly, to, trainingOnly } from '$lib/site';
+  import { CANDIDATE_SETTING, collectCopies, examOnly, parseCandidate, serverGrading, siteDraw, to, trainingOnly } from '$lib/site';
+  import { examState, GradeError, startOnServer, type ExamState } from '$lib/exam/client';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
   import { app } from '$lib/app.svelte';
   import { progressOf } from '$lib/domain/progress';
-  import { formatDuration } from '$lib/domain/session';
+  import { drawQuestionIds, formatDuration } from '$lib/domain/session';
   import { localize } from '$lib/domain/text';
   import type { AttemptMode, Quiz } from '$lib/domain/types';
   import { fmtDate, fmtNum, i18n, pct, t } from '$lib/i18n/index.svelte';
@@ -25,12 +26,59 @@
   const category = $derived(app.categories.find((c) => c.id === quiz?.categoryId));
   const hasSheet = $derived(!!app.sheetOf(quiz?.categoryId));
 
+  // Examen corrigé par le serveur, copies gardées : nom de l'élève (rappelé d'un examen à l'autre).
+  const askName = collectCopies();
+  let candidate = $state({ name: '', group: '' });
+  if (askName) app.repo().then(async (r) => (candidate = parseCandidate(await r.getSetting(CANDIDATE_SETTING))));
+  const named = $derived(!askName || candidate.name.trim().length > 0);
+
+  // Examen corrigé par le serveur : ouvert ou non par le surveillant, code d'accès, une seule copie par QCM.
+  const server = serverGrading();
+  const draw = siteDraw();
+  const drawn = $derived(quiz && draw && draw < quiz.questions.length ? draw : null);
+  let exam = $state<ExamState | null>(null);
+  let examError = $state<string | null>(null);
+  let accessCode = $state('');
+  let startError = $state<string | null>(null);
+  async function refreshExam() {
+    examError = null;
+    try {
+      exam = await examState();
+    } catch (e) {
+      exam = null;
+      examError = t(`site.grade.${e instanceof GradeError ? e.reason : 'server'}`);
+    }
+  }
+  if (server) refreshExam();
+  const submitted = $derived(server && attempts.some((a) => a.mode === 'exam' && a.status === 'finished'));
+  const canStartExam = $derived(!server || (!!exam?.open && !submitted && (!exam.code || accessCode.trim().length > 0)));
+
   async function start(mode: AttemptMode) {
     if (!quiz || busy) return;
+    if (mode === 'exam' && (!named || !canStartExam)) return;
     busy = true;
+    startError = null;
     try {
+      const c = { name: candidate.name.trim(), group: candidate.group.trim() };
+      if (mode === 'exam' && askName) await (await app.repo()).setSetting(CANDIDATE_SETTING, JSON.stringify(c));
       if (info.resumable) await app.abandon(info.resumable.id);
-      const attemptId = await app.startQuiz(quiz.id, mode);
+      // Tirage (reglages.js) : questions tirées au hasard pour cet examen ; par le serveur s'il corrige.
+      const only = mode === 'exam' && draw && !server ? drawQuestionIds(quiz, draw, crypto.randomUUID()) : undefined;
+      const attemptId = await app.startQuiz(quiz.id, mode, only);
+      if (server && mode === 'exam') {
+        // Le serveur enregistre le début (examen ouvert, bon code) ; sa durée et son tirage font foi.
+        try {
+          const started = await startOnServer(quiz.id, attemptId, askName ? c : undefined, accessCode.trim());
+          const repo = (await app.repo()) as Partial<{ setTimeLimit(quizId: string, sec: number | null): Promise<void> }>;
+          await repo.setTimeLimit?.(quiz.id, started.limitSec);
+          if (started.questions) await app.restrictAttempt(attemptId, started.questions);
+        } catch (e) {
+          await app.abandon(attemptId);
+          startError = t(`site.grade.${e instanceof GradeError ? e.reason : 'server'}`);
+          if (e instanceof GradeError && e.reason === 'closed') await refreshExam();
+          return;
+        }
+      }
       await goto(to(`/attempt/${attemptId}`));
     } finally {
       busy = false;
@@ -90,9 +138,45 @@
           ? t('quiz.exam.hintTimed', { time: formatDuration(quiz.timeLimitSec) })
           : t('quiz.exam.hint')}
       </p>
+      {#if drawn && quiz}<p class="muted">{t('site.exam.draw', { n: drawn, total: quiz.questions.length })}</p>{/if}
+      {#if server}
+        {#if submitted}
+          <p class="note">{t('site.exam.submitted')}</p>
+        {:else if examError}
+          <p class="note" role="alert">{examError}</p>
+        {:else if exam && !exam.open}
+          <p class="note">{t('site.exam.closed')}</p>
+          <button class="secondary" onclick={refreshExam}>{t('site.exam.refresh')}</button>
+        {:else if exam?.minutes}
+          <p class="muted">{t('site.exam.duration', { n: exam.minutes })}</p>
+        {/if}
+      {/if}
+      {#if askName && !submitted}
+        <div class="candidate">
+          <label>
+            {t('site.candidate.name')}
+            <input type="text" bind:value={candidate.name} maxlength="100" autocomplete="name" required aria-describedby="candidate-hint" />
+          </label>
+          <label>
+            {t('site.candidate.group')}
+            <input type="text" bind:value={candidate.group} maxlength="60" />
+          </label>
+          <p id="candidate-hint" class="muted small">{t(server && exam?.classList ? 'site.candidate.listHint' : 'site.candidate.hint')}</p>
+        </div>
+      {/if}
+      {#if server && exam?.open && exam.code && !submitted}
+        <div class="candidate">
+          <label>
+            {t('site.exam.code')}
+            <input type="text" bind:value={accessCode} maxlength="30" autocomplete="off" required />
+          </label>
+        </div>
+      {/if}
+      {#if startError}<p class="note" role="alert">{startError}</p>{/if}
       <button
         class={info.resumable ? 'secondary' : ''}
-        disabled={busy || !quiz.questions.length}
+        disabled={busy || !quiz.questions.length || !named || !canStartExam}
+        hidden={submitted}
         onclick={() => start('exam')}
       >
         {info.resumable ? t('quiz.restart') : t('quiz.start')}
@@ -123,6 +207,22 @@
 {/if}
 
 <style>
+  .candidate {
+    display: grid;
+    gap: 0.5rem;
+    margin-block: 0.75rem;
+  }
+  .candidate label {
+    display: grid;
+    gap: 0.25rem;
+    font-weight: 600;
+  }
+  .candidate p {
+    margin: 0;
+  }
+  .note {
+    font-weight: 600;
+  }
   .category {
     margin: 0;
     font-size: 0.8rem;

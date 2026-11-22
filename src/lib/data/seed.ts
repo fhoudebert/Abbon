@@ -169,11 +169,14 @@ const rich = (
 const ACID = String.raw`\ce{CH3COOH + H2O <=> CH3COO- + H3O+}`;
 const figure = (alt: string): RichNode => ({ type: 'paragraph', content: [{ type: 'image', attrs: { hash: DEMO_SVG_HASH, alt } }] });
 
+const DEMO_SCIENCE_TITLE: [string, string] = ['Formules et figures (démonstration)', 'Formulas and figures (demo)'];
+const DEMO_SCIENCE_DESCRIPTION: [string, string] = [
+  'Questionnaire de démonstration : formules mathématiques, équation chimique, figure vectorielle.',
+  'Demo quiz: mathematical formulas, a chemical equation, a vector figure.',
+];
+
 export const demoScience: Quiz = {
-  ...baseQuiz('demo-science', 'cat-culture', ['Formules et figures', 'Formulas and figures'], [
-    'Formules mathématiques, équation chimique, figure vectorielle.',
-    'Mathematical formulas, a chemical equation, a vector figure.',
-  ]),
+  ...baseQuiz('demo-science', 'cat-culture', DEMO_SCIENCE_TITLE, DEMO_SCIENCE_DESCRIPTION),
   questions: [
     rich(
       'demo-science-q-1',
@@ -344,13 +347,22 @@ export const demoModule: ModuleManifest = {
   },
 };
 
+/**
+ * QCM réservés à l'aperçu dans un navigateur (module de démonstration) : l'application installée ne les reçoit pas.
+ * « Anglais – verbes irréguliers » (une question) ne sert qu'à montrer les écrans d'un module.
+ */
+const PREVIEW_ONLY = new Set(['demo-english']);
+/** QCM de démonstration livrés avec l'application installée. */
+export const installedDemoQuizzes = demoQuizzes.filter((q) => !PREVIEW_ONLY.has(q.id));
+
 /** Installe les données de démonstration une seule fois. */
 export async function seedDemo(repo: Repository): Promise<boolean> {
   if (await repo.getSetting(SEEDED_KEY)) return false;
+  const preview = repo.backend === 'memory';
   for (const c of demoCategories) await repo.saveCategory(c);
   const svg = new TextEncoder().encode(DEMO_SVG);
   await repo.saveMedia({ hash: DEMO_SVG_HASH, mime: 'image/svg+xml', sizeBytes: svg.length, data: bytesToB64(svg) });
-  for (const quiz of demoQuizzes) await repo.saveQuiz(quiz);
+  for (const quiz of preview ? demoQuizzes : installedDemoQuizzes) await repo.saveQuiz(quiz);
 
   const t = Date.now();
   const iso = (minutesAgo: number) => new Date(t - minutesAgo * 60_000).toISOString();
@@ -395,7 +407,7 @@ export async function seedDemo(repo: Repository): Promise<boolean> {
       maxScore: 3,
     },
   ];
-  for (const a of attempts) await repo.saveAttempt(a);
+  for (const a of attempts) if (preview || !PREVIEW_ONLY.has(a.quizId)) await repo.saveAttempt(a);
   await repo.saveAnswer('demo-attempt-typed', { questionId: 'demo-typed-q-3', selected: [], texts: ['soleil', '180'], correct: false, points: 0, timeSec: 15, flagged: false });
   for (const [questionId, text, correct] of [['demo-typed-q-1', 'rome', true], ['demo-typed-q-2', '90', false]] as const)
     await repo.saveAnswer('demo-attempt-typed', { questionId, selected: [], text, correct, points: correct ? 1 : 0, timeSec: 40, flagged: false });
@@ -412,5 +424,25 @@ export async function seedDemo(repo: Repository): Promise<boolean> {
     });
   }
   await repo.setSetting(SEEDED_KEY, now());
+  await repo.setSetting(TIDIED_KEY, now());
   return true;
+}
+
+const TIDIED_KEY = 'demo_tidied';
+
+/**
+ * Données de démonstration installées par une version précédente : retire « Anglais – verbes irréguliers » et
+ * signale « Formules et figures » comme démonstration, s'ils n'ont pas été modifiés (version 1). Une seule fois.
+ */
+export async function tidyDemo(repo: Repository): Promise<void> {
+  if (repo.backend === 'memory' || (await repo.getSetting(TIDIED_KEY))) return;
+  for (const id of PREVIEW_ONLY) {
+    const q = await repo.getQuiz(id);
+    if (q && !q.moduleId && q.version === 1) await repo.deleteQuiz(id);
+  }
+  const science = await repo.getQuiz(demoScience.id);
+  if (science && !science.moduleId && science.version === 1 && science.title.fr === 'Formules et figures') {
+    await repo.saveQuiz({ ...science, title: demoScience.title, description: demoScience.description });
+  }
+  await repo.setSetting(TIDIED_KEY, now());
 }

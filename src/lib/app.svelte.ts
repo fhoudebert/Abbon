@@ -1,6 +1,6 @@
 import { SITE } from '$lib/site';
 import { getRepository, type Repository } from '$lib/data';
-import { seedDemo } from '$lib/data/seed';
+import { seedDemo, tidyDemo } from '$lib/data/seed';
 import { progressOf, type ProgressInfo } from '$lib/domain/progress';
 import { createPin, verifyPin, type PinRecord } from '$lib/domain/pin';
 import { b64ToBytes, bytesToB64 } from '$lib/data/bytes';
@@ -12,7 +12,7 @@ import type { ResolvedImport } from '$lib/interchange/plan';
 import type { ModulePlan } from '$lib/interchange/module';
 import { buildPackage, cardMedia, quizMedia, sheetMedia, type ContentBundle, type MediaFile, type ParsedPackage } from '$lib/interchange/qcmPackage';
 import { siteContent, siteDataOf, siteMediaHashes, zipSite, type SiteOptions } from '$lib/interchange/siteExport';
-import { startAttempt } from '$lib/domain/session';
+import { quizOf, startAttempt } from '$lib/domain/session';
 import { dueCards, newCard, restoreCard, reviewCard, type LeitnerCard } from '$lib/domain/leitner';
 import {
   attemptRewards,
@@ -92,7 +92,10 @@ class AppState {
       else setLang(i18n.lang);
       this.pinSet = !!(await repo.getSetting(PIN_KEY));
       this.showRewards = (await repo.getSetting(REWARDS_KEY)) !== 'off';
-      if (!SITE) await seedDemo(repo);
+      if (!SITE) {
+        await seedDemo(repo);
+        await tidyDemo(repo);
+      }
       await this.reload();
       this.ready = true;
     } catch (e) {
@@ -134,6 +137,19 @@ class AppState {
     await repo.saveAttempt(attempt);
     await this.reload();
     return attempt.id;
+  }
+
+  /**
+   * Examen corrigé par le serveur avec tirage : questions tirées par le serveur au début de la tentative
+   * (mélangées si le QCM le demande).
+   */
+  async restrictAttempt(attemptId: string, questionIds: string[]) {
+    const repo = await this.repo();
+    const attempt = await repo.getAttempt(attemptId);
+    const quiz = attempt ? quizOf(attempt, await repo.getQuiz(attempt.quizId)) : null;
+    if (!attempt || !quiz) return;
+    const { questionOrder } = startAttempt(quiz, attempt.mode, { id: attempt.id, onlyQuestionIds: questionIds });
+    if (questionOrder.length) await repo.saveAttempt({ ...attempt, questionOrder, currentIndex: 0 });
   }
 
   /** Abandonne une tentative en cours (elle ne compte plus dans la progression). */
@@ -386,11 +402,12 @@ class AppState {
    * Site web (.zip) : lecteur embarqué (web/, construit par `npm run build`) et contenus des QCM choisis,
    * avec les fiches de leurs modules.
    */
-  async exportSite(quizIds: string[] | undefined, opts: SiteOptions): Promise<Uint8Array> {
+  /** Archive du site ; `password` : consultation des copies d'un examen corrigé par le serveur. */
+  async exportSite(quizIds: string[] | undefined, opts: SiteOptions): Promise<{ bytes: Uint8Array; password?: string }> {
     const repo = await this.repo();
     const bundle = await this.#contentBundle(quizIds);
     const content = siteContent(bundle.quizzes, bundle.categories, await repo.listModules());
-    const data = await siteDataOf(content, await this.#media(siteMediaHashes(content)), opts, __APP_VERSION__);
+    const data = await siteDataOf(content, await this.#media(siteMediaHashes(content, opts.server)), opts, __APP_VERSION__);
     const list = await fetch('/web/files.json');
     if (!list.ok) throw new Error(t('io.site.noPlayer'));
     const player: Record<string, Uint8Array> = {};
@@ -399,7 +416,11 @@ class AppState {
       if (!r.ok) throw new Error(`web/${name} : ${r.status}`);
       player[name] = new Uint8Array(await r.arrayBuffer());
     }
-    return zipSite(fileSafe(opts.title, 'abbon-site'), player, data);
+    if (!opts.server) return { bytes: zipSite(fileSafe(opts.title, 'abbon-site'), player, data) };
+    const { examFiles, newPassword } = await import('$lib/exam/server');
+    const password = newPassword();
+    const extra = examFiles(content.quizzes, opts.solutions, password);
+    return { bytes: zipSite(fileSafe(opts.title, 'abbon-site'), player, data, extra), password };
   }
 
   /** Texte GIFT d'un QCM (images incluses en data:). */

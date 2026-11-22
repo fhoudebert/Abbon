@@ -10,8 +10,13 @@ import {
   quizOf,
   remainingSec,
   toggleChoice,
+  type Finished,
 } from '$lib/domain/session';
 import type { Answer, Attempt, Choice, Question, Quiz } from '$lib/domain/types';
+import { fetchCorrection, finishWithGrade, GradeError, gradeOnServer, withDetail, withSolutions } from '$lib/exam/client';
+import type { GradeResponse } from '$lib/exam/types';
+import { t } from '$lib/i18n/index.svelte';
+import { CANDIDATE_SETTING, collectCopies, parseCandidate, serverGrading } from '$lib/site';
 
 /** Intervalle d'enregistrement du chrono, en secondes. */
 const PERSIST_EVERY = 5;
@@ -163,8 +168,32 @@ export class AttemptSession {
     try {
       if (this.#timer) clearInterval(this.#timer);
       this.#timer = null;
-      const done = finishAttempt(this.quiz, $state.snapshot(this.attempt) as Attempt, Object.values($state.snapshot(this.answers)));
+      const attempt = $state.snapshot(this.attempt) as Attempt;
+      const answers = Object.values($state.snapshot(this.answers)) as Answer[];
       const repo = await app.repo();
+      let done: Finished;
+      if (serverGrading()) {
+        // Examen corrigé par le serveur : la note (et le corrigé, si permis) vient de examen/corriger.php.
+        let grade: GradeResponse;
+        try {
+          const candidate = collectCopies() ? parseCandidate(await repo.getSetting(CANDIDATE_SETTING)) : undefined;
+          grade = await gradeOnServer(this.quiz, attempt, answers, candidate);
+        } catch (e) {
+          const reason = e instanceof GradeError ? e.reason : 'server';
+          this.error = t(`site.grade.${reason}`);
+          if (this.remaining !== 0) this.startClock();
+          return false;
+        }
+        this.error = null;
+        if (grade.solutions) {
+          const site = repo as Partial<{ addSolutions(quizId: string, s: NonNullable<GradeResponse['solutions']>): Promise<void> }>;
+          await site.addSolutions?.(this.quiz.id, grade.solutions);
+          this.quiz = withSolutions(this.quiz, grade.solutions);
+        }
+        done = finishWithGrade(this.quiz, attempt, answers, grade);
+      } else {
+        done = finishAttempt(this.quiz, attempt, answers);
+      }
       for (const ans of done.answers) await repo.saveAnswer(done.attempt.id, ans);
       await repo.saveAttempt({ ...done.attempt, quizSnapshot: undefined });
       this.attempt = done.attempt;
@@ -175,5 +204,33 @@ export class AttemptSession {
     } finally {
       this.#finishing = false;
     }
+  }
+
+  /**
+   * Examen corrigé par le serveur, corrigé publié par l'enseignant : redemande le détail par question et le
+   * corrigé. Renvoie vrai s'ils sont maintenant là.
+   */
+  async checkCorrection(): Promise<boolean> {
+    if (!this.quiz || !this.attempt || this.attempt.status !== 'finished') return false;
+    const attempt = $state.snapshot(this.attempt) as Attempt;
+    const answers = Object.values($state.snapshot(this.answers)) as Answer[];
+    let grade: GradeResponse | null;
+    try {
+      grade = await fetchCorrection(this.quiz, attempt, answers);
+    } catch (e) {
+      this.error = t(`site.grade.${e instanceof GradeError ? e.reason : 'server'}`);
+      return false;
+    }
+    if (!grade) return false;
+    const repo = await app.repo();
+    const graded = withDetail(this.quiz, attempt, answers, grade.perQuestion);
+    for (const a of graded) await repo.saveAnswer(attempt.id, a);
+    if (grade.solutions) {
+      const site = repo as Partial<{ addSolutions(quizId: string, s: NonNullable<GradeResponse['solutions']>): Promise<void> }>;
+      await site.addSolutions?.(this.quiz.id, grade.solutions);
+      this.quiz = withSolutions(this.quiz, grade.solutions);
+    }
+    this.answers = Object.fromEntries(graded.map((a) => [a.questionId, a]));
+    return true;
   }
 }

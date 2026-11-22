@@ -383,6 +383,19 @@
                   },
                   "constant": {
                     "type": "boolean"
+                  },
+                  "samples": {
+                    "maxItems": 64,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {
+                        "type": "number"
+                      }
+                    }
                   }
                 },
                 "additionalProperties": false

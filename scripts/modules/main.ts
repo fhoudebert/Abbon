@@ -1,9 +1,10 @@
 /**
- * Commandes `module:check`, `module:build` et `module:site` (voir cli.mjs).
+ * Commandes `module:check`, `module:build` et `module:site` (voir cli.mjs ; `--serveur` : examen corrigé en PHP).
  */
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, sep } from 'node:path';
-import { siteContent, siteDataOf, SITE_README } from '$lib/interchange/siteExport';
+import { examFiles, newPassword } from '$lib/exam/server';
+import { siteContent, siteDataOf, SITE_README, SITE_SERVER_README } from '$lib/interchange/siteExport';
 import { settingsScript, siteScript } from '$lib/site';
 import { buildPackage, parsePackage, sha256Hex, sniffMime, type MediaFile } from '$lib/interchange/qcmPackage';
 import { imageTargets } from './markdown';
@@ -82,12 +83,15 @@ function report(name: string, c: Compiled): boolean {
 export async function main(argv: string[], root: string): Promise<number> {
   const [command, ...rest] = argv;
   if (command !== 'check' && command !== 'build' && command !== 'site') {
-    console.error('usage : module:check [nom…] | module:build [nom…] | module:site [--entrainement | --examen [--sans-corrige]] [nom…]');
+    console.error('usage : module:check [nom…] | module:build [nom…] | module:site [--entrainement | --examen [--sans-corrige] [--serveur [--corrige-fin]]] [nom…]');
     return 2;
   }
   // Site web : options, puis lecteur construit par `npm run build:site` (build-site/).
-  const modes = rest.includes('--examen') ? 'exam' : rest.includes('--entrainement') ? 'training' : 'both';
-  const solutions = rest.includes('--sans-corrige') ? 'never' : 'end';
+  // --serveur : examen corrigé par le serveur (PHP), sans réponses dans le site.
+  const server = rest.includes('--serveur');
+  const modes = server || rest.includes('--examen') ? 'exam' : rest.includes('--entrainement') ? 'training' : 'both';
+  // Corrigé : --sans-corrige (jamais), --corrige-fin ; avec --serveur, publié par l'enseignant par défaut.
+  const solutions = rest.includes('--sans-corrige') ? 'never' : rest.includes('--corrige-fin') || !rest.includes('--serveur') ? 'end' : 'teacher';
   const names = rest.filter((n) => !n.startsWith('--'));
   const player = join(root, 'build-site');
   if (command === 'site' && !existsSync(join(player, 'files.json'))) {
@@ -157,7 +161,7 @@ export async function main(argv: string[], root: string): Promise<number> {
     }
     if (command === 'site') {
       const title = c.manifest.title.fr ?? Object.values(c.manifest.title)[0] ?? name;
-      const opts = { title, modes, solutions } as const;
+      const opts = { title, modes, solutions, server } as const;
       const installed = [{ manifest: c.manifest, installedAt: now.toISOString(), updatedAt: now.toISOString() }];
       const content = siteContent(back.quizzes, back.categories, installed);
       const data = await siteDataOf(content, back.media, opts, appVersion);
@@ -168,9 +172,17 @@ export async function main(argv: string[], root: string): Promise<number> {
         copyFileSync(join(player, f), join(dir, f));
       }
       writeFileSync(join(dir, 'donnees.js'), siteScript(data));
-      writeFileSync(join(dir, 'reglages.js'), settingsScript(opts));
-      writeFileSync(join(dir, 'LISEZMOI.txt'), SITE_README);
-      const label = { both: 'entraînement et examen', training: 'entraînement seulement', exam: 'examen seulement' }[modes];
+      writeFileSync(join(dir, 'reglages.js'), settingsScript(opts, server));
+      writeFileSync(join(dir, 'LISEZMOI.txt'), server ? SITE_SERVER_README : SITE_README);
+      if (server) {
+        const password = newPassword();
+        console.log(`  mot de passe de l'espace enseignant (examen/enseignant.php) : ${password}`);
+        for (const [f, text] of Object.entries(examFiles(content.quizzes, solutions, password))) {
+          mkdirSync(dirname(join(dir, f)), { recursive: true });
+          writeFileSync(join(dir, f), text);
+        }
+      }
+      const label = server ? 'examen corrigé par le serveur (PHP)' : { both: 'entraînement et examen', training: 'entraînement seulement', exam: 'examen seulement' }[modes];
       console.log(`  → ${relative(root, dir)}/ (site web, ${label})`);
       continue;
     }

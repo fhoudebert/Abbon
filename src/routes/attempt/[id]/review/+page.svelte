@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { to } from '$lib/site';
+  import { serverGrading, to } from '$lib/site';
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
@@ -15,6 +15,7 @@
   import { i18n, t } from '$lib/i18n/index.svelte';
   import { app } from '$lib/app.svelte';
   import { AttemptSession } from '$lib/session.svelte';
+  import { detailLocked } from '$lib/exam/client';
 
   const session = new AttemptSession();
   const id = page.params.id ?? '';
@@ -23,7 +24,7 @@
   const lang = $derived(i18n.lang);
   const quiz = $derived(session.quiz);
   const attempt = $derived(session.attempt);
-  const result = $derived(quiz && attempt ? resultOf(quiz, attempt, Object.values(session.answers)) : null);
+  const result = $derived(quiz && attempt ? resultOf(quiz, attempt, Object.values(session.answers), serverGrading()) : null);
   const fallback = $derived(quiz?.languages[0]);
   const hasSheet = $derived(!!app.sheetOf(quiz?.categoryId));
 
@@ -33,8 +34,9 @@
     const a = session.attempt;
     if (!q || !a) return;
     // Corrigé non autorisé (tentative en cours, QCM sans corrigé ou pas encore réussi) : retour au résultat.
-    if (!canSeeSolution(q, a, resultOf(q, a, Object.values(session.answers)).passed)) {
-      goto(a.status === 'in_progress' ? `/attempt/${id}` : `/attempt/${id}/result`, { replaceState: true });
+    const answers = Object.values(session.answers);
+    if (!canSeeSolution(q, a, resultOf(q, a, answers, serverGrading()).passed) || (serverGrading() && detailLocked(q, a, answers))) {
+      goto(to(a.status === 'in_progress' ? `/attempt/${id}` : `/attempt/${id}/result`), { replaceState: true });
     }
   });
 
