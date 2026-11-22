@@ -4,10 +4,12 @@
  *
  * Le site exporté en « examen corrigé par le serveur » ne contient pas les réponses attendues : le navigateur
  * envoie ici les réponses de l'élève (POST, JSON), ce script les note avec le corrigé de solutions.php et
- * renvoie le score, puis le corrigé si reglages.js le permet (corrige: "fin").
+ * renvoie le score, puis le corrigé si reglages.js le permet (corrige: "fin"). Si reglages.js dit copies: "oui",
+ * la copie (nom, note, réponses) est ajoutée à copies/copies.php, consultable avec copies.php (mot de passe :
+ * config.php).
  *
- * Aucune base de données, aucun fichier écrit. PHP 7.4 ou plus récent. Ne pas modifier : ce fichier est
- * régénéré à chaque export. La notation reproduit celle de l'application (src/lib/domain/scoring.ts).
+ * Aucune base de données. PHP 7.4 ou plus récent. Ne pas modifier : ce fichier est régénéré à chaque export.
+ * La notation reproduit celle de l'application (src/lib/domain/scoring.ts).
  */
 
 const ABBON_EXAMEN = true;
@@ -205,18 +207,122 @@ function abbon_corriger($solutions, $request, $corrige) {
   return $out;
 }
 
-/** Corrigé « fin » ou « jamais » : reglages.js (modifiable après l'export), sinon le choix de l'export. */
-function abbon_corrige($default) {
-  $file = __DIR__ . '/../reglages.js';
-  if (is_readable($file)) {
-    $js = (string) file_get_contents($file);
-    $js = preg_replace('~^\s*//.*$~m', '', $js);
-    if (preg_match('/corrige\s*:\s*["\']\s*(fin|jamais|end|never)\s*["\']/i', $js, $m)) {
-      $v = strtolower($m[1]);
-      return $v === 'fin' || $v === 'end' ? 'fin' : 'jamais';
-    }
-  }
+/** Valeur d'un réglage de reglages.js (modifiable après l'export), ou null s'il est absent ou illisible. */
+function abbon_reglage($name, $file = null) {
+  $file = $file === null ? __DIR__ . '/../reglages.js' : $file;
+  if (!is_readable($file)) return null;
+  $js = preg_replace('~^\s*//.*$~m', '', (string) file_get_contents($file));
+  if (preg_match('/\b' . preg_quote($name, '/') . '\s*:\s*["\']\s*([^"\']*?)\s*["\']/u', $js, $m)) return mb_strtolower($m[1], 'UTF-8');
+  return null;
+}
+
+/** Corrigé « fin » ou « jamais » : reglages.js, sinon le choix de l'export. */
+function abbon_corrige($default, $file = null) {
+  $v = abbon_reglage('corrige', $file);
+  if ($v === 'fin' || $v === 'end') return 'fin';
+  if ($v === 'jamais' || $v === 'never') return 'jamais';
   return $default === 'jamais' ? 'jamais' : 'fin';
+}
+
+/** Copies gardées sur le serveur : reglages.js (copies: "oui" ou "non"), oui par défaut. */
+function abbon_collecte($file = null) {
+  return abbon_reglage('copies', $file) !== 'non';
+}
+
+// ---- Copies -------------------------------------------------------------------------------------------
+
+/** Texte saisi par l'élève, nettoyé et tronqué. */
+function abbon_texte($s, $max) {
+  if (!is_string($s)) return '';
+  $s = preg_replace('/[\x00-\x1F\x7F]+/u', ' ', $s);
+  $s = trim(preg_replace('/\s+/u', ' ', (string) $s));
+  return mb_substr($s, 0, $max, 'UTF-8');
+}
+
+/** Réponses de l'élève, telles qu'il les a données (tronquées). */
+function abbon_reponses($ids, $answers) {
+  $out = array();
+  foreach ($ids as $id) {
+    if (!is_string($id) || !isset($answers[$id]) || !is_array($answers[$id])) continue;
+    $a = $answers[$id];
+    $r = array();
+    if (!empty($a['selected']) && is_array($a['selected'])) $r['cases'] = array_slice(array_values(array_filter($a['selected'], 'is_string')), 0, 50);
+    if (isset($a['text']) && is_string($a['text']) && $a['text'] !== '') $r['texte'] = mb_substr($a['text'], 0, 500, 'UTF-8');
+    if (!empty($a['texts']) && is_array($a['texts'])) {
+      $r['trous'] = array_map(function ($t) { return is_string($t) ? mb_substr($t, 0, 200, 'UTF-8') : null; }, array_slice($a['texts'], 0, 50));
+    }
+    if ($r) $out[$id] = $r;
+  }
+  return $out;
+}
+
+/** Fiche d'une copie corrigée, à enregistrer. */
+function abbon_copie($solutions, $request, $result, $now = null) {
+  $quizId = $request['quiz'];
+  $c = isset($request['candidate']) && is_array($request['candidate']) ? $request['candidate'] : array();
+  $a = isset($request['attempt']) && is_array($request['attempt']) ? $request['attempt'] : array();
+  $id = isset($a['id']) && is_string($a['id']) && preg_match('/^[A-Za-z0-9_-]{1,64}$/', $a['id']) ? $a['id'] : bin2hex(random_bytes(8));
+  $points = array();
+  foreach ($result['perQuestion'] as $qid => $r) $points[$qid] = $r['points'];
+  $quiz = $solutions['quizzes'][$quizId];
+  return array(
+    'id' => $id,
+    'date' => gmdate('Y-m-d\TH:i:s\Z', $now === null ? time() : $now),
+    'nom' => abbon_texte(isset($c['name']) ? $c['name'] : '', 100),
+    'groupe' => abbon_texte(isset($c['group']) ? $c['group'] : '', 60),
+    'qcm' => $quizId,
+    'titre' => isset($quiz['title']) ? $quiz['title'] : $quizId,
+    'note' => $result['score'],
+    'sur' => $result['maxScore'],
+    'reussi' => $result['passed'],
+    'duree' => isset($a['elapsedSec']) && is_numeric($a['elapsedSec']) ? max(0, min(86400 * 7, (int) $a['elapsedSec'])) : null,
+    'points' => $points,
+    'reponses' => abbon_reponses(isset($request['questions']) ? $request['questions'] : array(), isset($request['answers']) ? $request['answers'] : array()),
+  );
+}
+
+const ABBON_COPIES_ENTETE = "<?php exit; ?>\n";
+
+/**
+ * Ajoute une copie à $dir/copies.php (une ligne JSON par copie ; la première ligne empêche de lire le fichier par
+ * le web). Une copie déjà enregistrée (même identifiant de tentative, envoi répété) n'est pas ajoutée deux fois.
+ */
+function abbon_enregistrer($dir, $copie) {
+  if (!is_dir($dir) && !@mkdir($dir, 0755, true)) return false;
+  $file = $dir . '/copies.php';
+  $h = @fopen($file, 'c+');
+  if (!$h) return false;
+  $ok = false;
+  if (flock($h, LOCK_EX)) {
+    $content = stream_get_contents($h);
+    if ($content === '' || $content === false) {
+      fwrite($h, ABBON_COPIES_ENTETE);
+      $content = '';
+    }
+    if (strpos((string) $content, '"id":' . json_encode($copie['id']) . ',') !== false) {
+      $ok = true;
+    } else {
+      fseek($h, 0, SEEK_END);
+      $ok = fwrite($h, json_encode($copie, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION) . "\n") !== false;
+    }
+    fflush($h);
+    flock($h, LOCK_UN);
+  }
+  fclose($h);
+  return $ok;
+}
+
+/** Copies enregistrées, de la plus récente à la plus ancienne. */
+function abbon_lire_copies($dir) {
+  $file = $dir . '/copies.php';
+  if (!is_readable($file)) return array();
+  $out = array();
+  foreach (file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $i => $line) {
+    if ($i === 0 && strpos($line, '<?php') === 0) continue;
+    $c = json_decode($line, true);
+    if (is_array($c) && isset($c['id'])) $out[] = $c;
+  }
+  return array_reverse($out);
 }
 
 if (!defined('ABBON_CORRIGER_BIBLIOTHEQUE')) {
@@ -235,5 +341,12 @@ if (!defined('ABBON_CORRIGER_BIBLIOTHEQUE')) {
   $solutions = require __DIR__ . '/solutions.php';
   if (!is_array($solutions) || !isset($solutions['quizzes'])) $reply(500, array('error' => 'solutions'));
   $out = abbon_corriger($solutions, $request, abbon_corrige(isset($solutions['corrige']) ? $solutions['corrige'] : 'fin'));
-  $reply(isset($out['error']) ? 400 : 200, $out);
+  if (isset($out['error'])) $reply(400, $out);
+  if (abbon_collecte()) {
+    // Copie non enregistrée (dossier copies/ non accessible en écriture…) : l'élève est prévenu, sa tentative
+    // reste ouverte et pourra être renvoyée.
+    if (!abbon_enregistrer(__DIR__ . '/copies', abbon_copie($solutions, $request, $out))) $reply(500, array('error' => 'copie'));
+    $out['recorded'] = true;
+  }
+  $reply(200, $out);
 }

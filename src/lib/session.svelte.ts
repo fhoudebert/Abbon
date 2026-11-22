@@ -16,7 +16,7 @@ import type { Answer, Attempt, Choice, Question, Quiz } from '$lib/domain/types'
 import { finishWithGrade, GradeError, gradeOnServer, withSolutions } from '$lib/exam/client';
 import type { GradeResponse } from '$lib/exam/types';
 import { t } from '$lib/i18n/index.svelte';
-import { serverGrading } from '$lib/site';
+import { CANDIDATE_SETTING, collectCopies, parseCandidate, serverGrading } from '$lib/site';
 
 /** Intervalle d'enregistrement du chrono, en secondes. */
 const PERSIST_EVERY = 5;
@@ -176,9 +176,11 @@ export class AttemptSession {
         // Examen corrigé par le serveur : la note (et le corrigé, si permis) vient de examen/corriger.php.
         let grade: GradeResponse;
         try {
-          grade = await gradeOnServer(this.quiz, attempt, answers);
+          const candidate = collectCopies() ? parseCandidate(await repo.getSetting(CANDIDATE_SETTING)) : undefined;
+          grade = await gradeOnServer(this.quiz, attempt, answers, candidate);
         } catch (e) {
-          this.error = t(e instanceof GradeError && e.reason === 'network' ? 'site.grade.network' : 'site.grade.server');
+          const reason = e instanceof GradeError ? e.reason : 'server';
+          this.error = t(`site.grade.${reason}`);
           if (this.remaining !== 0) this.startClock();
           return false;
         }

@@ -339,6 +339,12 @@ export const en: Messages = {
   'site.noData': 'This website cannot find its content: the donnees.js file must be uploaded next to index.html.',
   'site.unavailable': 'This page does not exist on this website.',
   'site.grade.network': 'The server is not responding: your answers are kept. Check the connection, then click “Finish” again.',
+  'site.grade.record': 'Your submission was graded but the server could not save it. Your answers are kept: let your teacher know, then click “Finish” again.',
+  'site.candidate.name': 'Full name',
+  'site.candidate.group': 'Class or group (optional)',
+  'site.candidate.hint': 'Your submission will be sent to the teacher under this name.',
+  'site.copySent': 'Submission sent to the teacher.',
+  'io.site.password': 'Password to view the submissions (examen/copies.php): {password}. It is also in examen/config.php.',
   'site.grade.server': 'The server could not grade this submission (PHP missing or incomplete files in the examen/ folder). Your answers are kept: let the website’s publisher know.',
   'io.saved': 'File saved: {path}',
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { examOnly, to, trainingOnly } from '$lib/site';
+  import { CANDIDATE_SETTING, collectCopies, examOnly, parseCandidate, to, trainingOnly } from '$lib/site';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
   import { app } from '$lib/app.svelte';
@@ -25,10 +25,21 @@
   const category = $derived(app.categories.find((c) => c.id === quiz?.categoryId));
   const hasSheet = $derived(!!app.sheetOf(quiz?.categoryId));
 
+  // Examen corrigé par le serveur, copies gardées : nom de l'élève (rappelé d'un examen à l'autre).
+  const askName = collectCopies();
+  let candidate = $state({ name: '', group: '' });
+  if (askName) app.repo().then(async (r) => (candidate = parseCandidate(await r.getSetting(CANDIDATE_SETTING))));
+  const named = $derived(!askName || candidate.name.trim().length > 0);
+
   async function start(mode: AttemptMode) {
     if (!quiz || busy) return;
+    if (mode === 'exam' && !named) return;
     busy = true;
     try {
+      if (mode === 'exam' && askName) {
+        const c = { name: candidate.name.trim(), group: candidate.group.trim() };
+        await (await app.repo()).setSetting(CANDIDATE_SETTING, JSON.stringify(c));
+      }
       if (info.resumable) await app.abandon(info.resumable.id);
       const attemptId = await app.startQuiz(quiz.id, mode);
       await goto(to(`/attempt/${attemptId}`));
@@ -90,9 +101,22 @@
           ? t('quiz.exam.hintTimed', { time: formatDuration(quiz.timeLimitSec) })
           : t('quiz.exam.hint')}
       </p>
+      {#if askName}
+        <div class="candidate">
+          <label>
+            {t('site.candidate.name')}
+            <input type="text" bind:value={candidate.name} maxlength="100" autocomplete="name" required aria-describedby="candidate-hint" />
+          </label>
+          <label>
+            {t('site.candidate.group')}
+            <input type="text" bind:value={candidate.group} maxlength="60" />
+          </label>
+          <p id="candidate-hint" class="muted small">{t('site.candidate.hint')}</p>
+        </div>
+      {/if}
       <button
         class={info.resumable ? 'secondary' : ''}
-        disabled={busy || !quiz.questions.length}
+        disabled={busy || !quiz.questions.length || !named}
         onclick={() => start('exam')}
       >
         {info.resumable ? t('quiz.restart') : t('quiz.start')}
@@ -123,6 +147,19 @@
 {/if}
 
 <style>
+  .candidate {
+    display: grid;
+    gap: 0.5rem;
+    margin-block: 0.75rem;
+  }
+  .candidate label {
+    display: grid;
+    gap: 0.25rem;
+    font-weight: 600;
+  }
+  .candidate p {
+    margin: 0;
+  }
   .category {
     margin: 0;
     font-size: 0.8rem;

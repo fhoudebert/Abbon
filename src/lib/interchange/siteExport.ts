@@ -119,22 +119,35 @@ Ce dossier est un site d'examen : les réponses attendues ne sont pas dans les f
 navigateur. Le corrigé est dans examen/solutions.php, et examen/corriger.php note chaque copie.
 
 Il faut un hébergement avec PHP 7.4 ou plus récent (c'est le cas de la plupart des hébergements
-mutualisés). Ni base de données ni réglage particulier ; aucun fichier n'est écrit sur le serveur.
+mutualisés). Ni base de données ni réglage particulier.
 
-1. Déposer tout le contenu du dossier (index.html, donnees.js, reglages.js, examen/, _app/…) par FTP ou par
-   le gestionnaire de fichiers de l'hébergeur, à la racine du site ou dans un sous-dossier (/examen-svt/).
-   Le dossier examen/ contient un fichier caché .htaccess : le déposer aussi.
+1. Déposer tout le contenu du dossier (index.html, donnees.js, reglages.js, examen/, _app/…) par FTP ou par le
+   gestionnaire de fichiers de l'hébergeur, à la racine du site ou dans un sous-dossier (/examen-svt/).
+   Les dossiers examen/ et examen/copies/ contiennent des fichiers cachés .htaccess : les déposer aussi.
+   Ne pas déposer ce fichier LISEZMOI.txt (il n'est pas nécessaire au site).
 2. Ouvrir l'adresse correspondante dans un navigateur et passer un QCM pour vérifier que la note s'affiche.
    Sans PHP (ou en ouvrant index.html depuis son disque), le site affiche que la correction est impossible.
 
-Corrigé : fichier reglages.js, ligne corrige ("fin" : renvoyé par le serveur après l'envoi des réponses ;
-"jamais" : la note seule). Le serveur relit ce fichier à chaque correction.
+Copies : avant l'examen, chaque élève indique son nom (et, s'il le souhaite, sa classe ou son groupe). Chaque
+copie corrigée est gardée sur le serveur, dans examen/copies/copies.php (illisible par le web). Pour les
+consulter : ouvrir examen/copies.php dans un navigateur (par exemple https://exemple.fr/examen-svt/examen/copies.php)
+et saisir le mot de passe de examen/config.php ; la liste se télécharge au format CSV (tableur). Le serveur doit
+pouvoir écrire dans le dossier examen/copies/ (c'est le cas par défaut chez la plupart des hébergeurs ; sinon, lui
+donner les droits d'écriture, 755 ou 775, avec le client FTP). Pour repartir de zéro, supprimer
+examen/copies/copies.php. Les noms des élèves sont des données personnelles : ne garder les copies que le temps
+nécessaire, et informer les élèves.
 
-Limites : un élève peut repasser l'examen (sa progression reste dans son navigateur), et, avec le corrigé
-"fin", communiquer les réponses une fois sa copie envoyée. Le site ne collecte pas les copies.
+Réglages (fichier reglages.js, relu par le serveur à chaque correction) :
+- corrige : "fin" (corrigé renvoyé après l'envoi des réponses) ou "jamais" (la note seule) ;
+- copies : "oui" (nom demandé, copies gardées) ou "non" (rien n'est gardé sur le serveur).
 
-Pour mettre le site à jour, exporter de nouveau depuis Abbon avec le même titre et remplacer les fichiers,
-y compris examen/solutions.php.
+Limites : un élève peut repasser l'examen (chaque copie est gardée, avec sa date), indiquer un autre nom que le
+sien, et, avec le corrigé "fin", communiquer les réponses une fois sa copie envoyée. Le chronomètre est mesuré par
+le navigateur.
+
+Pour mettre le site à jour, exporter de nouveau depuis Abbon avec le même titre et remplacer les fichiers, y
+compris examen/solutions.php, mais pas le dossier examen/copies/ (les copies déjà reçues) ; garder son
+examen/config.php si l'on a changé le mot de passe.
 `;
 
 /** Archive du site : `dossier/…` (lecteur, données, mode d'emploi, fichiers en plus : examen/…). */

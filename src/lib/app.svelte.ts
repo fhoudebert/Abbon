@@ -386,7 +386,8 @@ class AppState {
    * Site web (.zip) : lecteur embarqué (web/, construit par `npm run build`) et contenus des QCM choisis,
    * avec les fiches de leurs modules.
    */
-  async exportSite(quizIds: string[] | undefined, opts: SiteOptions): Promise<Uint8Array> {
+  /** Archive du site ; `password` : consultation des copies d'un examen corrigé par le serveur. */
+  async exportSite(quizIds: string[] | undefined, opts: SiteOptions): Promise<{ bytes: Uint8Array; password?: string }> {
     const repo = await this.repo();
     const bundle = await this.#contentBundle(quizIds);
     const content = siteContent(bundle.quizzes, bundle.categories, await repo.listModules());
@@ -399,8 +400,11 @@ class AppState {
       if (!r.ok) throw new Error(`web/${name} : ${r.status}`);
       player[name] = new Uint8Array(await r.arrayBuffer());
     }
-    const extra = opts.server ? (await import('$lib/exam/server')).examFiles(content.quizzes, opts.solutions) : {};
-    return zipSite(fileSafe(opts.title, 'abbon-site'), player, data, extra);
+    if (!opts.server) return { bytes: zipSite(fileSafe(opts.title, 'abbon-site'), player, data) };
+    const { examFiles, newPassword } = await import('$lib/exam/server');
+    const password = newPassword();
+    const extra = examFiles(content.quizzes, opts.solutions, password);
+    return { bytes: zipSite(fileSafe(opts.title, 'abbon-site'), player, data, extra), password };
   }
 
   /** Texte GIFT d'un QCM (images incluses en data:). */

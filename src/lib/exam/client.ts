@@ -8,7 +8,7 @@ import type { Answer, Attempt, Question, Quiz } from '$lib/domain/types';
 import { GRADER_PATH, type GradeAnswer, type GradeRequest, type GradeResponse, type QuestionSolution } from './types';
 
 /** Demande de correction d'une tentative. */
-export function gradeRequest(quiz: Quiz, attempt: Attempt, answers: readonly Answer[]): GradeRequest {
+export function gradeRequest(quiz: Quiz, attempt: Attempt, answers: readonly Answer[], candidate?: { name: string; group: string }): GradeRequest {
   const questions = questionsOf(quiz, attempt);
   const byId = new Map(answers.map((a) => [a.questionId, a]));
   const out: Record<string, GradeAnswer> = {};
@@ -21,7 +21,13 @@ export function gradeRequest(quiz: Quiz, attempt: Attempt, answers: readonly Ans
     }
     out[q.id] = g;
   }
-  return { quiz: quiz.id, questions: questions.map((q) => q.id), answers: out };
+  return {
+    quiz: quiz.id,
+    attempt: { id: attempt.id, startedAt: attempt.startedAt, elapsedSec: Math.round(attempt.elapsedSec) },
+    ...(candidate ? { candidate } : {}),
+    questions: questions.map((q) => q.id),
+    answers: out,
+  };
 }
 
 const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
@@ -60,8 +66,14 @@ export function finishWithGrade(quiz: Quiz, attempt: Attempt, answers: readonly 
 }
 
 /** Envoie la tentative au serveur et renvoie sa note. Erreur explicite si le serveur ne corrige pas. */
-export async function gradeOnServer(quiz: Quiz, attempt: Attempt, answers: readonly Answer[], fetcher: typeof fetch = fetch): Promise<GradeResponse> {
-  const request = gradeRequest(quiz, attempt, answers);
+export async function gradeOnServer(
+  quiz: Quiz,
+  attempt: Attempt,
+  answers: readonly Answer[],
+  candidate?: { name: string; group: string },
+  fetcher: typeof fetch = fetch,
+): Promise<GradeResponse> {
+  const request = gradeRequest(quiz, attempt, answers, candidate);
   let res: Response;
   try {
     res = await fetcher(GRADER_PATH, {
@@ -79,12 +91,14 @@ export async function gradeOnServer(quiz: Quiz, attempt: Attempt, answers: reado
   } catch {
     throw new GradeError('server');
   }
+  if ((body as { error?: unknown } | null)?.error === 'copie') throw new GradeError('record');
   if (!res.ok || !isGradeResponse(body, request.questions)) throw new GradeError('server');
   return body;
 }
 
 export class GradeError extends Error {
-  constructor(readonly reason: 'network' | 'server') {
+  /** network : serveur injoignable ; server : pas de correction (PHP absent…) ; record : copie non enregistrée. */
+  constructor(readonly reason: 'network' | 'server' | 'record') {
     super(reason);
   }
 }

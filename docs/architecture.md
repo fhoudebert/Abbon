@@ -268,10 +268,22 @@ hébergements mutualisés ; ni base de données ni fichier écrit).
   décision est prise côté serveur). La tentative est close avec ces notes (`finishWithGrade`) ; le récapitulatif et le
   corrigé les relisent sans recorriger (`resultOf(…, stored)`). Le corrigé reçu complète le QCM (`withSolutions`) et
   est gardé dans la progression du visiteur. Serveur muet ou sans PHP : message, la tentative reste ouverte.
+- **Copies** (réglage `copies: "oui"` de `reglages.js`, par défaut ; `"non"` : rien n'est gardé) : le lecteur demande
+  le nom de l'élève, et sa classe ou son groupe, avant l'examen (`quiz/[id]`, réglage `exam_candidate` du navigateur,
+  rappelé d'un examen à l'autre) et les joint à la demande, avec l'identifiant et la durée de la tentative.
+  `corriger.php` ajoute la copie (date du serveur, nom, note, points et réponses par question) à
+  `examen/copies/copies.php`, une ligne JSON par copie, après une première ligne `<?php exit; ?>` qui la rend
+  illisible par le web (et un `.htaccess` refuse tout le dossier) ; une copie renvoyée (même tentative) n'est pas
+  dupliquée. Échec d'écriture : erreur `copie`, la tentative reste ouverte. `examen/copies.php` affiche les copies
+  (filtre par QCM) et les exporte en CSV (point-virgule, UTF-8 avec BOM, formules neutralisées) après saisie du mot de
+  passe de `examen/config.php`, tiré au hasard à l'export (`newPassword`) et affiché par l'application ou par
+  `module:site`. Pas de session : le mot de passe est renvoyé avec chaque formulaire ; un mauvais mot de passe coûte
+  deux secondes.
 - **Parité** : `exam/exam.test.ts` note les mêmes réponses (justes, fausses, approchées) avec l'application et avec
   `php` (si installé), question par question.
-- **Limites** : un élève peut repasser l'examen (progression dans son navigateur) et, avec `corrige: "fin"`, faire
-  circuler le corrigé reçu ; les copies ne sont pas collectées ; le chrono reste mesuré par le navigateur.
+- **Limites** : un élève peut repasser l'examen (chaque copie est gardée, datée), se déclarer sous un autre nom et,
+  avec `corrige: "fin"`, faire circuler le corrigé reçu ; le chrono reste mesuré par le navigateur. Les noms sont des
+  données personnelles : `LISEZMOI.txt` invite à ne garder les copies que le temps nécessaire.
 
 ## Limites connues
 

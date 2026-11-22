@@ -93,6 +93,33 @@ export function siteSettings(): SiteSettings {
 export const examOnly = () => SITE && siteSettings().modes === 'exam';
 /** Examen corrigé par le serveur (PHP) : les tentatives sont notées par `examen/corriger.php`. */
 export const serverGrading = () => SITE && !!siteData()?.server;
+
+/**
+ * Examen corrigé par le serveur : copies gardées sur le serveur (nom de l'élève demandé avant l'examen) ?
+ * `reglages.js`, `copies: "oui" | "non"` ; oui par défaut. Le serveur relit le même réglage.
+ */
+export function resolveCollect(data: Pick<SiteData, 'server'> | null, override?: unknown): boolean {
+  if (!data?.server) return false;
+  const v = (override as { copies?: unknown } | null)?.copies;
+  return !(typeof v === 'string' && v.trim().toLowerCase() === 'non');
+}
+export const collectCopies = () =>
+  SITE && resolveCollect(siteData(), typeof window === 'undefined' ? null : (window as { ABBON_SITE_SETTINGS?: unknown }).ABBON_SITE_SETTINGS);
+
+/** Réglage du navigateur : nom et classe de l'élève, rappelés d'un examen à l'autre (JSON `Candidate`). */
+export const CANDIDATE_SETTING = 'exam_candidate';
+export interface Candidate {
+  name: string;
+  group: string;
+}
+export function parseCandidate(raw: string | null | undefined): Candidate {
+  try {
+    const c = JSON.parse(raw ?? '') as Partial<Candidate>;
+    return { name: typeof c.name === 'string' ? c.name : '', group: typeof c.group === 'string' ? c.group : '' };
+  } catch {
+    return { name: '', group: '' };
+  }
+}
 /** Site en mode entraînement seulement : pas d'examen. */
 export const trainingOnly = () => SITE && siteSettings().modes === 'training';
 
@@ -106,6 +133,9 @@ ${
   server
     ? `  // Examen corrigé par le serveur : le site ne contient pas les réponses, il est en examen seulement.
   modes: "examen",
+  // Copies gardées sur le serveur : "oui" (nom de l'élève demandé avant l'examen ; copies consultables avec
+  // examen/copies.php et le mot de passe de examen/config.php) ou "non" (note seule, rien n'est gardé).
+  copies: "oui",
   // Corrigé de l'examen : "fin" (renvoyé par le serveur après l'envoi des réponses) ou "jamais".
   // Le serveur (examen/corriger.php) relit ce fichier à chaque correction.`
     : `  // Modes proposés aux visiteurs :

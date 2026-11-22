@@ -3,9 +3,9 @@
  * identique à celle de l'application (si `php` est installé : c'est le cas des machines de la CI).
  */
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { strFromU8, unzipSync } from 'fflate';
 import { describe, expect, it } from 'vitest';
 import { demoCategories, demoModule, demoQuizzes } from '$lib/data/seed';
@@ -17,10 +17,10 @@ import { resultOf } from '$lib/domain/session';
 import type { Answer, Attempt, InstalledModule, Question, Quiz } from '$lib/domain/types';
 import { parsePackage } from '$lib/interchange/qcmPackage';
 import { siteContent, siteDataOf, zipSite } from '$lib/interchange/siteExport';
-import { resolveSettings, settingsScript } from '$lib/site';
+import { parseCandidate, resolveCollect, resolveSettings, settingsScript } from '$lib/site';
 import { finishWithGrade, gradeRequest, isGradeResponse, withSolutions } from './client';
 import { publicQuiz, serverSolutions, solutionsPhp } from './publish';
-import { CORRIGER_PHP, examFiles } from './server';
+import { COPIES_PHP, CORRIGER_PHP, examFiles, newPassword } from './server';
 import type { GradeRequest, GradeResponse } from './types';
 
 const fr = (s: string) => ({ fr: s });
@@ -166,10 +166,24 @@ describe('examen corrigé par le serveur : site publié', () => {
     expect(JSON.stringify(p.quizzes)).not.toMatch(/"correct":true|secret|"latex"/);
     expect(p.modules?.[0]?.manifest.sheets ?? p.module?.sheets).toBeUndefined();
 
-    const zip = unzipSync(zipSite('examen', { 'index.html': new Uint8Array() }, data, examFiles(content.quizzes, opts.solutions)));
+    const zip = unzipSync(zipSite('examen', { 'index.html': new Uint8Array() }, data, examFiles(content.quizzes, opts.solutions, 'MotDePasse23')));
     expect(Object.keys(zip).sort()).toEqual(
-      ['examen/LISEZMOI.txt', 'examen/donnees.js', 'examen/examen/.htaccess', 'examen/examen/corriger.php', 'examen/examen/solutions.php', 'examen/index.html', 'examen/reglages.js'].sort(),
+      [
+        'examen/LISEZMOI.txt',
+        'examen/donnees.js',
+        'examen/examen/.htaccess',
+        'examen/examen/config.php',
+        'examen/examen/copies.php',
+        'examen/examen/copies/.htaccess',
+        'examen/examen/copies/index.html',
+        'examen/examen/corriger.php',
+        'examen/examen/solutions.php',
+        'examen/index.html',
+        'examen/reglages.js',
+      ].sort(),
     );
+    expect(strFromU8(zip['examen/examen/config.php'])).toContain("'motDePasse' => 'MotDePasse23'");
+    expect(strFromU8(zip['examen/examen/.htaccess'])).toContain('(solutions|config)\\.php');
     expect(strFromU8(zip['examen/LISEZMOI.txt'])).toContain('PHP');
     const settings = strFromU8(zip['examen/reglages.js']);
     expect(settings).toContain('corrige: "jamais"');
@@ -178,6 +192,17 @@ describe('examen corrigé par le serveur : site publié', () => {
     new Function('window', settings)(w);
     expect(resolveSettings(data, { ...(w.ABBON_SITE_SETTINGS as object), modes: 'les-deux' }).modes).toBe('exam');
     expect(settingsScript({ modes: 'exam', solutions: 'end' }, true)).toContain('corrige: "fin"');
+    // Copies : oui par défaut, « non » dans reglages.js ; jamais sans correction par le serveur.
+    expect(settings).toContain('copies: "oui"');
+    expect(resolveCollect(data, w.ABBON_SITE_SETTINGS)).toBe(true);
+    expect(resolveCollect(data, { copies: ' Non ' })).toBe(false);
+    expect(resolveCollect({}, { copies: 'oui' })).toBe(false);
+  });
+
+  it('mot de passe des copies : 12 caractères sans ambiguïté, différent à chaque export', () => {
+    const a = newPassword();
+    expect(a).toMatch(/^[a-km-zA-HJ-NP-Z2-9]{12}$/);
+    expect(newPassword()).not.toBe(a);
   });
 });
 
@@ -186,8 +211,13 @@ describe('examen corrigé par le serveur : lecteur', () => {
   const answers = [answer('q0', { selected: ['c1'] }), answer('q2', { text: 'goed' }), answer(pub.questions[10].id, { text: 'n^2+2n+1' })];
 
   it('demande : réponses données, formules évaluées aux points de test', () => {
-    const r = gradeRequest(pub, attempt, answers);
+    const r = gradeRequest(pub, attempt, answers, { name: 'Ada Lovelace', group: 'TG2' });
     expect(r.quiz).toBe(quiz.id);
+    expect(r.attempt).toEqual({ id: 'a1', startedAt: attempt.startedAt, elapsedSec: 0 });
+    expect(r.candidate).toEqual({ name: 'Ada Lovelace', group: 'TG2' });
+    expect(gradeRequest(pub, attempt, answers).candidate).toBeUndefined();
+    expect(parseCandidate('{"name":"Ada","group":3}')).toEqual({ name: 'Ada', group: '' });
+    expect(parseCandidate(null)).toEqual({ name: '', group: '' });
     expect(r.questions).toHaveLength(quiz.questions.length);
     expect(Object.keys(r.answers)).toEqual(['q0', 'q2', pub.questions[10].id]);
     expect(r.answers[pub.questions[10].id].values?.length).toBe(pub.questions[10].expected?.samples?.length);
@@ -239,7 +269,9 @@ describe.skipIf(!hasPhp)('examen corrigé par le serveur : script PHP', () => {
     const dir = mkdtempSync(join(tmpdir(), 'abbon-php-'));
     try {
       writeFileSync(join(dir, 'corriger.php'), CORRIGER_PHP);
+      writeFileSync(join(dir, 'copies.php'), COPIES_PHP);
       expect(execFileSync('php', ['-l', join(dir, 'corriger.php')]).toString()).toContain('No syntax errors');
+      expect(execFileSync('php', ['-l', join(dir, 'copies.php')]).toString()).toContain('No syntax errors');
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -291,6 +323,61 @@ echo json_encode($out, JSON_PRESERVE_ZERO_FRACTION);
       const exprOk = results.flatMap((r) => quiz.questions.filter((x) => x.type === 'expression').map((x) => r.perQuestion[x.id].correct));
       expect(exprOk).toContain(true);
       expect(exprOk).toContain(false);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('copies : enregistrées une fois, réglages relus, consultation protégée, CSV', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'abbon-php-'));
+    try {
+      for (const [f, text] of Object.entries(examFiles([quiz], 'end', 'Secret23abcd'))) {
+        mkdirSync(dirname(join(dir, f)), { recursive: true });
+        writeFileSync(join(dir, f), text);
+      }
+      writeFileSync(join(dir, 'reglages.js'), settingsScript({ modes: 'exam', solutions: 'end' }, true).replace('corrige: "fin"', 'corrige: "jamais"'));
+      const pub = publicQuiz(quiz);
+      const request = gradeRequest(pub, attempt, [answer('q0', { selected: ['c1'] }), answer('q2', { text: 'went' })], {
+        name: '=HYPERLINK("x") Ada\u0007 <b>',
+        group: 'TG2',
+      });
+      writeFileSync(join(dir, 'demande.json'), JSON.stringify(request));
+      writeFileSync(
+        join(dir, 'test.php'),
+        `<?php
+define('ABBON_CORRIGER_BIBLIOTHEQUE', true);
+require __DIR__ . '/examen/corriger.php';
+$solutions = require __DIR__ . '/examen/solutions.php';
+$r = json_decode(file_get_contents(__DIR__ . '/demande.json'), true);
+$reglages = __DIR__ . '/reglages.js';
+$out = abbon_corriger($solutions, $r, abbon_corrige('fin', $reglages));
+$copies = __DIR__ . '/examen/copies';
+$a = abbon_enregistrer($copies, abbon_copie($solutions, $r, $out, 1795000000));
+$b = abbon_enregistrer($copies, abbon_copie($solutions, $r, $out)); // envoi répété : pas de doublon
+echo json_encode(array('corrige' => abbon_corrige('fin', $reglages), 'collecte' => abbon_collecte($reglages), 'solutions' => isset($out['solutions']), 'ok' => $a && $b, 'copies' => abbon_lire_copies($copies), 'fichier' => file_get_contents($copies . '/copies.php')), JSON_UNESCAPED_UNICODE);
+`,
+      );
+      const r = JSON.parse(execFileSync('php', [join(dir, 'test.php')]).toString());
+      expect(r).toMatchObject({ corrige: 'jamais', collecte: true, solutions: false, ok: true });
+      expect(r.copies).toHaveLength(1);
+      expect(r.copies[0]).toMatchObject({ id: 'a1', date: '2026-11-18T11:06:40Z', nom: '=HYPERLINK("x") Ada <b>', groupe: 'TG2', qcm: quiz.id, titre: 'Examen', note: 2, reussi: false });
+      expect(r.copies[0].reponses).toEqual({ q0: { cases: ['c1'] }, q2: { texte: 'went' } });
+      expect(r.fichier.startsWith('<?php exit; ?>\n')).toBe(true);
+
+      // Consultation : mot de passe exigé, noms échappés, cellules CSV neutralisées.
+      const view = (post: Record<string, string>) => {
+        writeFileSync(join(dir, 'vue.php'), `<?php $_POST = json_decode(${JSON.stringify(JSON.stringify(post))}, true); include __DIR__ . '/examen/copies.php';`);
+        return execFileSync('php', [join(dir, 'vue.php')]).toString();
+      };
+      expect(view({})).toContain('type="password"');
+      expect(view({})).not.toContain('Ada');
+      const html = view({ motdepasse: 'Secret23abcd' });
+      expect(html).toContain('1 copie,');
+      expect(html).toContain('&lt;b&gt;');
+      expect(html).not.toContain('<b>');
+      const csv = view({ motdepasse: 'Secret23abcd', format: 'csv' });
+      expect(csv.split('\r\n')[0]).toBe('﻿"Date";"Nom";"Classe ou groupe";"QCM";"Note";"Sur";"Pourcentage";"Réussi";"Durée";"Identifiant"');
+      expect(csv).toContain(`"'=HYPERLINK(""x"") Ada <b>";"TG2";"Examen";"2";"19";"10,53";"non";"0:00";"a1"`);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

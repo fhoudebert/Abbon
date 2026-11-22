@@ -35,6 +35,8 @@ export interface ServerSolutions {
   quizzes: Record<
     string,
     {
+      /** Titre affiché dans la liste des copies. */
+      title: string;
       scoring: Quiz['scoring'];
       passThreshold: number;
       questions: Record<string, Record<string, unknown>>;
@@ -64,7 +66,8 @@ export function serverSolutions(quizzes: readonly Quiz[], solutions: SiteSolutio
       }
       questions[q.id] = entry;
     }
-    out.quizzes[quiz.id] = { scoring: quiz.scoring, passThreshold: quiz.passThreshold, questions };
+    const title = quiz.title[quiz.languages[0]] ?? Object.values(quiz.title)[0] ?? quiz.id;
+    out.quizzes[quiz.id] = { title, scoring: quiz.scoring, passThreshold: quiz.passThreshold, questions };
   }
   return out;
 }

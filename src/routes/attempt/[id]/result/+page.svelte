@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { examOnly, serverGrading, to } from '$lib/site';
+  import { collectCopies, examOnly, serverGrading, to } from '$lib/site';
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
@@ -79,6 +79,7 @@
       <span>{attempt.mode === 'exam' ? t('quiz.exam') : t('quiz.training')}</span>
     </p>
     {#if attemptPoints}<p class="gain">{t('result.quizPoints', { n: attemptPoints })}</p>{/if}
+    {#if serverGrading() && collectCopies()}<p class="muted">{t('site.copySent')}</p>{/if}
     <div class="actions">
       {#if solution}
         <a class="button" href={to(`/attempt/${id}/review`)}>{t('result.review')}</a>

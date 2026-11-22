@@ -3,7 +3,7 @@
  */
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, sep } from 'node:path';
-import { examFiles } from '$lib/exam/server';
+import { examFiles, newPassword } from '$lib/exam/server';
 import { siteContent, siteDataOf, SITE_README, SITE_SERVER_README } from '$lib/interchange/siteExport';
 import { settingsScript, siteScript } from '$lib/site';
 import { buildPackage, parsePackage, sha256Hex, sniffMime, type MediaFile } from '$lib/interchange/qcmPackage';
@@ -174,7 +174,9 @@ export async function main(argv: string[], root: string): Promise<number> {
       writeFileSync(join(dir, 'reglages.js'), settingsScript(opts, server));
       writeFileSync(join(dir, 'LISEZMOI.txt'), server ? SITE_SERVER_README : SITE_README);
       if (server) {
-        for (const [f, text] of Object.entries(examFiles(content.quizzes, solutions))) {
+        const password = newPassword();
+        console.log(`  mot de passe des copies (examen/copies.php) : ${password}`);
+        for (const [f, text] of Object.entries(examFiles(content.quizzes, solutions, password))) {
           mkdirSync(dirname(join(dir, f)), { recursive: true });
           writeFileSync(join(dir, f), text);
         }

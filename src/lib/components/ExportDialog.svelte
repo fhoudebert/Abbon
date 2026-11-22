@@ -50,8 +50,13 @@
       if (format === 'site') {
         const ids = quiz ? (scope === 'module' && quiz.moduleId ? app.quizzes.filter((q) => q.moduleId === quiz!.moduleId).map((q) => q.id) : [quiz.id]) : undefined;
         const name = siteTitle.trim() || t('io.site.defaultTitle');
-        const bytes = await app.exportSite(ids, { title: name, modes, solutions: solutionsAtEnd ? 'end' : 'never', server: modes === 'exam' && server });
-        path = await saveFile(`${fileSafe(name, 'abbon-site')}-site.zip`, bytes, [{ name: 'ZIP', extensions: ['zip'] }]);
+        const out = await app.exportSite(ids, { title: name, modes, solutions: solutionsAtEnd ? 'end' : 'never', server: modes === 'exam' && server });
+        path = await saveFile(`${fileSafe(name, 'abbon-site')}-site.zip`, out.bytes, [{ name: 'ZIP', extensions: ['zip'] }]);
+        // Examen corrigé par le serveur : le mot de passe des copies reste affiché (pas de fermeture automatique).
+        if (path && out.password) {
+          message = `${t('io.saved', { path })} ${t('io.site.password', { password: out.password })}`;
+          return;
+        }
       } else if (format === 'gift' && quiz) {
         const text = await app.exportGift(quiz.id, lang);
         path = await saveFile(`${fileSafe(title)}.gift`, strToU8(text), [{ name: 'GIFT', extensions: ['gift', 'txt'] }]);

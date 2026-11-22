@@ -24,6 +24,10 @@ export interface GradeAnswer {
 
 export interface GradeRequest {
   quiz: string;
+  /** Tentative : identifiant (une copie renvoyée n'est enregistrée qu'une fois), durée. */
+  attempt: { id: string; startedAt: string; elapsedSec: number };
+  /** Élève, si les copies sont gardées sur le serveur. */
+  candidate?: { name: string; group: string };
   /** Questions de la tentative, dans l'ordre. */
   questions: string[];
   answers: Record<string, GradeAnswer>;
@@ -35,6 +39,8 @@ export interface GradeResponse {
   ratio: number;
   passed: boolean;
   perQuestion: Record<string, { points: number; correct: boolean }>;
+  /** Vrai si la copie a été enregistrée sur le serveur (reglages.js : copies "oui"). */
+  recorded?: boolean;
   /** Présent si le corrigé est montré à la fin (reglages.js : corrige "fin"). */
   solutions?: Record<string, QuestionSolution>;
 }

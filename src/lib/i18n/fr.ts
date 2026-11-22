@@ -342,6 +342,12 @@ export const fr = {
   'site.noData': 'Ce site ne trouve pas ses contenus : le fichier donnees.js doit être déposé à côté de index.html.',
   'site.unavailable': 'Cette page n’existe pas sur ce site.',
   'site.grade.network': 'Le serveur ne répond pas : vos réponses sont gardées, vérifiez la connexion puis cliquez de nouveau sur « Terminer ».',
+  'site.grade.record': 'Votre copie est corrigée mais le serveur n’a pas pu l’enregistrer. Vos réponses sont gardées : prévenez l’enseignant, puis cliquez de nouveau sur « Terminer ».',
+  'site.candidate.name': 'Nom et prénom',
+  'site.candidate.group': 'Classe ou groupe (facultatif)',
+  'site.candidate.hint': 'Votre copie sera transmise à l’enseignant sous ce nom.',
+  'site.copySent': 'Copie transmise à l’enseignant.',
+  'io.site.password': 'Mot de passe pour consulter les copies (examen/copies.php) : {password}. Il est aussi dans examen/config.php.',
   'site.grade.server': 'Le serveur n’a pas pu corriger la copie (PHP absent ou fichiers incomplets dans le dossier examen/). Vos réponses sont gardées : prévenez la personne qui a publié le site.',
   'io.saved': 'Fichier enregistré : {path}',
 
