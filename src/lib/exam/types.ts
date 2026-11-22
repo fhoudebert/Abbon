@@ -23,6 +23,8 @@ export interface GradeAnswer {
 }
 
 export interface GradeRequest {
+  /** « corrige » : demande du détail et du corrigé après coup (rien n'est enregistré). */
+  action?: 'corrige';
   quiz: string;
   /** Tentative : identifiant (une copie renvoyée n'est enregistrée qu'une fois), durée. */
   attempt: { id: string; startedAt: string; elapsedSec: number };
@@ -38,7 +40,10 @@ export interface GradeResponse {
   maxScore: number;
   ratio: number;
   passed: boolean;
-  perQuestion: Record<string, { points: number; correct: boolean }>;
+  /** Détail par question ; absent tant que l'enseignant n'a pas publié le corrigé (`locked`). */
+  perQuestion?: Record<string, { points: number; correct: boolean }>;
+  /** Corrigé « enseignant » pas encore publié : la note seule. */
+  locked?: boolean;
   /** Vrai si la copie a été enregistrée sur le serveur (reglages.js : copies "oui"). */
   recorded?: boolean;
   /** Présent si le corrigé est montré à la fin (reglages.js : corrige "fin"). */

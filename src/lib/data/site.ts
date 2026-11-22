@@ -77,7 +77,10 @@ export class SiteRepository extends MemoryRepository {
     const quizzes = p.quizzes.map((q) => ({
       ...(this.#solutions[q.id] ? withSolutions(q, this.#solutions[q.id]) : q),
       status: 'published' as const,
-      ...(settings.modes === 'exam' ? { solutionVisibility: settings.solutions === 'end' ? ('after_submit' as const) : ('never' as const) } : {}),
+      // « teacher » : corrigé publié par l'enseignant, seulement avec la correction par le serveur (lib/exam).
+      ...(settings.modes === 'exam'
+        ? { solutionVisibility: settings.solutions === 'end' || (settings.solutions === 'teacher' && data.server) ? ('after_submit' as const) : ('never' as const) }
+        : {}),
     }));
     const byId = new Map(quizzes.map((q) => [q.id, q]));
     await this.replaceAll({

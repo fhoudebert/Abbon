@@ -35,34 +35,55 @@ const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFin
 /** Réponse du serveur lisible ? (sinon : PHP absent, page d'erreur de l'hébergeur…) */
 export function isGradeResponse(v: unknown, questionIds: readonly string[]): v is GradeResponse {
   const r = v as Partial<GradeResponse> | null;
-  if (!r || !isNum(r.score) || !isNum(r.maxScore) || typeof r.passed !== 'boolean' || !r.perQuestion || typeof r.perQuestion !== 'object') return false;
+  if (!r || !isNum(r.score) || !isNum(r.maxScore) || typeof r.passed !== 'boolean') return false;
+  if (r.locked === true) return true;
+  if (!r.perQuestion || typeof r.perQuestion !== 'object') return false;
   return questionIds.every((id) => {
     const p = r.perQuestion![id];
     return !!p && isNum(p.points) && typeof p.correct === 'boolean';
   });
 }
 
-/** Clôt la tentative avec la note du serveur (comme `finishAttempt`, sans corriger sur place). */
+/**
+ * Clôt la tentative avec la note du serveur (comme `finishAttempt`, sans corriger sur place). Détail par question
+ * pas encore publié : les réponses restent sans note (`points` null), voir `detailLocked`.
+ */
 export function finishWithGrade(quiz: Quiz, attempt: Attempt, answers: readonly Answer[], grade: GradeResponse, now = new Date()): Finished {
-  const questions = questionsOf(quiz, attempt);
-  const byId = new Map(answers.map((a) => [a.questionId, a]));
-  const graded = questions.map((q) => {
-    const a = byId.get(q.id) ?? emptyAnswer(q.id);
-    const r = grade.perQuestion[q.id];
-    return { ...a, correct: r.correct, points: r.points };
-  });
+  const graded = withDetail(quiz, attempt, answers, grade.perQuestion);
   const result = {
     score: grade.score,
     maxScore: grade.maxScore,
     ratio: grade.maxScore > 0 ? grade.score / grade.maxScore : 0,
     passed: grade.passed,
-    perQuestion: Object.fromEntries(questions.map((q) => [q.id, grade.perQuestion[q.id]])),
+    perQuestion: grade.perQuestion ? Object.fromEntries(graded.map((a) => [a.questionId, { points: a.points ?? 0, correct: a.correct === true }])) : {},
   };
   return {
     attempt: { ...attempt, status: 'finished', finishedAt: now.toISOString(), score: result.score, maxScore: result.maxScore },
     answers: graded,
     result,
   };
+}
+
+/** Réponses de la tentative avec le détail par question du serveur (ou sans note, s'il n'est pas publié). */
+export function withDetail(
+  quiz: Quiz,
+  attempt: Attempt,
+  answers: readonly Answer[],
+  perQuestion: GradeResponse['perQuestion'],
+): Answer[] {
+  const byId = new Map(answers.map((a) => [a.questionId, a]));
+  return questionsOf(quiz, attempt).map((q) => {
+    const a = byId.get(q.id) ?? emptyAnswer(q.id);
+    const r = perQuestion?.[q.id];
+    return { ...a, correct: r ? r.correct : null, points: r ? r.points : null };
+  });
+}
+
+/** Tentative terminée dont le détail par question n'est pas encore publié par l'enseignant. */
+export function detailLocked(quiz: Quiz, attempt: Attempt, answers: readonly Answer[]): boolean {
+  if (attempt.status !== 'finished') return false;
+  const byId = new Map(answers.map((a) => [a.questionId, a]));
+  return questionsOf(quiz, attempt).some((q) => byId.get(q.id)?.points == null);
 }
 
 /** Envoie la tentative au serveur et renvoie sa note. Erreur explicite si le serveur ne corrige pas. */
@@ -72,8 +93,9 @@ export async function gradeOnServer(
   answers: readonly Answer[],
   candidate?: { name: string; group: string },
   fetcher: typeof fetch = fetch,
+  action?: 'corrige',
 ): Promise<GradeResponse> {
-  const request = gradeRequest(quiz, attempt, answers, candidate);
+  const request = { ...(action ? { action } : {}), ...gradeRequest(quiz, attempt, answers, candidate) };
   let res: Response;
   try {
     res = await fetcher(GRADER_PATH, {
@@ -94,6 +116,15 @@ export async function gradeOnServer(
   if ((body as { error?: unknown } | null)?.error === 'copie') throw new GradeError('record');
   if (!res.ok || !isGradeResponse(body, request.questions)) throw new GradeError('server');
   return body;
+}
+
+/**
+ * Corrigé publié depuis la copie ? Redemande au serveur le détail et le corrigé d'une tentative terminée ;
+ * null tant que l'enseignant ne les a pas publiés.
+ */
+export async function fetchCorrection(quiz: Quiz, attempt: Attempt, answers: readonly Answer[], fetcher: typeof fetch = fetch): Promise<GradeResponse | null> {
+  const grade = await gradeOnServer(quiz, attempt, answers, undefined, fetcher, 'corrige');
+  return grade.locked || !grade.perQuestion ? null : grade;
 }
 
 export class GradeError extends Error {

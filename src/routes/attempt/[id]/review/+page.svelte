@@ -15,6 +15,7 @@
   import { i18n, t } from '$lib/i18n/index.svelte';
   import { app } from '$lib/app.svelte';
   import { AttemptSession } from '$lib/session.svelte';
+  import { detailLocked } from '$lib/exam/client';
 
   const session = new AttemptSession();
   const id = page.params.id ?? '';
@@ -33,8 +34,9 @@
     const a = session.attempt;
     if (!q || !a) return;
     // Corrigé non autorisé (tentative en cours, QCM sans corrigé ou pas encore réussi) : retour au résultat.
-    if (!canSeeSolution(q, a, resultOf(q, a, Object.values(session.answers), serverGrading()).passed)) {
-      goto(a.status === 'in_progress' ? `/attempt/${id}` : `/attempt/${id}/result`, { replaceState: true });
+    const answers = Object.values(session.answers);
+    if (!canSeeSolution(q, a, resultOf(q, a, answers, serverGrading()).passed) || (serverGrading() && detailLocked(q, a, answers))) {
+      goto(to(a.status === 'in_progress' ? `/attempt/${id}` : `/attempt/${id}/result`), { replaceState: true });
     }
   });
 

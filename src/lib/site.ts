@@ -50,7 +50,11 @@ export function siteData(): SiteData | null {
 
 /** Modes proposés : entraînement et examen, entraînement seulement (avec la boîte de révision), examen seulement. */
 export type SiteModes = 'both' | 'training' | 'exam';
-export type SiteSolutions = 'end' | 'never';
+/**
+ * Corrigé de l'examen : à la fin, jamais, ou (examen corrigé par le serveur) quand l'enseignant le publie dans
+ * `examen/enseignant.php` ; sans serveur, « teacher » vaut « never ».
+ */
+export type SiteSolutions = 'end' | 'never' | 'teacher';
 
 /** Réglages effectifs du site. */
 export interface SiteSettings {
@@ -68,7 +72,15 @@ const MODE_NAMES: Record<string, SiteModes> = {
   examen: 'exam',
   exam: 'exam',
 };
-const SOLUTION_NAMES: Record<string, SiteSolutions> = { fin: 'end', end: 'end', jamais: 'never', never: 'never' };
+const SOLUTION_NAMES: Record<string, SiteSolutions> = {
+  fin: 'end',
+  end: 'end',
+  jamais: 'never',
+  never: 'never',
+  enseignant: 'teacher',
+  teacher: 'teacher',
+};
+const SOLUTION_LABELS: Record<SiteSolutions, string> = { end: 'fin', never: 'jamais', teacher: 'enseignant' };
 
 /**
  * Réglages du site : ceux de `reglages.js` s'ils sont lisibles, sinon ceux choisis à l'export.
@@ -133,10 +145,13 @@ ${
   server
     ? `  // Examen corrigé par le serveur : le site ne contient pas les réponses, il est en examen seulement.
   modes: "examen",
-  // Copies gardées sur le serveur : "oui" (nom de l'élève demandé avant l'examen ; copies consultables avec
-  // examen/copies.php et le mot de passe de examen/config.php) ou "non" (note seule, rien n'est gardé).
+  // Copies gardées sur le serveur : "oui" (nom de l'élève demandé avant l'examen ; copies consultables dans
+  // examen/enseignant.php avec le mot de passe de examen/config.php) ou "non" (note seule, rien n'est gardé).
   copies: "oui",
-  // Corrigé de l'examen : "fin" (renvoyé par le serveur après l'envoi des réponses) ou "jamais".
+  // Corrigé et détail par question :
+  //   "enseignant"  l'élève voit sa note ; le détail et le corrigé, quand l'enseignant les publie (examen/enseignant.php) ;
+  //   "fin"         dès que l'élève rend sa copie ;
+  //   "jamais"      la note et le détail par question, jamais le corrigé.
   // Le serveur (examen/corriger.php) relit ce fichier à chaque correction.`
     : `  // Modes proposés aux visiteurs :
   //   "les-deux"      entraînement (correction à chaque question, boîte de révision) et examen ;
@@ -145,7 +160,7 @@ ${
   modes: "${MODE_LABELS[s.modes]}",
   // Corrigé de l'examen : "fin" (après l'envoi des réponses) ou "jamais".`
 }
-  corrige: "${s.solutions === 'end' ? 'fin' : 'jamais'}",
+  corrige: "${SOLUTION_LABELS[server ? s.solutions : s.solutions === 'teacher' ? 'never' : s.solutions]}",
 };
 `;
 

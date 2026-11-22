@@ -1,17 +1,17 @@
 /**
  * Fichiers du dossier examen/ d'un site corrigé par le serveur : `corriger.php` (notation et enregistrement des
- * copies, en PHP), `solutions.php` (corrigé), `copies.php` (consultation des copies), `config.php` (mot de passe
- * de la consultation), `copies/` (les copies) et des `.htaccess`. Chargé seulement au moment de l'export.
+ * copies, en PHP), `solutions.php` (corrigé), `enseignant.php` (publication du corrigé, consultation des
+ * copies), `config.php` (mot de passe de l'espace enseignant), `copies/` (les copies) et des `.htaccess`. Chargé seulement au moment de l'export.
  */
 import type { Quiz } from '$lib/domain/types';
 import type { SiteSolutions } from '$lib/site';
-import COPIES_PHP from './copies.php?raw';
+import ENSEIGNANT_PHP from './enseignant.php?raw';
 import CORRIGER_PHP from './corriger.php?raw';
 import { serverSolutions, solutionsPhp } from './publish';
 
-export { COPIES_PHP, CORRIGER_PHP };
+export { CORRIGER_PHP, ENSEIGNANT_PHP };
 
-/** Mot de passe de la consultation des copies : 12 caractères sans ambiguïté (ni 0/O, ni 1/l/I). */
+/** Mot de passe de l'espace enseignant (publication du corrigé, copies) : 12 caractères sans ambiguïté (ni 0/O, ni 1/l/I). */
 export function newPassword(length = 12): string {
   const alphabet = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   const bytes = crypto.getRandomValues(new Uint8Array(length * 2));
@@ -27,7 +27,8 @@ export function newPassword(length = 12): string {
 /** Texte de `examen/config.php` : réglages lus seulement par le serveur. */
 export const configPhp = (password: string) => `<?php
 // Réglages de l'examen Abbon, lus seulement par le serveur (ouvert dans un navigateur, ce fichier ne montre rien).
-// motDePasse : pour consulter les copies (examen/copies.php) ; le changer ici si besoin, '' pour désactiver.
+// motDePasse : pour l'espace enseignant (examen/enseignant.php : publication du corrigé, copies) ; le changer ici
+// si besoin, '' pour désactiver.
 // fuseau : fuseau horaire des dates affichées.
 return array(
   'motDePasse' => '${password.replace(/[\\']/g, '')}',
@@ -56,12 +57,12 @@ export const EXAM_HTACCESS = `Options -Indexes
 </FilesMatch>
 `;
 
-/** Fichiers du dossier examen/ du site (`password` : consultation des copies). */
+/** Fichiers du dossier examen/ du site (`password` : espace enseignant). */
 export function examFiles(quizzes: readonly Quiz[], solutions: SiteSolutions, password: string): Record<string, string> {
   return {
     'examen/corriger.php': CORRIGER_PHP,
     'examen/solutions.php': solutionsPhp(serverSolutions(quizzes, solutions)),
-    'examen/copies.php': COPIES_PHP,
+    'examen/enseignant.php': ENSEIGNANT_PHP,
     'examen/config.php': configPhp(password),
     'examen/.htaccess': EXAM_HTACCESS,
     'examen/copies/.htaccess': COPIES_HTACCESS,

@@ -1,10 +1,12 @@
 <?php
 /*
- * Abbon — consultation des copies d'un examen corrigé par le serveur.
+ * Abbon — espace enseignant d'un examen corrigé par le serveur.
  *
- * Ouvrir examen/copies.php dans un navigateur et saisir le mot de passe de config.php : liste des copies
- * (nom, classe ou groupe, QCM, note, durée) et téléchargement au format CSV (tableur). Les copies sont dans
- * copies/copies.php (une ligne JSON par copie) : les supprimer par FTP pour repartir de zéro.
+ * Ouvrir examen/enseignant.php dans un navigateur et saisir le mot de passe de config.php :
+ *  - corrigé : avec corrige: "enseignant" dans reglages.js, le publier (ou le retirer) QCM par QCM, quand le temps
+ *    de l'épreuve est écoulé ; les élèves voient alors le détail par question et le corrigé ;
+ *  - copies : liste (nom, classe ou groupe, QCM, note, durée) et téléchargement au format CSV (tableur). Les copies
+ *    sont dans copies/copies.php (une ligne JSON par copie) : les supprimer par FTP pour repartir de zéro.
  * Ne pas modifier : ce fichier est régénéré à chaque export.
  */
 
@@ -51,6 +53,33 @@ $given = isset($_POST['motdepasse']) ? (string) $_POST['motdepasse'] : '';
 $ok = $secret !== '' && $given !== '' && hash_equals($secret, $given);
 if ($given !== '' && !$ok) sleep(2);
 
+// Publication du corrigé (mode « enseignant »).
+$solutions = require __DIR__ . '/solutions.php';
+$corrige = abbon_corrige(is_array($solutions) && isset($solutions['corrige']) ? $solutions['corrige'] : 'enseignant');
+$quizTitles = array();
+if (is_array($solutions) && isset($solutions['quizzes'])) {
+  foreach ($solutions['quizzes'] as $id => $q) $quizTitles[$id] = isset($q['title']) ? $q['title'] : $id;
+}
+$published = abbon_publication(__DIR__ . '/copies');
+$notice = '';
+$action = isset($_POST['action']) ? (string) $_POST['action'] : '';
+if ($ok && $corrige === 'enseignant' && $action !== '') {
+  $target = isset($_POST['cible']) ? (string) $_POST['cible'] : '';
+  $next = $published;
+  if ($action === 'publier' && isset($quizTitles[$target])) $next[$target] = gmdate('Y-m-d\TH:i:s\Z');
+  elseif ($action === 'retirer') unset($next[$target]);
+  elseif ($action === 'publier-tout') { foreach ($quizTitles as $id => $t) if (!isset($next[$id])) $next[$id] = gmdate('Y-m-d\TH:i:s\Z'); }
+  elseif ($action === 'retirer-tout') $next = array();
+  if ($next !== $published) {
+    if (abbon_publier(__DIR__ . '/copies', $next)) {
+      $notice = count($next) > count($published) ? 'Corrigé publié.' : 'Corrigé retiré.';
+      $published = $next;
+    } else {
+      $notice = 'Impossible d\'écrire dans le dossier examen/copies/ : vérifier ses droits d\'écriture.';
+    }
+  }
+}
+
 $copies = $ok ? abbon_lire_copies(__DIR__ . '/copies') : array();
 $titles = array();
 foreach ($copies as $c) $titles[$c['qcm']] = $c['titre'];
@@ -80,7 +109,7 @@ header('Content-Type: text/html; charset=utf-8');
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>Copies de l'examen — Abbon</title>
+<title>Espace enseignant — Abbon</title>
 <style>
   :root { color-scheme: light dark; --fg: #1d2a1f; --bg: #fafaf7; --muted: #5f685a; --line: #d9dcd3; --accent: #2e6b1f; --bad: #b3261e; }
   @media (prefers-color-scheme: dark) { :root { --fg: #e6eae2; --bg: #161a15; --muted: #a6ae9f; --line: #3a4136; --accent: #8fd06f; --bad: #ff8a80; } }
@@ -97,11 +126,14 @@ header('Content-Type: text/html; charset=utf-8');
   td.num { text-align: right; font-variant-numeric: tabular-nums; }
   .muted { color: var(--muted); }
   .error { color: var(--bad); font-weight: 600; }
+  h2 { font-size: 1.2rem; margin-top: 2rem; }
+  form.inline { display: inline; margin: 0; }
+  .ok { color: var(--accent); font-weight: 600; }
 </style>
 </head>
 <body>
 <main>
-<h1>Copies de l'examen</h1>
+<h1>Espace enseignant</h1>
 <?php if ($secret === ''): ?>
   <p class="error">Consultation désactivée : indiquer un mot de passe dans examen/config.php.</p>
 <?php elseif (!$ok): ?>
@@ -112,6 +144,52 @@ header('Content-Type: text/html; charset=utf-8');
   </form>
   <p class="muted">Le mot de passe est dans le fichier examen/config.php (voir LISEZMOI.txt).</p>
 <?php else: ?>
+  <h2>Corrigé</h2>
+  <?php if ($notice !== ''): ?><p class="<?= strpos($notice, 'Impossible') === 0 ? 'error' : 'ok' ?>" role="status"><?= h($notice) ?></p><?php endif; ?>
+  <?php if ($corrige === 'enseignant'): ?>
+    <p>Tant que le corrigé d'un QCM n'est pas publié, les élèves ne voient que leur note. Une fois publié, ils voient le
+      détail par question et le corrigé (y compris ceux qui ont déjà rendu leur copie, en revenant sur leur résultat).</p>
+    <div class="table" tabindex="0" role="region" aria-label="Publication du corrigé">
+    <table>
+      <thead><tr><th scope="col">QCM</th><th scope="col">Corrigé</th><th scope="col"><span class="muted">Action</span></th></tr></thead>
+      <tbody>
+      <?php foreach ($quizTitles as $id => $t): ?>
+        <tr>
+          <td><?= h($t) ?></td>
+          <td><?= isset($published[$id]) ? 'publié le ' . h(abbon_date($published[$id])) : '<span class="muted">non publié</span>' ?></td>
+          <td>
+            <form method="post" class="inline">
+              <input type="hidden" name="motdepasse" value="<?= h($given) ?>">
+              <input type="hidden" name="cible" value="<?= h($id) ?>">
+              <?php if (isset($published[$id])): ?>
+                <button type="submit" name="action" value="retirer" class="secondary" aria-label="Retirer le corrigé : <?= h($t) ?>">Retirer</button>
+              <?php else: ?>
+                <button type="submit" name="action" value="publier" aria-label="Publier le corrigé : <?= h($t) ?>">Publier</button>
+              <?php endif; ?>
+            </form>
+          </td>
+        </tr>
+      <?php endforeach; ?>
+      </tbody>
+    </table>
+    </div>
+    <?php if (count($quizTitles) > 1): ?>
+      <form method="post">
+        <input type="hidden" name="motdepasse" value="<?= h($given) ?>">
+        <button type="submit" name="action" value="publier-tout">Publier tous les corrigés</button>
+        <button type="submit" name="action" value="retirer-tout" class="secondary">Tout retirer</button>
+      </form>
+    <?php endif; ?>
+  <?php elseif ($corrige === 'fin'): ?>
+    <p>reglages.js : corrige "fin" — chaque élève reçoit le détail par question et le corrigé dès qu'il rend sa copie.
+      Pour les publier vous-même, une fois l'épreuve terminée, indiquer corrige: "enseignant".</p>
+  <?php else: ?>
+    <p>reglages.js : corrige "jamais" — les élèves voient leur note et le détail par question, jamais le corrigé.
+      Pour le publier vous-même, une fois l'épreuve terminée, indiquer corrige: "enseignant".</p>
+  <?php endif; ?>
+
+  <h2>Copies</h2>
+  <?php if (!abbon_collecte()): ?><p class="muted">reglages.js : copies "non" — les nouvelles copies ne sont pas gardées.</p><?php endif; ?>
   <form method="post">
     <input type="hidden" name="motdepasse" value="<?= h($given) ?>">
     <label>QCM

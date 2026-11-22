@@ -31,7 +31,7 @@ export function publicQuiz(quiz: Quiz): Quiz {
 export interface ServerSolutions {
   version: 1;
   /** Choix de l'export ; reglages.js, s'il est lisible par le serveur, l'emporte. */
-  corrige: 'fin' | 'jamais';
+  corrige: 'fin' | 'jamais' | 'enseignant';
   quizzes: Record<
     string,
     {
@@ -45,7 +45,7 @@ export interface ServerSolutions {
 }
 
 export function serverSolutions(quizzes: readonly Quiz[], solutions: SiteSolutions): ServerSolutions {
-  const out: ServerSolutions = { version: 1, corrige: solutions === 'never' ? 'jamais' : 'fin', quizzes: {} };
+  const out: ServerSolutions = { version: 1, corrige: solutions === 'never' ? 'jamais' : solutions === 'teacher' ? 'enseignant' : 'fin', quizzes: {} };
   for (const quiz of quizzes) {
     const questions: Record<string, Record<string, unknown>> = {};
     for (const q of quiz.questions) {

@@ -6,7 +6,7 @@
   import { fileSafe, saveFile } from '$lib/files';
   import { i18n, t } from '$lib/i18n/index.svelte';
   import { languageName } from '$lib/i18n/languages';
-  import type { SiteModes } from '$lib/site';
+  import type { SiteModes, SiteSolutions } from '$lib/site';
 
   /** Export d'un QCM (.qcm, GIFT ou site web) ou de tous les QCM (.qcm ou site web). */
   let dialog: HTMLDialogElement;
@@ -18,6 +18,8 @@
   let modes = $state<SiteModes>('both');
   let solutionsAtEnd = $state(true);
   let server = $state(false);
+  // Examen corrigé par le serveur : par défaut, l'enseignant publie le corrigé après l'épreuve.
+  let serverSolutions = $state<SiteSolutions>('teacher');
   const module = $derived(quiz?.moduleId ? app.moduleOf(quiz.moduleId) : undefined);
   const moduleTitle = $derived(module ? localize(module.manifest.title, i18n.lang) : '');
   let solutions = $state(true);
@@ -34,6 +36,7 @@
     modes = 'both';
     solutionsAtEnd = true;
     server = false;
+    serverSolutions = 'teacher';
     siteTitle = q ? localize(q.title, i18n.lang, q.languages[0]) || t('admin.untitled') : t('io.site.defaultTitle');
     solutions = true;
     lang = q?.languages.includes(i18n.lang) ? i18n.lang : (q?.languages[0] ?? i18n.lang);
@@ -50,7 +53,12 @@
       if (format === 'site') {
         const ids = quiz ? (scope === 'module' && quiz.moduleId ? app.quizzes.filter((q) => q.moduleId === quiz!.moduleId).map((q) => q.id) : [quiz.id]) : undefined;
         const name = siteTitle.trim() || t('io.site.defaultTitle');
-        const out = await app.exportSite(ids, { title: name, modes, solutions: solutionsAtEnd ? 'end' : 'never', server: modes === 'exam' && server });
+        const out = await app.exportSite(ids, {
+          title: name,
+          modes,
+          solutions: modes === 'exam' && server ? serverSolutions : solutionsAtEnd ? 'end' : 'never',
+          server: modes === 'exam' && server,
+        });
         path = await saveFile(`${fileSafe(name, 'abbon-site')}-site.zip`, out.bytes, [{ name: 'ZIP', extensions: ['zip'] }]);
         // Examen corrigé par le serveur : le mot de passe des copies reste affiché (pas de fermeture automatique).
         if (path && out.password) {
@@ -111,13 +119,22 @@
     </fieldset>
     {#if modes === 'exam'}
       <label class="check">
-        <input type="checkbox" bind:checked={solutionsAtEnd} />
-        <span>{t('io.site.solutionsAtEnd')}</span>
-      </label>
-      <label class="check">
         <input type="checkbox" bind:checked={server} />
         <span>{t('io.site.server')}<br /><small class="muted">{server ? t('io.site.server.hint') : t('io.site.readable')}</small></span>
       </label>
+      {#if server}
+        <fieldset>
+          <legend>{t('io.site.corrige')}</legend>
+          <label><input type="radio" bind:group={serverSolutions} value="teacher" /> {t('io.site.corrige.teacher')}</label>
+          <label><input type="radio" bind:group={serverSolutions} value="end" /> {t('io.site.corrige.end')}</label>
+          <label><input type="radio" bind:group={serverSolutions} value="never" /> {t('io.site.corrige.never')}</label>
+        </fieldset>
+      {:else}
+        <label class="check">
+          <input type="checkbox" bind:checked={solutionsAtEnd} />
+          <span>{t('io.site.solutionsAtEnd')}</span>
+        </label>
+      {/if}
     {/if}
   {:else if format === 'qcm'}
     <label class="check">

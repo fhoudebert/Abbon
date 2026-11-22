@@ -15,6 +15,7 @@
   import { pick, richToPlain } from '$lib/domain/rich';
   import { fmtNum, i18n, pct, t } from '$lib/i18n/index.svelte';
   import { AttemptSession } from '$lib/session.svelte';
+  import { detailLocked } from '$lib/exam/client';
 
   const session = new AttemptSession();
   const id = page.params.id ?? '';
@@ -23,13 +24,30 @@
   onMount(async () => {
     await session.load(id);
     if (session.attempt?.status === 'in_progress') goto(to(`/attempt/${id}`), { replaceState: true });
+    else if (locked) await check(true);
   });
+
+  // Examen corrigé par le serveur, corrigé « enseignant » pas encore publié : la note seule, sans détail ni corrigé.
+  const locked = $derived(
+    serverGrading() && !!session.quiz && !!session.attempt && detailLocked(session.quiz, session.attempt, Object.values(session.answers)),
+  );
+  let checking = $state(false);
+  let stillLocked = $state(false);
+  async function check(silent = false) {
+    if (checking) return;
+    checking = true;
+    try {
+      stillLocked = !(await session.checkCorrection()) && !silent;
+    } finally {
+      checking = false;
+    }
+  }
 
   const lang = $derived(i18n.lang);
   const quiz = $derived(session.quiz);
   const attempt = $derived(session.attempt);
   const result = $derived(quiz && attempt ? resultOf(quiz, attempt, Object.values(session.answers), serverGrading()) : null);
-  const solution = $derived(quiz && attempt && result ? canSeeSolution(quiz, attempt, result.passed) : false);
+  const solution = $derived(quiz && attempt && result && !locked ? canSeeSolution(quiz, attempt, result.passed) : false);
   const missed = $derived(result ? missedQuestionIds(result) : []);
   const fallback = $derived(quiz?.languages[0]);
 
@@ -91,7 +109,13 @@
       {/if}
       <button class="secondary" disabled={busy} onclick={() => retry(false)}>{t('result.retry')}</button>
     </div>
-    {#if !solution}
+    {#if locked}
+      <p class="muted">{t('site.locked')}</p>
+      <div class="actions">
+        <button class="secondary" disabled={checking} onclick={() => check()}>{t('site.locked.check')}</button>
+      </div>
+      {#if stillLocked && !checking}<p class="muted" role="status">{t('site.locked.still')}</p>{/if}
+    {:else if !solution}
       <p class="muted">
         {quiz.solutionVisibility === 'after_pass' ? t('result.solutionAfterPass') : t('result.noSolution')}
       </p>
@@ -121,7 +145,7 @@
     </section>
   {/if}
 
-  <section>
+  {#if !locked}<section>
     <h2>{t('result.details')}</h2>
     <ol class="details">
       {#each session.questions as q, i (q.id)}
@@ -136,7 +160,7 @@
         </li>
       {/each}
     </ol>
-  </section>
+  </section>{/if}
 {/if}
 
 <style>

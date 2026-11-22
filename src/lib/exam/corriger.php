@@ -4,9 +4,10 @@
  *
  * Le site exporté en « examen corrigé par le serveur » ne contient pas les réponses attendues : le navigateur
  * envoie ici les réponses de l'élève (POST, JSON), ce script les note avec le corrigé de solutions.php et
- * renvoie le score, puis le corrigé si reglages.js le permet (corrige: "fin"). Si reglages.js dit copies: "oui",
- * la copie (nom, note, réponses) est ajoutée à copies/copies.php, consultable avec copies.php (mot de passe :
- * config.php).
+ * renvoie la note ; le détail par question et le corrigé suivent reglages.js (corrige: "enseignant" : quand
+ * l'enseignant les publie dans enseignant.php ; "fin" : tout de suite ; "jamais"). Si reglages.js dit
+ * copies: "oui", la copie (nom, note, réponses) est ajoutée à copies/copies.php, consultable dans enseignant.php
+ * (mot de passe : config.php).
  *
  * Aucune base de données. PHP 7.4 ou plus récent. Ne pas modifier : ce fichier est régénéré à chaque export.
  * La notation reproduit celle de l'application (src/lib/domain/scoring.ts).
@@ -171,9 +172,10 @@ function abbon_solution($q) {
 
 /**
  * Corrige une demande : ['quiz' => id, 'questions' => [ids], 'answers' => [id => réponse]].
- * Renvoie le résultat, ou ['error' => code].
+ * Renvoie le résultat complet (note, détail par question, corrigé), ou ['error' => code] ; ce que l'élève en
+ * reçoit est choisi par abbon_visible.
  */
-function abbon_corriger($solutions, $request, $corrige) {
+function abbon_corriger($solutions, $request) {
   if (!is_array($request) || !isset($request['quiz']) || !is_string($request['quiz'])) return array('error' => 'requete');
   if (!isset($solutions['quizzes'][$request['quiz']])) return array('error' => 'qcm');
   $quiz = $solutions['quizzes'][$request['quiz']];
@@ -191,7 +193,7 @@ function abbon_corriger($solutions, $request, $corrige) {
     $per[$id] = $r;
     $score += $r['points'];
     $max += (float) $q['points'];
-    if ($corrige === 'fin') $sols[$id] = abbon_solution($q);
+    $sols[$id] = abbon_solution($q);
   }
   if (!$per) return array('error' => 'questions');
   $score = abbon_round2($score);
@@ -202,9 +204,41 @@ function abbon_corriger($solutions, $request, $corrige) {
     'ratio' => $ratio,
     'passed' => $ratio >= $quiz['passThreshold'],
     'perQuestion' => $per,
+    'solutions' => $sols,
   );
-  if ($corrige === 'fin') $out['solutions'] = $sols;
   return $out;
+}
+
+/**
+ * Ce que l'élève reçoit, selon le corrigé de reglages.js :
+ *  - fin : note, détail par question et corrigé ;
+ *  - jamais : note et détail par question ;
+ *  - enseignant : la note seule (locked) tant que l'enseignant n'a pas publié le corrigé de ce QCM
+ *    (enseignant.php), puis comme « fin ».
+ */
+function abbon_visible($out, $corrige, $published) {
+  if ($corrige === 'enseignant' && !$published) {
+    return array('score' => $out['score'], 'maxScore' => $out['maxScore'], 'ratio' => $out['ratio'], 'passed' => $out['passed'], 'locked' => true);
+  }
+  if ($corrige === 'jamais') unset($out['solutions']);
+  return $out;
+}
+
+// ---- Publication du corrigé (mode « enseignant ») ----------------------------------------------------
+
+/** QCM dont le corrigé est publié : [id => date]. Fichier dans copies/, illisible par le web. */
+function abbon_publication($dir) {
+  $file = $dir . '/publication.php';
+  if (!is_readable($file)) return array();
+  $lines = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+  $data = json_decode(isset($lines[1]) ? $lines[1] : '', true);
+  return is_array($data) ? $data : array();
+}
+
+function abbon_publier($dir, $published) {
+  if (!is_dir($dir) && !@mkdir($dir, 0755, true)) return false;
+  $json = json_encode((object) $published, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+  return @file_put_contents($dir . '/publication.php', "<?php exit; ?>\n" . $json . "\n", LOCK_EX) !== false;
 }
 
 /** Valeur d'un réglage de reglages.js (modifiable après l'export), ou null s'il est absent ou illisible. */
@@ -216,12 +250,12 @@ function abbon_reglage($name, $file = null) {
   return null;
 }
 
-/** Corrigé « fin » ou « jamais » : reglages.js, sinon le choix de l'export. */
+/** Corrigé « fin », « jamais » ou « enseignant » (publié par l'enseignant) : reglages.js, sinon le choix de l'export. */
 function abbon_corrige($default, $file = null) {
+  $names = array('fin' => 'fin', 'end' => 'fin', 'jamais' => 'jamais', 'never' => 'jamais', 'enseignant' => 'enseignant', 'teacher' => 'enseignant');
   $v = abbon_reglage('corrige', $file);
-  if ($v === 'fin' || $v === 'end') return 'fin';
-  if ($v === 'jamais' || $v === 'never') return 'jamais';
-  return $default === 'jamais' ? 'jamais' : 'fin';
+  if ($v !== null && isset($names[$v])) return $names[$v];
+  return isset($names[$default]) ? $names[$default] : 'enseignant';
 }
 
 /** Copies gardées sur le serveur : reglages.js (copies: "oui" ou "non"), oui par défaut. */
@@ -340,13 +374,18 @@ if (!defined('ABBON_CORRIGER_BIBLIOTHEQUE')) {
   if (!is_array($request)) $reply(400, array('error' => 'requete'));
   $solutions = require __DIR__ . '/solutions.php';
   if (!is_array($solutions) || !isset($solutions['quizzes'])) $reply(500, array('error' => 'solutions'));
-  $out = abbon_corriger($solutions, $request, abbon_corrige(isset($solutions['corrige']) ? $solutions['corrige'] : 'fin'));
+  $out = abbon_corriger($solutions, $request);
   if (isset($out['error'])) $reply(400, $out);
+  $corrige = abbon_corrige(isset($solutions['corrige']) ? $solutions['corrige'] : 'enseignant');
+  $published = isset(abbon_publication(__DIR__ . '/copies')[$request['quiz']]);
+  $visible = abbon_visible($out, $corrige, $published);
+  // Demande du corrigé après coup (« Vérifier ») : rien n'est enregistré.
+  if (isset($request['action']) && $request['action'] === 'corrige') $reply(200, $visible);
   if (abbon_collecte()) {
     // Copie non enregistrée (dossier copies/ non accessible en écriture…) : l'élève est prévenu, sa tentative
     // reste ouverte et pourra être renvoyée.
     if (!abbon_enregistrer(__DIR__ . '/copies', abbon_copie($solutions, $request, $out))) $reply(500, array('error' => 'copie'));
-    $out['recorded'] = true;
+    $visible['recorded'] = true;
   }
-  $reply(200, $out);
+  $reply(200, $visible);
 }

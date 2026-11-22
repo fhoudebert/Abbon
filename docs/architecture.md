@@ -274,11 +274,20 @@ hébergements mutualisés ; ni base de données ni fichier écrit).
   `corriger.php` ajoute la copie (date du serveur, nom, note, points et réponses par question) à
   `examen/copies/copies.php`, une ligne JSON par copie, après une première ligne `<?php exit; ?>` qui la rend
   illisible par le web (et un `.htaccess` refuse tout le dossier) ; une copie renvoyée (même tentative) n'est pas
-  dupliquée. Échec d'écriture : erreur `copie`, la tentative reste ouverte. `examen/copies.php` affiche les copies
+  dupliquée. Échec d'écriture : erreur `copie`, la tentative reste ouverte. `examen/enseignant.php` affiche les copies
   (filtre par QCM) et les exporte en CSV (point-virgule, UTF-8 avec BOM, formules neutralisées) après saisie du mot de
   passe de `examen/config.php`, tiré au hasard à l'export (`newPassword`) et affiché par l'application ou par
   `module:site`. Pas de session : le mot de passe est renvoyé avec chaque formulaire ; un mauvais mot de passe coûte
   deux secondes.
+- **Corrigé publié par l'enseignant** (`corrige: "enseignant"`, choix par défaut de l'export corrigé par le
+  serveur) : `abbon_visible` ne renvoie que la note (`locked`) tant que le corrigé du QCM n'est pas publié ; la
+  tentative est close sans note par question (`points` null, `detailLocked`), le récapitulatif n'affiche que la note
+  (`resultOf(…, stored)` reprend celle de la tentative) et le corrigé est refusé. L'enseignant publie ou retire le
+  corrigé de chaque QCM dans `examen/enseignant.php` (même mot de passe) ; l'état est dans
+  `examen/copies/publication.php` (protégé comme les copies). Au retour sur son résultat (ou par « Voir si le corrigé
+  est publié »), le lecteur redemande la correction (`action: "corrige"`, rien n'est enregistré, `fetchCorrection`) :
+  publiée, elle note les réponses gardées (`withDetail`) et ajoute le corrigé. `"fin"` : tout de suite ; `"jamais"` :
+  note et détail, jamais le corrigé. Sans serveur, `"enseignant"` vaut `"jamais"`.
 - **Parité** : `exam/exam.test.ts` note les mêmes réponses (justes, fausses, approchées) avec l'application et avec
   `php` (si installé), question par question.
 - **Limites** : un élève peut repasser l'examen (chaque copie est gardée, datée), se déclarer sous un autre nom et,

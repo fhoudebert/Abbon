@@ -83,14 +83,15 @@ function report(name: string, c: Compiled): boolean {
 export async function main(argv: string[], root: string): Promise<number> {
   const [command, ...rest] = argv;
   if (command !== 'check' && command !== 'build' && command !== 'site') {
-    console.error('usage : module:check [nom…] | module:build [nom…] | module:site [--entrainement | --examen [--sans-corrige] [--serveur]] [nom…]');
+    console.error('usage : module:check [nom…] | module:build [nom…] | module:site [--entrainement | --examen [--sans-corrige] [--serveur [--corrige-fin]]] [nom…]');
     return 2;
   }
   // Site web : options, puis lecteur construit par `npm run build:site` (build-site/).
   // --serveur : examen corrigé par le serveur (PHP), sans réponses dans le site.
   const server = rest.includes('--serveur');
   const modes = server || rest.includes('--examen') ? 'exam' : rest.includes('--entrainement') ? 'training' : 'both';
-  const solutions = rest.includes('--sans-corrige') ? 'never' : 'end';
+  // Corrigé : --sans-corrige (jamais), --corrige-fin ; avec --serveur, publié par l'enseignant par défaut.
+  const solutions = rest.includes('--sans-corrige') ? 'never' : rest.includes('--corrige-fin') || !rest.includes('--serveur') ? 'end' : 'teacher';
   const names = rest.filter((n) => !n.startsWith('--'));
   const player = join(root, 'build-site');
   if (command === 'site' && !existsSync(join(player, 'files.json'))) {
@@ -175,7 +176,7 @@ export async function main(argv: string[], root: string): Promise<number> {
       writeFileSync(join(dir, 'LISEZMOI.txt'), server ? SITE_SERVER_README : SITE_README);
       if (server) {
         const password = newPassword();
-        console.log(`  mot de passe des copies (examen/copies.php) : ${password}`);
+        console.log(`  mot de passe de l'espace enseignant (examen/enseignant.php) : ${password}`);
         for (const [f, text] of Object.entries(examFiles(content.quizzes, solutions, password))) {
           mkdirSync(dirname(join(dir, f)), { recursive: true });
           writeFileSync(join(dir, f), text);

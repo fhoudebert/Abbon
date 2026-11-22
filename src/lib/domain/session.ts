@@ -174,6 +174,12 @@ export function resultOf(quiz: Quiz, attempt: Attempt, answers: readonly Answer[
   const questions = questionsOf(quiz, attempt);
   const byQuestion = new Map(answers.map((a) => [a.questionId, a]));
   if (stored) {
+    // Détail par question pas encore publié (examen corrigé par le serveur) : la note de la tentative seule.
+    if (attempt.score != null && questions.some((q) => byQuestion.get(q.id)?.points == null)) {
+      const maxScore = attempt.maxScore ?? questions.reduce((s, q) => s + q.points, 0);
+      const ratio = maxScore > 0 ? attempt.score / maxScore : 0;
+      return { score: attempt.score, maxScore, ratio, passed: ratio >= quiz.passThreshold, perQuestion: {} };
+    }
     const perQuestion = Object.fromEntries(
       questions.map((q) => {
         const a = byQuestion.get(q.id);
