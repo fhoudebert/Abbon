@@ -37,7 +37,7 @@ abbon/questionnaires/
   fr/histoire/      Abbon-histoire-…qcm, Abbon-histoire-terminale-…qcm
   fr/philosophie/   Abbon-philosophie-…qcm
   fr/sciences/      Abbon-maths-specialite-…qcm, Abbon-maths-expertes-…qcm, Abbon-physique-chimie-…qcm,
-                    Abbon-enseignement-scientifique-…qcm
+                    Abbon-enseignement-scientifique-…qcm, Abbon-svt-…qcm
   fr/technologie/   Abbon-informatique-…qcm
 ```
 
