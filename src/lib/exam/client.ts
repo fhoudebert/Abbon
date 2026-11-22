@@ -166,7 +166,8 @@ export async function examState(fetcher: typeof fetch = fetch): Promise<ExamStat
 
 /**
  * Début d'une tentative auprès du serveur (examen ouvert, bon code) : il note l'heure, qui fait foi pour la
- * durée. Renvoie la durée allouée en secondes (null : aucune).
+ * durée. Renvoie la durée allouée en secondes (null : aucune) et, avec un tirage, les questions tirées par le
+ * serveur pour cette tentative.
  */
 export async function startOnServer(
   quizId: string,
@@ -174,7 +175,7 @@ export async function startOnServer(
   candidate: { name: string; group: string } | undefined,
   code: string,
   fetcher: typeof fetch = fetch,
-): Promise<number | null> {
+): Promise<{ limitSec: number | null; questions: string[] | null }> {
   const r = await post({ action: 'debut', quiz: quizId, attempt: { id: attemptId }, code, ...(candidate ? { candidate } : {}) }, fetcher);
   const error = r.body?.error;
   if (error === 'ferme') throw new GradeError('closed');
@@ -182,7 +183,8 @@ export async function startOnServer(
   if (error === 'nom') throw new GradeError('name');
   if (error === 'copie') throw new GradeError('record');
   if (!r.ok || r.body?.ok !== true) throw new GradeError('server');
-  return typeof r.body.limitSec === 'number' && r.body.limitSec > 0 ? r.body.limitSec : null;
+  const questions = Array.isArray(r.body.questions) && r.body.questions.every((q) => typeof q === 'string') ? (r.body.questions as string[]) : null;
+  return { limitSec: typeof r.body.limitSec === 'number' && r.body.limitSec > 0 ? r.body.limitSec : null, questions };
 }
 
 export class GradeError extends Error {

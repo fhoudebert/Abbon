@@ -314,6 +314,7 @@ header('Content-Type: text/html; charset=utf-8');
 <?php else: ?>
   <?php if ($notice !== ''): ?><p class="<?= $noticeError ? 'error' : 'ok' ?>" role="status"><?= h($notice) ?></p><?php endif; ?>
   <h2>Examen</h2>
+  <?php $tirage = abbon_tirage(); if ($tirage !== null): ?><p>Tirage au sort (reglages.js) : <?= $tirage ?> question<?= $tirage > 1 ? 's' : '' ?> par élève et par QCM, tirées par le serveur.</p><?php endif; ?>
   <?php if ($ouverture['ouvert']): ?>
     <p class="state"><strong>Ouvert</strong> depuis <?= h(abbon_date($ouverture['depuis'])) ?><?= $ouverture['duree'] ? ' — durée : ' . (int) $ouverture['duree'] . ' min' : '' ?>.</p>
     <?php if ($ouverture['code'] !== ''): ?><p>Code d'accès à donner aux élèves : <span class="code"><?= h($ouverture['code']) ?></span></p><?php else: ?><p class="muted">Sans code d'accès : toute personne qui connaît l'adresse du site peut commencer.</p><?php endif; ?>

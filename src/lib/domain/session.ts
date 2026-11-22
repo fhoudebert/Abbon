@@ -78,6 +78,17 @@ export function startAttempt(quiz: Quiz, mode: AttemptMode, opts: StartOptions =
   };
 }
 
+/**
+ * Tirage de `count` questions au hasard parmi celles du QCM (site web, réglage `tirage`) ; toutes si `count` est
+ * absent ou dépasse leur nombre. Ordre du QCM : `startAttempt` mélange ensuite si le QCM le demande.
+ */
+export function drawQuestionIds(quiz: Quiz, count: number | null, seed: string): string[] {
+  const ids = [...quiz.questions].sort((a, b) => a.position - b.position).map((q) => q.id);
+  if (!count || count >= ids.length) return ids;
+  const kept = new Set(shuffled(ids, `${seed}:tirage`).slice(0, count));
+  return ids.filter((id) => kept.has(id));
+}
+
 /** Le QCM tel qu'il était au démarrage de la tentative (sinon la version actuelle). */
 export function quizOf(attempt: Attempt, current: Quiz | null): Quiz | null {
   return attempt.quizSnapshot ?? current;

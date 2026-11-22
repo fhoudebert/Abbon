@@ -356,6 +356,7 @@ export const en: Messages = {
   'site.exam.submitted': 'You have submitted your work for this quiz.',
   'site.grade.name': 'This name is not on the class list: check the spelling (last and first name), or ask the invigilator.',
   'site.candidate.listHint': 'Write your last and first name as they appear on the class list: your submission will be sent to the teacher under this name.',
+  'site.exam.draw': '{n} questions drawn at random from {total}.',
   'site.grade.record': 'Your submission was graded but the server could not save it. Your answers are kept: let your teacher know, then click “Finish” again.',
   'site.candidate.name': 'Full name',
   'site.candidate.group': 'Class or group (optional)',

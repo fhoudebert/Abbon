@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { CANDIDATE_SETTING, collectCopies, examOnly, parseCandidate, serverGrading, to, trainingOnly } from '$lib/site';
+  import { CANDIDATE_SETTING, collectCopies, examOnly, parseCandidate, serverGrading, siteDraw, to, trainingOnly } from '$lib/site';
   import { examState, GradeError, startOnServer, type ExamState } from '$lib/exam/client';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
   import { app } from '$lib/app.svelte';
   import { progressOf } from '$lib/domain/progress';
-  import { formatDuration } from '$lib/domain/session';
+  import { drawQuestionIds, formatDuration } from '$lib/domain/session';
   import { localize } from '$lib/domain/text';
   import type { AttemptMode, Quiz } from '$lib/domain/types';
   import { fmtDate, fmtNum, i18n, pct, t } from '$lib/i18n/index.svelte';
@@ -34,6 +34,8 @@
 
   // Examen corrigé par le serveur : ouvert ou non par le surveillant, code d'accès, une seule copie par QCM.
   const server = serverGrading();
+  const draw = siteDraw();
+  const drawn = $derived(quiz && draw && draw < quiz.questions.length ? draw : null);
   let exam = $state<ExamState | null>(null);
   let examError = $state<string | null>(null);
   let accessCode = $state('');
@@ -60,13 +62,16 @@
       const c = { name: candidate.name.trim(), group: candidate.group.trim() };
       if (mode === 'exam' && askName) await (await app.repo()).setSetting(CANDIDATE_SETTING, JSON.stringify(c));
       if (info.resumable) await app.abandon(info.resumable.id);
-      const attemptId = await app.startQuiz(quiz.id, mode);
+      // Tirage (reglages.js) : questions tirées au hasard pour cet examen ; par le serveur s'il corrige.
+      const only = mode === 'exam' && draw && !server ? drawQuestionIds(quiz, draw, crypto.randomUUID()) : undefined;
+      const attemptId = await app.startQuiz(quiz.id, mode, only);
       if (server && mode === 'exam') {
-        // Le serveur enregistre le début (examen ouvert, bon code) ; sa durée fait foi.
+        // Le serveur enregistre le début (examen ouvert, bon code) ; sa durée et son tirage font foi.
         try {
-          const limit = await startOnServer(quiz.id, attemptId, askName ? c : undefined, accessCode.trim());
+          const started = await startOnServer(quiz.id, attemptId, askName ? c : undefined, accessCode.trim());
           const repo = (await app.repo()) as Partial<{ setTimeLimit(quizId: string, sec: number | null): Promise<void> }>;
-          await repo.setTimeLimit?.(quiz.id, limit);
+          await repo.setTimeLimit?.(quiz.id, started.limitSec);
+          if (started.questions) await app.restrictAttempt(attemptId, started.questions);
         } catch (e) {
           await app.abandon(attemptId);
           startError = t(`site.grade.${e instanceof GradeError ? e.reason : 'server'}`);
@@ -133,6 +138,7 @@
           ? t('quiz.exam.hintTimed', { time: formatDuration(quiz.timeLimitSec) })
           : t('quiz.exam.hint')}
       </p>
+      {#if drawn && quiz}<p class="muted">{t('site.exam.draw', { n: drawn, total: quiz.questions.length })}</p>{/if}
       {#if server}
         {#if submitted}
           <p class="note">{t('site.exam.submitted')}</p>

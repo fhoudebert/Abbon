@@ -466,6 +466,21 @@ function abbon_trouver_eleve($classe, $nom) {
   return null;
 }
 
+/** Tirage de reglages.js (tirage: "10") : nombre de questions par examen, ou null : toutes. */
+function abbon_tirage($file = null) {
+  $v = abbon_reglage('tirage', $file);
+  return $v !== null && preg_match('/^\d{1,4}$/', $v) && (int) $v > 0 ? (int) $v : null;
+}
+
+/** Questions tirées au hasard pour une tentative (ordre du QCM), ou null si toutes sont posées. */
+function abbon_tirer($quiz, $n) {
+  $ids = array_keys($quiz['questions']);
+  if ($n === null || $n >= count($ids)) return null;
+  $keys = array_rand(array_flip($ids), $n);
+  $kept = array_flip(is_array($keys) ? $keys : array($keys));
+  return array_values(array_filter($ids, function ($id) use ($kept) { return isset($kept[$id]); }));
+}
+
 /** Identifiant de tentative envoyé par le lecteur, ou null s'il est absent ou illisible. */
 function abbon_tentative($request) {
   $a = isset($request['attempt']) && is_array($request['attempt']) ? $request['attempt'] : array();
@@ -511,10 +526,16 @@ function abbon_traiter($solutions, $request, $dir, $reglages = null, $now = null
       if ($groupe === '') $groupe = $eleve['groupe'];
     }
     $debut = array('id' => $id, 't' => $now === null ? time() : $now, 'qcm' => $quizId, 'nom' => $nom, 'groupe' => $groupe);
+    // Tirage : les questions de cette tentative, choisies ici et gardées avec le début (elles font foi à la correction).
+    $tirees = abbon_tirer($quiz, abbon_tirage($reglages));
+    if ($tirees !== null) $debut['questions'] = $tirees;
     if (!abbon_enregistrer($dir, $debut, 'debuts.php')) return array(500, array('error' => 'copie'));
-    return array(200, array('ok' => true, 'limitSec' => abbon_limite($ouverture, $quiz)));
+    return array(200, array('ok' => true, 'limitSec' => abbon_limite($ouverture, $quiz), 'questions' => $tirees));
   }
 
+  // Questions tirées au début de la tentative : seules celles-là sont notées, quoi qu'envoie le lecteur.
+  $debut = $id === null ? null : abbon_debut($dir, $id);
+  if ($debut !== null && isset($debut['questions']) && is_array($debut['questions'])) $request['questions'] = $debut['questions'];
   $out = abbon_corriger($solutions, $request, abbon_seuil($reglages));
   if (isset($out['error'])) return array(400, $out);
   $corrige = abbon_corrige(isset($solutions['corrige']) ? $solutions['corrige'] : 'enseignant', $reglages);
@@ -524,7 +545,6 @@ function abbon_traiter($solutions, $request, $dir, $reglages = null, $now = null
   if ($action === 'corrige') return array(200, $visible);
 
   // Copie : seulement pour une tentative commencée auprès du serveur (examen ouvert, bon code).
-  $debut = $id === null ? null : abbon_debut($dir, $id);
   if ($debut === null) return array(403, array('error' => 'debut'));
   if (abbon_collecte($reglages)) {
     $now = $now === null ? time() : $now;

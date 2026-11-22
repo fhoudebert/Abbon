@@ -308,6 +308,12 @@ hébergements mutualisés ; ni base de données ni fichier écrit).
   attendue et points par question) et, pour un QCM choisi, des statistiques par question (part des copies avec tous
   les points, points moyens, sans réponse) et un CSV avec une colonne de points par question. Les textes viennent de
   `display` (`displayOf` : énoncé, choix, réponse attendue en texte), ajouté à chaque question de `solutions.php`.
+- **Tirage** : `tirage: "10"` dans `reglages.js` (désactivé par défaut, `resolveDraw`) : chaque examen pose 10
+  questions tirées au hasard parmi celles du QCM, dans l'ordre du QCM (mélangées s'il le demande). Site statique :
+  tirage par le lecteur (`drawQuestionIds`, `startQuiz(…, onlyQuestionIds)`). Correction par le serveur : tirage
+  au début (`abbon_tirer`), gardé avec le début dans `debuts.php` et renvoyé au lecteur (`restrictAttempt`) ; à
+  la correction, seules ces questions sont notées, quoi qu'envoie le lecteur. Statistiques et CSV comptent chaque
+  question sur les copies qui l'ont reçue.
 - **Seuil** : `seuil: "50"` dans `reglages.js` (`resolveThreshold`) remplace le seuil de chaque QCM du site, au
   chargement et, avec la correction par le serveur, dans `corriger.php` (`abbon_seuil`).
 - **Parité** : `exam/exam.test.ts` note les mêmes réponses (justes, fausses, approchées) avec l'application et avec

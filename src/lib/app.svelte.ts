@@ -12,7 +12,7 @@ import type { ResolvedImport } from '$lib/interchange/plan';
 import type { ModulePlan } from '$lib/interchange/module';
 import { buildPackage, cardMedia, quizMedia, sheetMedia, type ContentBundle, type MediaFile, type ParsedPackage } from '$lib/interchange/qcmPackage';
 import { siteContent, siteDataOf, siteMediaHashes, zipSite, type SiteOptions } from '$lib/interchange/siteExport';
-import { startAttempt } from '$lib/domain/session';
+import { quizOf, startAttempt } from '$lib/domain/session';
 import { dueCards, newCard, restoreCard, reviewCard, type LeitnerCard } from '$lib/domain/leitner';
 import {
   attemptRewards,
@@ -137,6 +137,19 @@ class AppState {
     await repo.saveAttempt(attempt);
     await this.reload();
     return attempt.id;
+  }
+
+  /**
+   * Examen corrigé par le serveur avec tirage : questions tirées par le serveur au début de la tentative
+   * (mélangées si le QCM le demande).
+   */
+  async restrictAttempt(attemptId: string, questionIds: string[]) {
+    const repo = await this.repo();
+    const attempt = await repo.getAttempt(attemptId);
+    const quiz = attempt ? quizOf(attempt, await repo.getQuiz(attempt.quizId)) : null;
+    if (!attempt || !quiz) return;
+    const { questionOrder } = startAttempt(quiz, attempt.mode, { id: attempt.id, onlyQuestionIds: questionIds });
+    if (questionOrder.length) await repo.saveAttempt({ ...attempt, questionOrder, currentIndex: 0 });
   }
 
   /** Abandonne une tentative en cours (elle ne compte plus dans la progression). */

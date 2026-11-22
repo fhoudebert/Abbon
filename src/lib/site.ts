@@ -163,8 +163,22 @@ ${
   corrige: "${SOLUTION_LABELS[server ? s.solutions : s.solutions === 'teacher' ? 'never' : s.solutions]}",
   // Seuil de réussite, en % (par exemple "50"), pour tous les QCM du site ; "" : celui de chaque QCM.${server ? '\n  // Appliqué aussi par le serveur.' : ''}
   seuil: "",
+  // Tirage au sort : nombre de questions par examen, tirées au hasard pour chaque élève parmi celles du QCM
+  // (par exemple "10") ; "" : toutes les questions.${server ? ' Le tirage est fait par le serveur.' : ''}
+  tirage: "",
 };
 `;
+
+/** Tirage de `reglages.js` (`tirage: "10"`) : nombre de questions par examen ; null : toutes. */
+export function resolveDraw(override?: unknown): number | null {
+  const v = (override as { tirage?: unknown } | null)?.tirage;
+  const text = typeof v === 'number' ? String(v) : typeof v === 'string' ? v.trim() : '';
+  if (!/^\d{1,4}$/.test(text)) return null;
+  const n = Number(text);
+  return n >= 1 ? n : null;
+}
+export const siteDraw = () =>
+  SITE ? resolveDraw(typeof window === 'undefined' ? null : (window as { ABBON_SITE_SETTINGS?: unknown }).ABBON_SITE_SETTINGS) : null;
 
 /** Seuil de réussite de `reglages.js` (`seuil: "50"`, en %), entre 0,01 et 1 ; null : celui de chaque QCM. */
 export function resolveThreshold(override?: unknown): number | null {
