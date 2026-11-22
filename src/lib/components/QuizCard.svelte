@@ -15,7 +15,7 @@
     info.progress === 'in_progress' ? t('quiz.resume') : info.progress === 'done' ? t('quiz.retry') : t('quiz.start'),
   );
   /** Reprendre va directement à la question ; sinon la fiche du QCM (choix du mode). */
-  const href = $derived(info.resumable ? `/attempt/${info.resumable.id}` : `/quiz/${quiz.id}`);
+  const href = $derived(to(info.resumable ? `/attempt/${info.resumable.id}` : `/quiz/${quiz.id}`));
   const ratio = (score?: number) => (info.maxScore ? (score ?? 0) / info.maxScore : 0);
 </script>
 

@@ -3,7 +3,7 @@
   import { siteData, SITE, to } from '$lib/site';
   import '../app.css';
   import { onMount, type Snippet } from 'svelte';
-  import { afterNavigate } from '$app/navigation';
+  import { afterNavigate, goto } from '$app/navigation';
   import { page } from '$app/state';
   import { app } from '$lib/app.svelte';
   import { prefs } from '$lib/prefs.svelte';
@@ -17,7 +17,21 @@
   /** Questions de la boîte de révision à revoir maintenant (pastille du menu). */
   const dueCount = $derived(app.ready ? app.dueCount() : 0);
 
+  /**
+   * Site web : filet de sécurité pour un lien interne écrit sans `to()` (« /quiz/… ») : le serveur ne
+   * connaît que index.html et répondrait 404. Le clic est ramené au routage par fragment.
+   */
+  function siteLinks(e: MouseEvent) {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    const a = (e.target as Element | null)?.closest?.('a[href]');
+    const href = a?.getAttribute('href') ?? '';
+    if (!href.startsWith('/') || href.startsWith('//') || a?.hasAttribute('download') || a?.getAttribute('target')) return;
+    e.preventDefault();
+    void goto(`#${href}`);
+  }
+
   onMount(async () => {
+    if (SITE) document.addEventListener('click', siteLinks, true);
     await app.init();
     await prefs.load();
     void updates.init(); // vérification éventuelle, sans bloquer l'affichage
