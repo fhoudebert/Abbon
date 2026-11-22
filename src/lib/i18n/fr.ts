@@ -357,6 +357,8 @@ export const fr = {
   'site.exam.duration': 'Durée de l’épreuve : {n} min.',
   'site.exam.code': 'Code d’accès (donné par le surveillant)',
   'site.exam.submitted': 'Vous avez rendu votre copie pour ce QCM.',
+  'site.grade.name': 'Ce nom ne figure pas sur la liste de classe : vérifiez l’orthographe (nom et prénom), ou voyez avec le surveillant.',
+  'site.candidate.listHint': 'Écrivez votre nom et votre prénom tels qu’ils figurent sur la liste de classe : votre copie sera transmise à l’enseignant sous ce nom.',
   'site.grade.record': 'Votre copie est corrigée mais le serveur n’a pas pu l’enregistrer. Vos réponses sont gardées : prévenez l’enseignant, puis cliquez de nouveau sur « Terminer ».',
   'site.candidate.name': 'Nom et prénom',
   'site.candidate.group': 'Classe ou groupe (facultatif)',

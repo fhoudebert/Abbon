@@ -13,13 +13,14 @@ import { readProgress, SiteRepository, progressKey } from '$lib/data/site';
 import { b64ToBytes } from '$lib/data/bytes';
 import { stripConstant } from '$lib/domain/expr';
 import { scoreQuestion, type QuestionScore } from '$lib/domain/scoring';
+import { expectedText } from '$lib/domain/typed';
 import { resultOf } from '$lib/domain/session';
 import type { Answer, Attempt, InstalledModule, Question, Quiz } from '$lib/domain/types';
 import { parsePackage } from '$lib/interchange/qcmPackage';
 import { siteContent, siteDataOf, zipSite } from '$lib/interchange/siteExport';
 import { parseCandidate, resolveCollect, resolveSettings, resolveThreshold, settingsScript } from '$lib/site';
 import { detailLocked, examState, finishWithGrade, gradeOnServer, gradeRequest, isGradeResponse, startOnServer, withDetail, withSolutions } from './client';
-import { publicQuiz, serverSolutions, solutionsPhp } from './publish';
+import { displayOf, plainMath, publicQuiz, serverSolutions, solutionsPhp } from './publish';
 import { CORRIGER_PHP, ENSEIGNANT_PHP, examFiles, newPassword } from './server';
 import type { GradeRequest, GradeResponse } from './types';
 
@@ -521,10 +522,10 @@ echo json_encode($out, JSON_UNESCAPED_UNICODE);
 `,
       );
       const r = JSON.parse(execFileSync('php', [join(dir, 'test.php')]).toString());
-      expect(r[0]).toEqual([200, { ouvert: false, code: false, duree: null }]); // fermé par défaut
+      expect(r[0]).toEqual([200, { ouvert: false, code: false, duree: null, classe: false }]); // fermé par défaut
       expect(r[1]).toEqual([403, { error: 'ferme' }]);
       expect(r[2]).toEqual([403, { error: 'debut' }]); // copie sans début : refusée
-      expect(r[4]).toEqual([200, { ouvert: true, code: true, duree: null }]); // le code n'est jamais renvoyé
+      expect(r[4]).toEqual([200, { ouvert: true, code: true, duree: null, classe: false }]); // le code n'est jamais renvoyé
       expect(r[5]).toEqual([403, { error: 'code' }]);
       expect(r[6]).toEqual([200, { ok: true, limitSec: 600 }]); // code sans majuscules ni espaces
       expect(r[7][0]).toBe(200);
@@ -594,7 +595,8 @@ describe('ouverture, durée et seuil : lecteur', () => {
 
   it('demandes au serveur : état, début, erreurs', async () => {
     const reply = (status: number, body: unknown) => (async () => new Response(JSON.stringify(body), { status })) as unknown as typeof fetch;
-    expect(await examState(reply(200, { ouvert: true, code: true, duree: 45 }))).toEqual({ open: true, code: true, minutes: 45 });
+    expect(await examState(reply(200, { ouvert: true, code: true, duree: 45, classe: true }))).toEqual({ open: true, code: true, minutes: 45, classList: true });
+    await expect(startOnServer('q', 'a', undefined, '', reply(403, { error: 'nom' }))).rejects.toMatchObject({ reason: 'name' });
     expect(await startOnServer('q', 'a', undefined, 'X', reply(200, { ok: true, limitSec: 600 }))).toBe(600);
     expect(await startOnServer('q', 'a', undefined, 'X', reply(200, { ok: true, limitSec: null }))).toBeNull();
     for (const [error, reason] of [['ferme', 'closed'], ['code', 'code'], ['copie', 'record']] as const) {
@@ -603,5 +605,111 @@ describe('ouverture, durée et seuil : lecteur', () => {
     await expect(gradeOnServer(quiz, attempt, [], undefined, reply(403, { error: 'debut' }))).rejects.toMatchObject({ reason: 'start' });
     const html = (async () => new Response('<?php', { status: 200 })) as unknown as typeof fetch;
     await expect(examState(html)).rejects.toMatchObject({ reason: 'server' });
+  });
+
+  it('liste de classe, détail d’une copie, statistiques par question, CSV par question', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'abbon-php-'));
+    try {
+      for (const [f, text] of Object.entries(examFiles([quiz], 'teacher', 'Secret23abcd'))) {
+        mkdirSync(dirname(join(dir, f)), { recursive: true });
+        writeFileSync(join(dir, f), text);
+      }
+      writeFileSync(join(dir, 'reglages.js'), settingsScript({ modes: 'exam', solutions: 'teacher' }, true));
+      const view = (post: Record<string, string>) => {
+        writeFileSync(join(dir, 'vue.php'), `<?php $_POST = json_decode(${JSON.stringify(JSON.stringify(post))}, true); include __DIR__ . '/examen/enseignant.php';`);
+        return execFileSync('php', [join(dir, 'vue.php')]).toString();
+      };
+      const pw = { motdepasse: 'Secret23abcd' };
+      const saved = view({ ...pw, action: 'classe', classe: 'Lovelace Ada ; TG2\nTuring Alan\n\nlovelace ada\nHopper Grace ; TG1' });
+      expect(saved).toContain('Liste de classe enregistrée : 3 élèves.');
+      view({ ...pw, action: 'ouvrir', code: '', duree: '' });
+      const pub = publicQuiz(quiz);
+      const answers = [
+        answer('q0', { selected: ['c1'] }),
+        answer('q1', { selected: ['c0'] }),
+        answer('q2', { text: 'goed' }),
+        answer('q8', { texts: ['est parti', 'avion'] }),
+      ];
+      const steps = [
+        { action: 'etat' },
+        { action: 'debut', quiz: quiz.id, attempt: { id: 'a1' }, candidate: { name: 'Ada Lovelace', group: '' } }, // ordre et majuscules libres
+        { action: 'debut', quiz: quiz.id, attempt: { id: 'a2' }, candidate: { name: 'Lovelase Ada', group: '' } }, // faute : refusé
+        { action: 'debut', quiz: quiz.id, attempt: { id: 'a3' }, candidate: { name: 'TURING alan', group: 'autre' } },
+        { ...gradeRequest(pub, { ...attempt, id: 'a1' }, answers, { name: 'Ada Lovelace', group: '' }) },
+        { ...gradeRequest(pub, { ...attempt, id: 'a3' }, [answer('q0', { selected: ['c1'] })], { name: 'TURING alan', group: 'autre' }) },
+      ];
+      writeFileSync(join(dir, 'etapes.json'), JSON.stringify(steps));
+      writeFileSync(
+        join(dir, 'test.php'),
+        `<?php
+define('ABBON_CORRIGER_BIBLIOTHEQUE', true);
+require __DIR__ . '/examen/corriger.php';
+$solutions = require __DIR__ . '/examen/solutions.php';
+$out = array();
+foreach (json_decode(file_get_contents(__DIR__ . '/etapes.json'), true) as $r) $out[] = abbon_traiter($solutions, $r, __DIR__ . '/examen/copies', __DIR__ . '/reglages.js', 1000);
+$out[] = abbon_lire_copies(__DIR__ . '/examen/copies');
+$out[] = array(abbon_cle_nom('  Élodie   DE LA Tour-Pin '), abbon_cle_nom('tour pin elodie de la'));
+echo json_encode($out, JSON_UNESCAPED_UNICODE);
+`,
+      );
+      const r = JSON.parse(execFileSync('php', [join(dir, 'test.php')]).toString());
+      expect(r[0][1].classe).toBe(true);
+      expect(r[1][0]).toBe(200);
+      expect(r[2]).toEqual([403, { error: 'nom' }]);
+      expect(r[3][0]).toBe(200);
+      const copies = r[6];
+      // Nom et groupe de la liste ; groupe donné par l'élève gardé.
+      expect(copies.map((c: { nom: string; groupe: string }) => [c.nom, c.groupe])).toEqual([['Turing Alan', 'autre'], ['Lovelace Ada', 'TG2']]);
+      expect(r[7][0]).toBe(r[7][1]);
+
+      const html = view(pw);
+      expect(html).toContain('1 élève de la liste sans copie commencée : Hopper Grace.');
+      expect(html).toContain('Lovelace Ada ; TG2\nTuring Alan\nHopper Grace ; TG1</textarea>');
+      expect(html).toContain('Choisir un QCM pour voir les statistiques');
+
+      // Statistiques du QCM : q0 réussie par les deux copies, q1 par aucune (sans réponse dans l'une).
+      const stats = view({ ...pw, qcm: quiz.id });
+      const rows = [...stats.matchAll(/<tr>\s*<td class="num">(\d+)<\/td>\s*<td>([^<]*)<\/td>\s*<td>([^<]*)<\/td>\s*<td class="num">([^<]*)<\/td>\s*<td class="num">([^<]*)<\/td>\s*<td class="num">([^<]*)<\/td>/g)].map((m) => m.slice(1));
+      expect(rows[0]).toEqual(['1', 'Question 0', 'choix 1', '100 %', '1 / 1', '0']);
+      expect(rows[1]).toEqual(['2', 'Question 1', 'choix 0 ; choix 2', '0 %', '0,25 / 1', '1']); // notation partielle : 0,5 et 0
+      expect(rows[2][2]).toBe('went / did go');
+      expect(rows[8][2]).toBe('est parti / est allé · train');
+
+      // Détail d'une copie : réponses de l'élève, réponses attendues, points.
+      const detail = view({ ...pw, action: 'copie', id: 'a1' });
+      expect(detail).toContain('Copie de Lovelace Ada (TG2)');
+      expect(detail).toContain('<td>choix 0</td>');
+      expect(detail).toContain('<td>goed</td>');
+      expect(detail).toContain('<td>est parti · avion</td>');
+      expect(detail).toContain('(sans réponse)');
+      expect(detail).toMatch(/class="num ok">1 \/ 1/);
+      expect(detail).toMatch(/class="num ko">1 \/ 2/); // texte à trous : un trou sur deux (notation partielle)
+
+      const csv = view({ ...pw, qcm: quiz.id, format: 'csv' }).split('\r\n');
+      expect(csv[0]).toContain('"Identifiant";"Q1 (/1)";"Q2 (/1)"');
+      expect(csv[0]).toContain('"Q9 (/2)"');
+      expect(csv[2]).toContain('"a1";"1";"0,5";"0";');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('textes pour l’espace enseignant', () => {
+  it('énoncé, choix et réponse attendue de chaque question', () => {
+    const d = (i: number) => displayOf(quiz.questions[i], 'fr');
+    expect(d(0)).toEqual({ prompt: 'Question 0', choices: { c0: 'choix 0', c1: 'choix 1', c2: 'choix 2' }, expected: 'choix 1' });
+    expect(d(5).expected).toBe(plainMath(expectedText(quiz.questions[5], 'fr')));
+    expect(d(5).expected).toContain('m/s²');
+    expect(d(9).expected).toBe('(autoévaluation)');
+    expect(d(10).expected).toBe('(n+1)^2');
+    expect(serverSolutions([quiz], 'end').quizzes[quiz.id].questions.q0.display).toEqual(d(0));
+  });
+
+  it('formules lisibles en texte simple', () => {
+    expect(plainMath('Calculez \\displaystyle\\int_0^2 3x^2\\,\\mathrm{d}x.')).toBe('Calculez ∫_0^2 3x^2 dx.');
+    expect(plainMath('x \\mapsto \\dfrac{x^{n+1}}{n+1}')).toBe('x ↦ (x^(n+1))/(n+1)');
+    expect(plainMath('Pour n \\neq -1, sur ]0\\,;+\\infty[ et \\mathbb{R}')).toBe('Pour n ≠ -1, sur ]0 ;+∞[ et ℝ');
+    expect(plainMath('\\frac12 \\ln(2x+1)')).toBe('\\frac12 ln(2x+1)');
   });
 });

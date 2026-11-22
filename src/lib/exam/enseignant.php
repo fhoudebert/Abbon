@@ -5,9 +5,11 @@
  * Ouvrir examen/enseignant.php dans un navigateur et saisir le mot de passe de config.php :
  *  - examen : l'ouvrir (avec un code d'accès et une durée, facultatifs) puis le fermer ; les élèves ne peuvent
  *    commencer que lorsqu'il est ouvert, avec le bon code ; élèves en cours ;
+ *  - liste de classe (facultative) : les élèves ne peuvent commencer que sous un nom de la liste ; absents ;
  *  - corrigé : avec corrige: "enseignant" dans reglages.js, le publier (ou le retirer) QCM par QCM, quand le temps
  *    de l'épreuve est écoulé ; les élèves voient alors le détail par question et le corrigé ;
- *  - copies : liste (nom, classe ou groupe, QCM, note, durée) et téléchargement au format CSV (tableur). Les copies
+ *  - copies : liste (nom, classe ou groupe, QCM, note, durée), détail d'une copie question par question,
+ *    statistiques par question d'un QCM, et téléchargement au format CSV (tableur). Les copies
  *    sont dans copies/copies.php (une ligne JSON par copie) : les supprimer par FTP pour repartir de zéro.
  * Ne pas modifier : ce fichier est régénéré à chaque export.
  */
@@ -124,8 +126,21 @@ if ($ok && $corrige === 'enseignant' && in_array($action, array('publier', 'reti
   }
 }
 
+// Liste de classe.
+if ($ok && $action === 'classe') {
+  $liste = abbon_lire_classe(isset($_POST['classe']) ? $_POST['classe'] : '');
+  if (abbon_ecrire_etat($dir, 'classe', array('eleves' => $liste))) {
+    $notice = $liste ? 'Liste de classe enregistrée : ' . count($liste) . ' élève' . (count($liste) > 1 ? 's' : '') . '.' : 'Liste de classe retirée : nom libre.';
+  } else {
+    $notice = $cannotWrite;
+    $noticeError = true;
+  }
+}
+$classe = $ok ? abbon_classe($dir) : array();
+
 $copies = $ok ? abbon_lire_copies($dir) : array();
 $debuts = $ok ? abbon_lire_copies($dir, 'debuts.php') : array();
+$toutes = $copies;
 
 // Remarques : hors délai, rendue après la fermeture, plusieurs copies au même nom pour un QCM.
 $parNom = array();
@@ -145,6 +160,27 @@ function abbon_remarques($c, $parNom) {
 $rendues = array();
 foreach ($copies as $c) $rendues[$c['id']] = true;
 $enCours = array_values(array_filter($debuts, function ($d) use ($rendues) { return !isset($rendues[$d['id']]); }));
+// Absents : élèves de la liste qui n'ont commencé aucun QCM.
+$presents = array();
+foreach ($debuts as $d) $presents[abbon_cle_nom($d['nom'])] = true;
+foreach ($copies as $c) $presents[abbon_cle_nom($c['nom'])] = true;
+$absents = array_values(array_filter($classe, function ($e) use ($presents) { return !isset($presents[abbon_cle_nom($e['nom'])]); }));
+
+/** Réponse de l'élève à une question, lisible ('' : pas de réponse). */
+function abbon_reponse_texte($q, $rep) {
+  if (!$rep) return '';
+  $d = isset($q['display']) ? $q['display'] : array('choices' => array());
+  if (!empty($rep['cases'])) {
+    return implode(' ; ', array_map(function ($id) use ($d) { return isset($d['choices'][$id]) ? $d['choices'][$id] : $id; }, $rep['cases']));
+  }
+  if (!empty($rep['trous'])) return implode(' · ', array_map(function ($t) { return $t === null || $t === '' ? '—' : $t; }, $rep['trous']));
+  if (isset($rep['texte'])) {
+    if ($q['type'] === 'flashcard') return $rep['texte'] === 'known' ? 'je savais' : 'je ne savais pas';
+    return $rep['texte'];
+  }
+  return '';
+}
+
 /** Durée d'une copie : mesurée par le serveur (début enregistré → copie reçue), sinon celle du navigateur. */
 function abbon_duree_copie($c) {
   return isset($c['dureeServeur']) ? $c['dureeServeur'] : $c['duree'];
@@ -155,15 +191,42 @@ asort($titles);
 $filtre = isset($_POST['qcm']) && isset($titles[$_POST['qcm']]) ? $_POST['qcm'] : '';
 if ($filtre !== '') $copies = array_values(array_filter($copies, function ($c) use ($filtre) { return $c['qcm'] === $filtre; }));
 
+// Questions du QCM choisi (ordre du QCM) et statistiques par question.
+$questions = $filtre !== '' && isset($solutions['quizzes'][$filtre]) ? $solutions['quizzes'][$filtre]['questions'] : array();
+$stats = array();
+foreach ($questions as $qid => $q) {
+  $n = 0; $reussies = 0; $total = 0; $sans = 0;
+  foreach ($copies as $c) {
+    if (!isset($c['points'][$qid])) continue;
+    $n++;
+    $total += $c['points'][$qid];
+    if ($c['points'][$qid] >= $q['points'] - 1e-9) $reussies++;
+    if (empty($c['reponses'][$qid])) $sans++;
+  }
+  $stats[$qid] = array('n' => $n, 'reussies' => $reussies, 'moyenne' => $n ? $total / $n : 0, 'sans' => $sans);
+}
+
+// Détail d'une copie.
+$detail = null;
+if ($ok && $action === 'copie' && isset($_POST['id'])) {
+  foreach ($toutes as $c) if ($c['id'] === $_POST['id']) $detail = $c;
+}
+
 if ($ok && isset($_POST['format']) && $_POST['format'] === 'csv') {
   header('Content-Type: text/csv; charset=utf-8');
   header('Content-Disposition: attachment; filename="copies-' . date('Y-m-d') . '.csv"');
-  $rows = array(array('Date', 'Nom', 'Classe ou groupe', 'QCM', 'Note', 'Sur', 'Pourcentage', 'Réussi', 'Durée', 'Remarques', 'Identifiant'));
+  // Un QCM choisi : une colonne de points par question (Q1, Q2…).
+  $head = array('Date', 'Nom', 'Classe ou groupe', 'QCM', 'Note', 'Sur', 'Pourcentage', 'Réussi', 'Durée', 'Remarques', 'Identifiant');
+  $i = 0;
+  foreach ($questions as $qid => $q) $head[] = 'Q' . (++$i) . ' (/' . abbon_nombre($q['points']) . ')';
+  $rows = array($head);
   foreach ($copies as $c) {
-    $rows[] = array(
+    $row = array(
       abbon_date($c['date']), $c['nom'], $c['groupe'], $c['titre'], abbon_nombre($c['note']), abbon_nombre($c['sur']),
       $c['sur'] > 0 ? abbon_nombre(100 * $c['note'] / $c['sur']) : '', $c['reussi'] ? 'oui' : 'non', abbon_duree(abbon_duree_copie($c)), abbon_remarques($c, $parNom), $c['id'],
     );
+    foreach ($questions as $qid => $q) $row[] = isset($c['points'][$qid]) ? abbon_nombre($c['points'][$qid]) : '';
+    $rows[] = $row;
   }
   echo "\xEF\xBB\xBF"; // UTF-8 reconnu par les tableurs
   foreach ($rows as $r) echo implode(';', array_map('abbon_cellule', $r)) . "\r\n";
@@ -184,6 +247,8 @@ header('Content-Type: text/html; charset=utf-8');
   body { font: 16px/1.5 system-ui, sans-serif; color: var(--fg); background: var(--bg); margin: 0 auto; padding: 1rem; max-width: 72rem; }
   h1 { font-size: 1.5rem; }
   form { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: end; margin-block: 1rem; }
+  form.stack { flex-direction: column; align-items: stretch; }
+  form.stack button { align-self: flex-start; }
   label { display: flex; flex-direction: column; gap: 0.25rem; font-weight: 600; }
   input, select, button { font: inherit; padding: 0.4rem 0.6rem; border: 1px solid var(--line); border-radius: 0.4rem; background: transparent; color: inherit; }
   button { background: var(--accent); color: var(--bg); border-color: var(--accent); cursor: pointer; }
@@ -201,6 +266,10 @@ header('Content-Type: text/html; charset=utf-8');
   .code { font-size: 2rem; font-weight: 700; letter-spacing: 0.1em; font-family: ui-monospace, monospace; }
   label.check { flex-direction: row; align-items: center; font-weight: 400; }
   .warn { color: var(--bad); }
+  button.link { background: none; border: 0; padding: 0; color: var(--accent); text-decoration: underline; font-weight: 400; }
+  textarea { box-sizing: border-box; font: inherit; width: 100%; max-width: 36rem; padding: 0.4rem 0.6rem; border: 1px solid var(--line); border-radius: 0.4rem; background: transparent; color: inherit; }
+  td.ok { color: var(--accent); }
+  td.ko { color: var(--bad); }
 </style>
 </head>
 <body>
@@ -215,6 +284,33 @@ header('Content-Type: text/html; charset=utf-8');
     <button type="submit">Se connecter</button>
   </form>
   <p class="muted">Le mot de passe est dans le fichier examen/config.php (voir LISEZMOI.txt).</p>
+<?php elseif ($detail !== null): ?>
+  <?php $dq = isset($solutions['quizzes'][$detail['qcm']]) ? $solutions['quizzes'][$detail['qcm']]['questions'] : array(); ?>
+  <form method="post">
+    <input type="hidden" name="motdepasse" value="<?= h($given) ?>">
+    <input type="hidden" name="qcm" value="<?= h($detail['qcm']) ?>">
+    <button type="submit" class="secondary">← Retour aux copies</button>
+  </form>
+  <h2>Copie de <?= $detail['nom'] !== '' ? h($detail['nom']) : '(sans nom)' ?><?= $detail['groupe'] !== '' ? ' (' . h($detail['groupe']) . ')' : '' ?></h2>
+  <p><?= h($detail['titre']) ?> — rendue le <?= h(abbon_date($detail['date'])) ?> — note : <strong><?= h(abbon_nombre($detail['note'])) ?> / <?= h(abbon_nombre($detail['sur'])) ?></strong>
+    (<?= $detail['sur'] > 0 ? h(abbon_nombre(100 * $detail['note'] / $detail['sur'])) : '0' ?> %) — durée : <?= h(abbon_duree(abbon_duree_copie($detail))) ?>
+    <?php $rem = abbon_remarques($detail, $parNom); if ($rem !== ''): ?> — <span class="warn"><?= h($rem) ?></span><?php endif; ?></p>
+  <div class="table" tabindex="0" role="region" aria-label="Détail de la copie">
+  <table>
+    <thead><tr><th scope="col">N°</th><th scope="col">Question</th><th scope="col">Réponse de l'élève</th><th scope="col">Réponse attendue</th><th scope="col">Points</th></tr></thead>
+    <tbody>
+    <?php $i = 0; foreach ($dq as $qid => $q): if (!isset($detail['points'][$qid])) continue; $pts = $detail['points'][$qid]; $rep = abbon_reponse_texte($q, isset($detail['reponses'][$qid]) ? $detail['reponses'][$qid] : null); ?>
+      <tr>
+        <td class="num"><?= ++$i ?></td>
+        <td><?= h(isset($q['display']['prompt']) ? $q['display']['prompt'] : $qid) ?></td>
+        <td><?= $rep !== '' ? h($rep) : '<span class="muted">(sans réponse)</span>' ?></td>
+        <td><?= h(isset($q['display']['expected']) ? $q['display']['expected'] : '') ?></td>
+        <td class="num <?= $pts >= $q['points'] - 1e-9 ? 'ok' : 'ko' ?>"><?= h(abbon_nombre($pts)) ?> / <?= h(abbon_nombre($q['points'])) ?></td>
+      </tr>
+    <?php endforeach; ?>
+    </tbody>
+  </table>
+  </div>
 <?php else: ?>
   <?php if ($notice !== ''): ?><p class="<?= $noticeError ? 'error' : 'ok' ?>" role="status"><?= h($notice) ?></p><?php endif; ?>
   <h2>Examen</h2>
@@ -253,6 +349,9 @@ header('Content-Type: text/html; charset=utf-8');
       </tbody>
     </table>
     </div>
+  <?php endif; ?>
+  <?php if ($classe && ($ouverture['ouvert'] || $debuts || $toutes)): ?>
+    <p><?= $absents ? count($absents) . ' élève' . (count($absents) > 1 ? 's' : '') . ' de la liste sans copie commencée : ' . h(implode(', ', array_map(function ($e) { return $e['nom']; }, $absents))) . '.' : 'Tous les élèves de la liste ont commencé.' ?></p>
   <?php endif; ?>
 
   <h2>Corrigé</h2>
@@ -298,6 +397,16 @@ header('Content-Type: text/html; charset=utf-8');
       Pour le publier vous-même, une fois l'épreuve terminée, indiquer corrige: "enseignant".</p>
   <?php endif; ?>
 
+  <h2>Liste de classe</h2>
+  <form method="post" class="stack">
+    <input type="hidden" name="motdepasse" value="<?= h($given) ?>">
+    <label>Un élève par ligne : « Nom Prénom », ou « Nom Prénom ; Groupe » (facultatif)
+      <textarea name="classe" rows="6"><?= h(implode("\n", array_map(function ($e) { return $e['nom'] . ($e['groupe'] !== '' ? ' ; ' . $e['groupe'] : ''); }, $classe))) ?></textarea>
+    </label>
+    <button type="submit" name="action" value="classe" class="secondary">Enregistrer la liste</button>
+  </form>
+  <p class="muted"><?= $classe ? count($classe) . ' élève' . (count($classe) > 1 ? 's' : '') . ' : seuls ces noms peuvent commencer (accents, majuscules et ordre des mots ne comptent pas), et la copie porte le nom de la liste.' : "Sans liste, le nom est libre. Avec une liste, un nom absent ou mal orthographié est refusé au début de l'examen. Vider le champ pour revenir au nom libre." ?></p>
+
   <h2>Copies</h2>
   <?php if (!abbon_collecte()): ?><p class="muted">reglages.js : copies "non" — les nouvelles copies ne sont pas gardées.</p><?php endif; ?>
   <form method="post">
@@ -320,7 +429,7 @@ header('Content-Type: text/html; charset=utf-8');
     <?php foreach ($copies as $c): ?>
       <tr>
         <td><?= h(abbon_date($c['date'])) ?></td>
-        <td><?= $c['nom'] !== '' ? h($c['nom']) : '<span class="muted">(sans nom)</span>' ?></td>
+        <td><form method="post" class="inline"><input type="hidden" name="motdepasse" value="<?= h($given) ?>"><input type="hidden" name="id" value="<?= h($c['id']) ?>"><button type="submit" name="action" value="copie" class="link" aria-label="Détail de la copie : <?= h($c['nom'] !== '' ? $c['nom'] : 'sans nom') ?>"><?= $c['nom'] !== '' ? h($c['nom']) : '(sans nom)' ?></button></form></td>
         <td><?= h($c['groupe']) ?></td>
         <td><?= h($c['titre']) ?></td>
         <td class="num"><?= h(abbon_nombre($c['note'])) ?> / <?= h(abbon_nombre($c['sur'])) ?></td>
@@ -333,7 +442,30 @@ header('Content-Type: text/html; charset=utf-8');
     </tbody>
   </table>
   </div>
-  <p class="muted">Durée : mesurée par le serveur, du début de l'examen à la copie rendue.</p>
+  <p class="muted">Durée : mesurée par le serveur, du début de l'examen à la copie rendue. Cliquer sur un nom pour le détail de la copie.</p>
+  <?php if ($questions): ?>
+    <h3>Statistiques par question</h3>
+    <div class="table" tabindex="0" role="region" aria-label="Statistiques par question">
+    <table>
+      <thead><tr><th scope="col">N°</th><th scope="col">Question</th><th scope="col">Réponse attendue</th><th scope="col">Réussite</th><th scope="col">Points moyens</th><th scope="col">Sans réponse</th></tr></thead>
+      <tbody>
+      <?php $i = 0; foreach ($questions as $qid => $q): $st = $stats[$qid]; ?>
+        <tr>
+          <td class="num"><?= ++$i ?></td>
+          <td><?= h(isset($q['display']['prompt']) ? $q['display']['prompt'] : $qid) ?></td>
+          <td><?= h(isset($q['display']['expected']) ? $q['display']['expected'] : '') ?></td>
+          <td class="num"><?= $st['n'] ? h(abbon_nombre(100 * $st['reussies'] / $st['n'])) . ' %' : '—' ?></td>
+          <td class="num"><?= $st['n'] ? h(abbon_nombre($st['moyenne'])) . ' / ' . h(abbon_nombre($q['points'])) : '—' ?></td>
+          <td class="num"><?= $st['n'] ? $st['sans'] : '—' ?></td>
+        </tr>
+      <?php endforeach; ?>
+      </tbody>
+    </table>
+    </div>
+    <p class="muted">Réussite : part des copies où la question a tous ses points. Le CSV de ce QCM a une colonne de points par question.</p>
+  <?php elseif ($copies): ?>
+    <p class="muted">Choisir un QCM pour voir les statistiques par question.</p>
+  <?php endif; ?>
   <form method="post">
     <input type="hidden" name="motdepasse" value="<?= h($given) ?>">
     <label class="check"><input type="checkbox" name="confirmer" value="1"> Je confirme</label>

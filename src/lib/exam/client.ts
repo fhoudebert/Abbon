@@ -149,12 +149,19 @@ export interface ExamState {
   open: boolean;
   code: boolean;
   minutes: number | null;
+  /** Liste de classe : le nom doit y figurer (vérifié par le serveur au début). */
+  classList: boolean;
 }
 
 export async function examState(fetcher: typeof fetch = fetch): Promise<ExamState> {
   const r = await post({ action: 'etat' }, fetcher);
   if (!r.ok || !r.body || typeof r.body.ouvert !== 'boolean') throw new GradeError('server');
-  return { open: r.body.ouvert, code: r.body.code === true, minutes: typeof r.body.duree === 'number' ? r.body.duree : null };
+  return {
+    open: r.body.ouvert,
+    code: r.body.code === true,
+    minutes: typeof r.body.duree === 'number' ? r.body.duree : null,
+    classList: r.body.classe === true,
+  };
 }
 
 /**
@@ -172,6 +179,7 @@ export async function startOnServer(
   const error = r.body?.error;
   if (error === 'ferme') throw new GradeError('closed');
   if (error === 'code') throw new GradeError('code');
+  if (error === 'nom') throw new GradeError('name');
   if (error === 'copie') throw new GradeError('record');
   if (!r.ok || r.body?.ok !== true) throw new GradeError('server');
   return typeof r.body.limitSec === 'number' && r.body.limitSec > 0 ? r.body.limitSec : null;
@@ -180,9 +188,10 @@ export async function startOnServer(
 export class GradeError extends Error {
   /**
    * network : serveur injoignable ; server : pas de correction (PHP absent…) ; record : copie non enregistrée ;
-   * closed : examen fermé ; code : mauvais code d'accès ; start : tentative non commencée auprès du serveur.
+   * closed : examen fermé ; code : mauvais code d'accès ; start : tentative non commencée auprès du serveur ;
+   * name : nom absent de la liste de classe.
    */
-  constructor(readonly reason: 'network' | 'server' | 'record' | 'closed' | 'code' | 'start') {
+  constructor(readonly reason: 'network' | 'server' | 'record' | 'closed' | 'code' | 'start' | 'name') {
     super(reason);
   }
 }

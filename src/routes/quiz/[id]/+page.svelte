@@ -155,7 +155,7 @@
             {t('site.candidate.group')}
             <input type="text" bind:value={candidate.group} maxlength="60" />
           </label>
-          <p id="candidate-hint" class="muted small">{t('site.candidate.hint')}</p>
+          <p id="candidate-hint" class="muted small">{t(server && exam?.classList ? 'site.candidate.listHint' : 'site.candidate.hint')}</p>
         </div>
       {/if}
       {#if server && exam?.open && exam.code && !submitted}

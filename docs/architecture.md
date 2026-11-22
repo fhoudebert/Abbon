@@ -300,6 +300,14 @@ hébergements mutualisés ; ni base de données ni fichier écrit).
   même nom pour un QCM et supprime les copies (case de confirmation). Une seule copie par QCM : le lecteur ne
   propose ni « Recommencer » ni « Refaire les erreurs ». `abbon_traiter` regroupe ces demandes (testable sans
   serveur web).
+- **Liste de classe, détail, statistiques** : l'enseignant saisit une liste (`copies/classe.php`, une ligne par
+  élève, « Nom Prénom ; Groupe ») ; le début d'une tentative est alors refusé (`nom`) si le nom n'y figure pas,
+  comparé par `abbon_cle_nom` (sans accents, majuscules, ponctuation ni ordre des mots), et la copie prend le nom et
+  le groupe de la liste ; `etat` dit seulement qu'une liste existe (`classe`), sans l'envoyer. L'espace enseignant
+  liste les absents (élèves de la liste sans début), montre le détail d'une copie (réponse de l'élève, réponse
+  attendue et points par question) et, pour un QCM choisi, des statistiques par question (part des copies avec tous
+  les points, points moyens, sans réponse) et un CSV avec une colonne de points par question. Les textes viennent de
+  `display` (`displayOf` : énoncé, choix, réponse attendue en texte), ajouté à chaque question de `solutions.php`.
 - **Seuil** : `seuil: "50"` dans `reglages.js` (`resolveThreshold`) remplace le seuil de chaque QCM du site, au
   chargement et, avec la correction par le serveur, dans `corriger.php` (`abbon_seuil`).
 - **Parité** : `exam/exam.test.ts` note les mêmes réponses (justes, fausses, approchées) avec l'application et avec

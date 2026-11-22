@@ -141,6 +141,11 @@ copie rendue après la durée (plus une minute de marge), mesurée par le serveu
 élève ne rend qu'une copie par QCM (le site ne propose pas de recommencer) ; plusieurs copies au même nom sont
 signalées.
 
+Liste de classe (facultative, dans l'espace enseignant) : un élève par ligne, « Nom Prénom » ou
+« Nom Prénom ; Groupe ». Seuls ces noms peuvent alors commencer (accents, majuscules et ordre des mots ne comptent
+pas : un nom mal orthographié est refusé, l'élève corrige) ; la copie porte le nom et le groupe de la liste, et
+l'espace enseignant indique les élèves de la liste qui n'ont pas commencé. La liste n'est jamais envoyée aux élèves.
+
 Corrigé : par défaut (corrige: "enseignant"), l'élève qui rend sa copie ne voit que sa note. Quand le temps de
 l'épreuve est écoulé, publier le corrigé de chaque QCM dans l'espace enseignant (bouton « Publier ») : les élèves
 voient alors le détail par question et le corrigé, en revenant sur leur résultat (bouton « Voir si le corrigé est
@@ -148,7 +153,9 @@ publié »). Le corrigé se retire de la même façon.
 
 Copies : avant l'examen, chaque élève indique son nom (et, s'il le souhaite, sa classe ou son groupe). Chaque
 copie corrigée est gardée sur le serveur, dans examen/copies/copies.php (illisible par le web), et s'affiche dans
-l'espace enseignant ; la liste se télécharge au format CSV (tableur). Le serveur doit pouvoir écrire dans le
+l'espace enseignant : liste des copies, détail de chacune (réponses de l'élève et réponses attendues, question par
+question) et, pour un QCM choisi, statistiques par question (taux de réussite, points moyens, sans réponse). La
+liste se télécharge au format CSV (tableur) ; pour un QCM choisi, avec une colonne de points par question. Le serveur doit pouvoir écrire dans le
 dossier examen/copies/ (c'est le cas par défaut chez la plupart des hébergeurs ; sinon, lui donner les droits
 d'écriture, 755 ou 775, avec le client FTP). Pour repartir de zéro : « Supprimer toutes les copies » dans
 l'espace enseignant (après avoir téléchargé le CSV). Les noms des élèves sont des données

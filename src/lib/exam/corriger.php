@@ -418,6 +418,54 @@ function abbon_seuil($file = null) {
   return $n >= 1 && $n <= 100 ? $n / 100 : null;
 }
 
+// ---- Liste de classe ------------------------------------------------------------------------------------
+
+/** Nom comparable : sans accents, majuscules, ponctuation ni ordre des mots (« Lovelace Ada » = « ada lovelace »). */
+function abbon_cle_nom($s) {
+  $s = mb_strtolower(abbon_texte($s, 200), 'UTF-8');
+  if (class_exists('Normalizer')) {
+    $n = Normalizer::normalize($s, Normalizer::FORM_D);
+    if ($n !== false) $s = preg_replace('/\p{Mn}+/u', '', $n);
+  } else {
+    $s = strtr($s, array('à' => 'a', 'â' => 'a', 'ä' => 'a', 'á' => 'a', 'ã' => 'a', 'ç' => 'c', 'é' => 'e', 'è' => 'e', 'ê' => 'e', 'ë' => 'e',
+      'î' => 'i', 'ï' => 'i', 'í' => 'i', 'ô' => 'o', 'ö' => 'o', 'ó' => 'o', 'õ' => 'o', 'ù' => 'u', 'û' => 'u', 'ü' => 'u', 'ú' => 'u', 'ÿ' => 'y', 'ñ' => 'n', 'œ' => 'oe', 'æ' => 'ae'));
+  }
+  $words = preg_split('/[^\p{L}\p{N}]+/u', $s, -1, PREG_SPLIT_NO_EMPTY);
+  sort($words);
+  return implode(' ', $words);
+}
+
+/** Liste de classe : [['nom' => …, 'groupe' => …], …] ; vide si aucune liste (nom libre). */
+function abbon_classe($dir) {
+  $c = abbon_etat($dir, 'classe');
+  return isset($c['eleves']) && is_array($c['eleves']) ? $c['eleves'] : array();
+}
+
+/** Texte saisi par l'enseignant (une ligne par élève, « Nom Prénom » ou « Nom Prénom ; Groupe ») → liste. */
+function abbon_lire_classe($text) {
+  $out = array();
+  $seen = array();
+  foreach (preg_split('/\r\n|\r|\n/', (string) $text) as $line) {
+    $parts = preg_split('/[;\t]/', $line, 2);
+    $nom = abbon_texte($parts[0], 100);
+    if ($nom === '') continue;
+    $k = abbon_cle_nom($nom);
+    if ($k === '' || isset($seen[$k])) continue;
+    $seen[$k] = true;
+    $out[] = array('nom' => $nom, 'groupe' => abbon_texte(isset($parts[1]) ? $parts[1] : '', 60));
+    if (count($out) >= 1000) break;
+  }
+  return $out;
+}
+
+/** Élève de la liste qui porte ce nom, ou null. */
+function abbon_trouver_eleve($classe, $nom) {
+  $k = abbon_cle_nom($nom);
+  if ($k === '') return null;
+  foreach ($classe as $e) if (abbon_cle_nom($e['nom']) === $k) return $e;
+  return null;
+}
+
 /** Identifiant de tentative envoyé par le lecteur, ou null s'il est absent ou illisible. */
 function abbon_tentative($request) {
   $a = isset($request['attempt']) && is_array($request['attempt']) ? $request['attempt'] : array();
@@ -435,7 +483,8 @@ function abbon_traiter($solutions, $request, $dir, $reglages = null, $now = null
 
   // État de l'examen, avant de commencer : ouvert ou non, code demandé ou non (jamais le code lui-même).
   if ($action === 'etat') {
-    return array(200, array('ouvert' => $ouverture['ouvert'], 'code' => $ouverture['code'] !== '', 'duree' => $ouverture['duree']));
+    // « classe » : le nom sera vérifié dans la liste de classe (la liste elle-même n'est jamais envoyée).
+    return array(200, array('ouvert' => $ouverture['ouvert'], 'code' => $ouverture['code'] !== '', 'duree' => $ouverture['duree'], 'classe' => count(abbon_classe($dir)) > 0));
   }
   $quizId = isset($request['quiz']) && is_string($request['quiz']) ? $request['quiz'] : '';
   if (!isset($solutions['quizzes'][$quizId])) return array(400, array('error' => 'qcm'));
@@ -451,7 +500,17 @@ function abbon_traiter($solutions, $request, $dir, $reglages = null, $now = null
       return array(403, array('error' => 'code'));
     }
     $c = isset($request['candidate']) && is_array($request['candidate']) ? $request['candidate'] : array();
-    $debut = array('id' => $id, 't' => $now === null ? time() : $now, 'qcm' => $quizId, 'nom' => abbon_texte(isset($c['name']) ? $c['name'] : '', 100), 'groupe' => abbon_texte(isset($c['group']) ? $c['group'] : '', 60));
+    $nom = abbon_texte(isset($c['name']) ? $c['name'] : '', 100);
+    $groupe = abbon_texte(isset($c['group']) ? $c['group'] : '', 60);
+    // Liste de classe : le nom doit y figurer (orthographe de la liste, groupe de la liste s'il n'est pas donné).
+    $classe = abbon_classe($dir);
+    if ($classe && abbon_collecte($reglages)) {
+      $eleve = abbon_trouver_eleve($classe, $nom);
+      if ($eleve === null) return array(403, array('error' => 'nom'));
+      $nom = $eleve['nom'];
+      if ($groupe === '') $groupe = $eleve['groupe'];
+    }
+    $debut = array('id' => $id, 't' => $now === null ? time() : $now, 'qcm' => $quizId, 'nom' => $nom, 'groupe' => $groupe);
     if (!abbon_enregistrer($dir, $debut, 'debuts.php')) return array(500, array('error' => 'copie'));
     return array(200, array('ok' => true, 'limitSec' => abbon_limite($ouverture, $quiz)));
   }
@@ -470,6 +529,9 @@ function abbon_traiter($solutions, $request, $dir, $reglages = null, $now = null
   if (abbon_collecte($reglages)) {
     $now = $now === null ? time() : $now;
     $copie = abbon_copie($solutions, $request, $out, $now);
+    // Nom et groupe enregistrés au début (ceux de la liste de classe, le cas échéant).
+    if ($debut['nom'] !== '') $copie['nom'] = $debut['nom'];
+    if ($copie['groupe'] === '' && isset($debut['groupe'])) $copie['groupe'] = $debut['groupe'];
     $limit = abbon_limite($ouverture, $quiz);
     $copie['debut'] = gmdate('Y-m-d\TH:i:s\Z', $debut['t']);
     $copie['dureeServeur'] = $now - $debut['t'];
