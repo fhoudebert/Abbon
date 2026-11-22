@@ -1,0 +1,29 @@
+# Module « Biologie, SVT spécialité terminale générale » — révision du bac, parties biologiques du programme
+# (BO spécial n° 8 du 25 juillet 2019) : génétique et évolution ; de la plante sauvage à la plante domestiquée ;
+# corps humain et santé. Les parties de géologie et de climatologie ne sont pas traitées ici.
+# Format des sources : docs/modules.md.
+
+id: org.abbon.svt
+version: 0.1.0
+date: 2026-11-22
+title:
+  fr: "Biologie, SVT spécialité terminale"
+description:
+  fr: "Révision du bac, parties biologiques du programme : génétique et évolution (méiose, brassages, complexification des génomes), de la plante sauvage à la plante domestiquée, corps humain et santé (réflexes, cerveau, muscle et énergie, stress). Version pilote : 36 questions et leurs fiches."
+level: terminale
+license: CC-BY-NC-SA-4.0
+authors: [Abbon]
+homepage: https://github.com/fhoudebert/Abbon
+languages: [fr]
+requires:
+  app: ">=0.2.0"
+defaults:
+  passThreshold: 0.6
+
+categories:
+  - id: genetique-evolution
+    name: { fr: "Génétique et évolution" }
+  - id: plante
+    name: { fr: "De la plante sauvage à la plante domestiquée" }
+  - id: corps-humain
+    name: { fr: "Corps humain et santé" }

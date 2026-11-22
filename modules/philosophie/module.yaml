@@ -1,0 +1,29 @@
+# Module « Philosophie, terminale générale » — révision du bac : notions, auteurs et repères du programme
+# (BO spécial n° 8 du 25 juillet 2019). Format des sources : docs/modules.md.
+
+id: org.abbon.philosophie
+version: 0.1.0
+date: 2026-11-22
+title:
+  fr: "Philosophie, terminale générale"
+description:
+  fr: "Révision du bac : les 17 notions du programme, réparties selon ses trois perspectives (l'existence humaine et la culture, la morale et la politique, la connaissance), les thèses des grands auteurs et les repères conceptuels. Version pilote : 40 questions et leurs fiches."
+level: terminale
+license: CC-BY-NC-SA-4.0
+authors: [Abbon]
+homepage: https://github.com/fhoudebert/Abbon
+languages: [fr]
+requires:
+  app: ">=0.2.0"
+defaults:
+  passThreshold: 0.6
+
+categories:
+  - id: existence-culture
+    name: { fr: "L'existence humaine et la culture" }
+  - id: morale-politique
+    name: { fr: "La morale et la politique" }
+  - id: connaissance
+    name: { fr: "La connaissance" }
+  - id: reperes
+    name: { fr: "Les repères" }

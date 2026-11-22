@@ -2,12 +2,12 @@
 # Questions reprises des ébauches (modules/_ebauches/chimie, physique), reformulées et vérifiées.
 
 id: org.abbon.physique-chimie
-version: 0.8.0
+version: 0.9.0
 date: 2026-11-21
 title:
   fr: "Physique-chimie, terminale spécialité"
 description:
-  fr: "Révisions du bac : matière, mouvement, ondes et signaux, énergie ; niveaux bases, approfondissement et expert, 124 questions et leurs fiches de révision."
+  fr: "Révisions du bac : matière, mouvement, ondes et signaux, énergie (niveaux bases, approfondissement et expert), mécanique des fluides ; 134 questions et leurs fiches de révision."
 level: terminale
 license: CC-BY-NC-SA-4.0
 authors: [Abbon]
@@ -36,3 +36,6 @@ categories:
   - id: energie
     parent: physique
     name: { fr: "L'énergie : conversions et transferts" }
+  - id: fluides
+    parent: physique
+    name: { fr: "Mécanique des fluides" }

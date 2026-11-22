@@ -32,10 +32,13 @@ l'interface, puis par rubrique :
 
 ```
 abbon/questionnaires/
-  fr/langues/       Abbon-anglais-verbes-…qcm, Abbon-anglais-grammaire-…qcm, Abbon-espagnol-…qcm
-  fr/histoire/      Abbon-histoire-…qcm
-  fr/sciences/      Abbon-maths-specialite-…qcm, Abbon-maths-expertes-…qcm, Abbon-physique-chimie-…qcm
-  fr/technologie/   Abbon-informatique-…qcm
+  fr/langues/       Abbon-anglais-verbes-…qcm, Abbon-anglais-grammaire-…qcm, Abbon-espagnol-…qcm,
+                    Abbon-etymologie-…qcm
+  fr/histoire/      Abbon-histoire-…qcm, Abbon-histoire-terminale-…qcm
+  fr/philosophie/   Abbon-philosophie-…qcm
+  fr/sciences/      Abbon-maths-specialite-…qcm, Abbon-maths-expertes-…qcm, Abbon-physique-chimie-…qcm,
+                    Abbon-enseignement-scientifique-…qcm, Abbon-svt-…qcm
+  fr/technologie/   Abbon-informatique-…qcm, Abbon-sciences-ingenieur-…qcm
 ```
 
 GitHub Pages n'affiche pas le contenu d'un dossier : chaque niveau a sa page `index.html`, produite par

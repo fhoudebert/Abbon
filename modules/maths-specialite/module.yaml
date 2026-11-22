@@ -3,12 +3,12 @@
 # Questions reprises des ébauches (modules/_ebauches/math/01-bases.md), reformulées et vérifiées.
 
 id: org.abbon.maths-specialite
-version: 0.4.0
+version: 0.5.0
 date: 2026-11-21
 title:
   fr: "Maths spécialité, terminale"
 description:
-  fr: "Révisions du bac : suites, fonctions, calcul intégral, probabilités ; niveaux bases, approfondissement et expert, 120 questions et leurs fiches de révision."
+  fr: "Révisions du bac : suites, fonctions, calcul intégral, probabilités (niveaux bases, approfondissement et expert), géométrie dans l'espace, logique et raisonnement, algorithmique et méthodes numériques ; 152 questions et leurs fiches de révision. Les trois dernières rubriques, communes au programme de 2019 et à celui qui entre en vigueur en terminale à la rentrée 2027, préparent aussi ce nouveau programme."
 level: terminale
 license: CC-BY-NC-SA-4.0
 authors: [Abbon]
@@ -28,3 +28,9 @@ categories:
     name: { fr: "Primitives et intégrales" }
   - id: probabilites
     name: { fr: "Dénombrement et probabilités" }
+  - id: geometrie-espace
+    name: { fr: "Géométrie dans l'espace" }
+  - id: logique
+    name: { fr: "Logique et raisonnement" }
+  - id: algorithmique
+    name: { fr: "Algorithmique et méthodes numériques" }

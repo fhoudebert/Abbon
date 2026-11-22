@@ -34,6 +34,12 @@ Leur contenu est repris tel quel dans les notes de version (page de télécharge
 - Export en site web : un QCM, un module ou tous les QCM deviennent un site complet, à déposer par FTP sur un hébergement même mutualisé, sans base de données. La progression de chaque visiteur reste dans son navigateur, boîte de révision comprise. Modes proposés au choix : entraînement et examen, entraînement seulement, examen seulement ; modifiables après l'export dans reglages.js.
 - Questionnaires publiés à part, sur https://fhoudebert.github.io/abbon/questionnaires/ (par langue et par rubrique) : lien dans « À propos » et sur la page d'import ; pages index produites par `npm run module:catalogue`. L'application se construit et se publie sans eux.
 - Modules « Espagnol : pièges des francophones » (31 questions : faux amis, grammaire et conjugaison, expressions) et « Histoire : dates insolites ou méconnues » (33 questions, de la domestication des animaux au premier iPhone), en version pilote, avec leurs fiches de révision.
+- Module « Enseignement scientifique, terminale générale », en version pilote : un QCM d'entraînement par thème du programme (climat, énergies, histoire du vivant), 36 questions et leurs fiches de révision.
+- Module « Biologie, SVT spécialité terminale », en version pilote : révision du bac sur les parties biologiques du programme (génétique et évolution, de la plante sauvage à la plante domestiquée, corps humain et santé), 36 questions et leurs fiches de révision.
+- Module « Sciences de l'ingénieur, spécialité terminale », en version pilote : révision du bac (analyse des systèmes, mécanique et énergie, commande et information), 36 questions et leurs fiches de révision.
+- Module « Étymologie : curiosités méconnues », en version pilote : argent et travail, mots voyageurs, noms propres et fausses pistes, 36 questions et leurs fiches.
+- Modules de révision du bac « Philosophie, terminale générale » (notions par perspective, auteurs, repères) et « Histoire, terminale générale » (les quatre thèmes du tronc commun, avec une frise par thème), en version pilote : 40 questions chacun, avec leurs fiches.
+- Maths spécialité 0.5.0 : géométrie dans l'espace, logique et raisonnement, algorithmique et méthodes numériques (32 questions), communes au programme de 2019 et au nouveau programme de terminale (rentrée 2027). Physique-chimie 0.9.0 : mécanique des fluides (10 questions).
 ### en
 - Content modules: a `.qcm` file is installed, updated and removed as a whole; its quizzes are protected (“Duplicate to edit” makes a personal copy).
 - Revision sheets per category, from the quiz page and from the answers.
@@ -62,6 +68,12 @@ Leur contenu est repris tel quel dans les notes de version (page de télécharge
 - Website export: a quiz, a module or all quizzes become a complete website to upload by FTP to any host, including shared hosting, with no database. Each visitor’s progress stays in their browser, review box included. Modes offered: practice and exam, practice only, or exam only; can be changed after export in reglages.js.
 - Quizzes published separately at https://fhoudebert.github.io/abbon/questionnaires/ (by language and topic): link in “About” and on the import page; index pages produced by `npm run module:catalogue`. The app is built and released without them.
 - “Spanish: traps for French speakers” (31 questions) and “History: unusual or little-known dates” (33 questions) modules, pilot versions with revision sheets (French only).
+- “Enseignement scientifique” (French final-year general science) module, pilot version: one practice quiz per syllabus theme, 36 questions with revision sheets (French only).
+- “Biology, SVT specialty” module (French final year), pilot version: exam revision on the biology parts of the syllabus (genetics and evolution, plant domestication, human body and health), 36 questions with revision sheets (French only).
+- “Engineering science, specialty” module (French final year), pilot version: exam revision (systems analysis, mechanics and energy, control and information), 36 questions with revision sheets (French only).
+- “Étymologie” (French word origins) module, pilot version: 36 questions with revision sheets (French only).
+- “Philosophie” and “Histoire” French final-year exam revision modules, pilot versions: 40 questions each, with revision sheets (French only).
+- Maths spécialité 0.5.0: space geometry, logic and reasoning, algorithms and numerical methods (32 questions), common to the 2019 syllabus and the new final-year syllabus (from September 2027). Physique-chimie 0.9.0: fluid mechanics (10 questions).
 
 ## 0.1.0
 

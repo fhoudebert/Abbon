@@ -1,0 +1,28 @@
+# Module « Sciences de l'ingénieur, spécialité terminale » — révision du bac (programme de spécialité SI du
+# cycle terminal, BO spécial n° 1 du 22 janvier 2019) : analyser, modéliser, commander et traiter l'information.
+# Format des sources : docs/modules.md.
+
+id: org.abbon.sciences-ingenieur
+version: 0.1.0
+date: 2026-11-22
+title:
+  fr: "Sciences de l'ingénieur, spécialité terminale"
+description:
+  fr: "Révision du bac de sciences de l'ingénieur : analyse des systèmes (besoin, SysML, chaînes de puissance et d'information, écoconception), mécanique et énergie (puissance, rendement, transmission, statique, résistance des matériaux), commande et information (asservissements, numération, conversion, réseaux, intelligence artificielle). Version pilote : 36 questions et leurs fiches."
+level: terminale
+license: CC-BY-NC-SA-4.0
+authors: [Abbon]
+homepage: https://github.com/fhoudebert/Abbon
+languages: [fr]
+requires:
+  app: ">=0.2.0"
+defaults:
+  passThreshold: 0.6
+
+categories:
+  - id: analyse
+    name: { fr: "Analyse des systèmes" }
+  - id: mecanique-energie
+    name: { fr: "Mécanique et énergie" }
+  - id: commande-information
+    name: { fr: "Commande et information" }

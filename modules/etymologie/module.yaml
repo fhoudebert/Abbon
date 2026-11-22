@@ -1,0 +1,29 @@
+# Module « Étymologie : curiosités méconnues » — culture générale sur l'origine des mots français.
+# Inspiré de deux séries fournies (30 et 100 mots), reformulées : chaque mauvaise réponse est une fausse piste
+# précise et vraisemblable, et les étymologies discutées sont signalées comme telles.
+# Format des sources : docs/modules.md. Vérifier : npm run module:check ; construire : npm run module:build
+
+id: org.abbon.etymologie
+version: 0.1.0
+date: 2026-11-22
+title:
+  fr: "Étymologie : curiosités méconnues"
+description:
+  fr: "Le travail et l'instrument à trois pieux, le capital et le cheptel, le cafard et le mouchard, l'abricot qui a fait le tour de la Méditerranée, le jean venu de Gênes : l'histoire surprenante de mots de tous les jours. Version pilote : 36 questions et leurs fiches."
+level: culture générale
+license: CC-BY-NC-SA-4.0
+authors: [Abbon]
+homepage: https://github.com/fhoudebert/Abbon
+languages: [fr]
+requires:
+  app: ">=0.2.0"
+defaults:
+  passThreshold: 0.6
+
+categories:
+  - id: argent-travail
+    name: { fr: "Argent, travail et vie quotidienne" }
+  - id: mots-voyageurs
+    name: { fr: "Mots voyageurs et allers-retours" }
+  - id: noms-propres
+    name: { fr: "Noms propres et fausses pistes" }
