@@ -25,7 +25,7 @@ Linux, Windows, macOS and Android; no account, no data sent anywhere.
 - **Website export** of a quiz or a module, for shared hosting: practice as static pages, or an **exam graded by
   the server** (PHP) with no answers in the site, opened by the invigilator, with access code, class list, random
   draw of questions, submissions, statistics and answers published by the teacher.
-- **Formula workshop**: a [single web page](https://fhoudebert.github.io/abbon/atelier/), also usable offline,
+- **Formula workshop** (Tools menu, or a [single web page](https://fhoudebert.github.io/abbon/atelier/), also usable offline),
   to write a maths or chemistry formula and paste it into Word (as an editable equation), LibreOffice, LaTeX or
   as an image; formulas can be kept in a Markdown notebook.
 - **Accessible** (WCAG 2.1 AA, light and dark, adjustable text size), in English and French, usable on a phone.

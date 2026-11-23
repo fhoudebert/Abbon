@@ -6,6 +6,7 @@ Leur contenu est repris tel quel dans les notes de version (page de télécharge
 ## 0.2.0
 
 ### fr
+- Menu « Outils », avec l'atelier de formules dans l'application : même écran que la page autonome ; images et carnets enregistrés par la fenêtre « Enregistrer sous ». Sur téléphone, les entrées du menu passent sur deux lignes au lieu de déborder.
 - Atelier de formules : page web autonome (un seul fichier, hors ligne) pour écrire une formule de mathématiques (éditeur visuel ou LaTeX) ou de chimie (notation mhchem, palette de symboles) et la copier pour Word (équation modifiable), pour LibreOffice, en LaTeX ou en image PNG ; carnet de formules gardé dans le navigateur, enregistré et rouvert en Markdown. En ligne sur fhoudebert.github.io/abbon/atelier/, construite par `npm run atelier`.
 - Trois modules en anglais : « French for English speakers: classic traps » (faux amis et pièges de grammaire, 24 questions), « Word stories: playful English etymology » (24 questions) et « Abbon showcase » (tour de tous les types de questions, 14 questions).
 - Documentation : README.md en anglais, lisezMoi.md en français, présentation synthétique des fonctions ; les explications techniques passent dans developpement_fr.md et development.md.
@@ -58,6 +59,7 @@ Leur contenu est repris tel quel dans les notes de version (page de télécharge
 - Modules de révision du bac « Philosophie, terminale générale » (notions par perspective, auteurs, repères) et « Histoire, terminale générale » (les quatre thèmes du tronc commun, avec une frise par thème), en version pilote : 40 questions chacun, avec leurs fiches.
 - Maths spécialité 0.5.0 : géométrie dans l'espace, logique et raisonnement, algorithmique et méthodes numériques (32 questions), communes au programme de 2019 et au nouveau programme de terminale (rentrée 2027). Physique-chimie 0.9.0 : mécanique des fluides (10 questions).
 ### en
+- “Tools” menu, with the formula workshop inside the app: the same screen as the standalone page; images and notebooks saved through the “Save as” dialog. On phones, menu entries wrap onto two lines instead of overflowing.
 - Formula workshop: a standalone web page (a single file, works offline) to write a maths formula (visual editor or LaTeX) or a chemistry one (mhchem notation, symbol palette) and copy it for Word (editable equation), for LibreOffice, as LaTeX or as a PNG image; a formula notebook kept in the browser, saved and reopened as Markdown. Online at fhoudebert.github.io/abbon/atelier/, built with `npm run atelier`.
 - Three English modules: “French for English speakers: classic traps” (false friends and grammar traps, 24 questions), “Word stories: playful English etymology” (24 questions) and “Abbon showcase” (a tour of every question type, 14 questions).
 - Documentation: README.md in English, lisezMoi.md in French, with a short overview of the features; technical instructions move to development.md and developpement_fr.md.

@@ -10,6 +10,9 @@ export const REPO_URL = 'https://github.com/fhoudebert/Abbon';
  */
 export const MODULES_URL = 'https://fhoudebert.github.io/abbon/questionnaires/';
 
+/** Atelier de formules en page web autonome (même code que l'écran Outils → Atelier de formules). */
+export const ATELIER_URL = 'https://fhoudebert.github.io/abbon/atelier/';
+
 /**
  * Ouvre une adresse https dans le navigateur du système (plugin opener sous Tauri).
  * À brancher sur le `onclick` d'un vrai lien : dans un simple navigateur, le lien fait son travail.

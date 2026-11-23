@@ -30,6 +30,6 @@ export default defineConfig({
     cssCodeSplit: false,
     modulePreload: false,
     chunkSizeWarningLimit: 4000, // une seule page, tout compris
-    rollupOptions: { output: { inlineDynamicImports: true } },
+    rolldownOptions: { output: { codeSplitting: false } }, // un seul script
   },
 });

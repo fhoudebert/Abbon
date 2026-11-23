@@ -26,8 +26,8 @@ Linux, Windows, macOS et Android ; aucune inscription, aucune donnée envoyée.
   statiques, ou **examen corrigé par le serveur** (PHP) sans les réponses dans le site, avec ouverture par le
   surveillant, code d'accès, liste de classe, tirage des questions, copies, statistiques et publication du
   corrigé.
-- **Atelier de formules** : une [page web](https://fhoudebert.github.io/abbon/atelier/), utilisable aussi hors
-  ligne, pour écrire une formule de maths ou de chimie et la coller dans Word (équation modifiable), LibreOffice,
+- **Atelier de formules** (menu Outils, ou [page web](https://fhoudebert.github.io/abbon/atelier/), utilisable aussi hors
+  ligne) pour écrire une formule de maths ou de chimie et la coller dans Word (équation modifiable), LibreOffice,
   en LaTeX ou en image ; les formules se gardent dans un carnet en Markdown.
 - **Accessible** (WCAG 2.1 AA, clair et sombre, taille du texte réglable), en français et en anglais,
   utilisable sur téléphone.
