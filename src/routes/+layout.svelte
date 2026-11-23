@@ -49,7 +49,7 @@
    * L'écran courant se lit dans `page.route.id`, valable avec les deux routages (chemin ou fragment).
    */
   const site = SITE ? siteData() : null;
-  const SITE_ONLY_ADMIN = /^\/(admin|settings|about|leitner\/new)(\/|$)/;
+  const SITE_ONLY_ADMIN = /^\/(admin|settings|about|tools|leitner\/new)(\/|$)/;
   const blocked = $derived(
     SITE && (SITE_ONLY_ADMIN.test(page.route.id ?? '') || (examOnly() && (page.route.id ?? '').startsWith('/leitner'))),
   );
@@ -73,6 +73,7 @@
     </a>{/if}
     {#if !SITE}
       <a href={to('/admin')} aria-current={page.route.id?.startsWith('/admin') ? 'page' : undefined}>{t('nav.admin')}</a>
+      <a href={to('/tools')} aria-current={page.route.id?.startsWith('/tools') ? 'page' : undefined}>{t('nav.tools')}</a>
       <a href={to('/settings')} aria-current={page.route.id === '/settings' ? 'page' : undefined}>{t('nav.settings')}</a>
       <a href={to('/about')} aria-current={page.route.id === '/about' ? 'page' : undefined}>{t('nav.about')}</a>
     {/if}
@@ -189,6 +190,7 @@
     gap: 1rem;
   }
   nav a {
+    white-space: nowrap;
     color: var(--muted);
     text-decoration: none;
     padding-block: 0.5rem;
@@ -228,9 +230,11 @@
     .lang {
       display: none;
     }
+    /* Six entrées : sur deux lignes si besoin, jamais coupées. */
     nav {
       inline-size: 100%;
-      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0 0.9rem;
     }
   }
   main {

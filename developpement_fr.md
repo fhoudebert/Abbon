@@ -47,6 +47,7 @@ npm run module:check       # vérifie les sources des modules (dossier modules/)
 npm run module:build       # construit dist/modules/Abbon-<nom>-<version>.qcm
 npm run module:site        # exporte un module en site web (dist/sites/), --serveur : examen corrigé en PHP
 npm run module:catalogue -- <dossier>   # pages index.html du catalogue de questionnaires
+npm run atelier            # atelier de formules : dist/atelier/atelier-formules.html, page autonome (tools/atelier)
 cd src-tauri && cargo test # tests Rust (migrations)
 ```
 

@@ -135,7 +135,7 @@
     align-items: center;
   }
   :global(.ML__keyboard) {
-    --keyboard-accent-color: var(--accent);
-    --keyboard-toolbar-text-active: var(--accent);
+    --keyboard-accent-color: var(--keyboard-accent);
+    --keyboard-toolbar-text-active: var(--keyboard-accent);
   }
 </style>

@@ -4,6 +4,7 @@ import { hasMath, mathSource, richToPlain, walkRich } from '$lib/domain/rich';
 import { sanitizeSvg } from '$lib/domain/svg';
 import { buildPackage, parsePackage, sha256Hex, sniffMime } from '$lib/interchange/qcmPackage';
 import { mathError, renderMath } from './math';
+import { standardLatex } from './macros';
 
 describe('formules (KaTeX)', () => {
   it('rend une formule en HTML avec du MathML pour les lecteurs d’écran', () => {
@@ -16,6 +17,21 @@ describe('formules (KaTeX)', () => {
   it('connaît la chimie et les unités (mhchem)', () => {
     expect(mathError(String.raw`\ce{CH3COOH + H2O <=> CH3COO- + H3O+}`)).toBeNull();
     expect(mathError(String.raw`\pu{9,81 m.s-2}`)).toBeNull();
+  });
+
+  it('connaît les commandes écrites par l’éditeur visuel et le clavier de MathLive', () => {
+    for (const s of [String.raw`\exponentialE^{x}`, String.raw`\int_0^1 x\,\differentialD x`, String.raw`1+\imaginaryI`, String.raw`x\in\doubleStruckCapitalR`, String.raw`\placeholder{}^2`]) {
+      expect(mathError(s)).toBeNull();
+      expect(renderMath(s)).not.toContain('katex-error');
+    }
+  });
+
+  it('LaTeX standard à partir de celui de MathLive', () => {
+    expect(standardLatex(String.raw`\exponentialE^{x}+\imaginaryI\pi`)).toBe(String.raw`\mathrm{e}^{x}+\mathrm{i}\pi`);
+    expect(standardLatex(String.raw`\int f\,\differentialD x`)).toBe(String.raw`\int f\,\mathrm{d} x`);
+    expect(standardLatex(String.raw`\placeholder{}^2`)).toBe(String.raw`\square ^2`);
+    expect(standardLatex(String.raw`\exponentialEx`)).toBe(String.raw`\exponentialEx`);
+    expect(standardLatex(String.raw`\frac{a}{b}`)).toBe(String.raw`\frac{a}{b}`);
   });
 
   it('ne produit ni lien, ni script, ni balise venue de la source', () => {
