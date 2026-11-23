@@ -36,7 +36,8 @@ Linux, Windows, macOS et Android ; aucune inscription, aucune donnée envoyée.
 ## Télécharger
 
 - Application : [dernière version](https://github.com/fhoudebert/Abbon/releases/latest) (`.deb`, `.rpm`,
-  AppImage, `.msi`, `.exe`, `.dmg`, `.apk`). L'application signale les nouvelles versions.
+  AppImage, `.msi`, `.exe`, `.dmg`, `.apk`) ; Linux et Windows pour processeurs Intel/AMD (x86-64) et ARM64
+  (Raspberry Pi 4/5, Snapdragon…), macOS pour Apple silicon et Intel. L'application signale les nouvelles versions.
 - Questionnaires : [catalogue](https://fhoudebert.github.io/abbon/questionnaires/), ou depuis l'application
   (À propos → Questionnaires), puis Administration → Importer.
 

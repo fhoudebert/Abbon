@@ -26,6 +26,8 @@ export const isNewer = (candidate: string, current: string) => compareVersions(c
 const ReleaseFileSchema = z.object({
   platform: z.enum(['linux', 'windows', 'android', 'macos']),
   kind: z.string().max(20),
+  /** x86_64, aarch64 ou universal ; absent dans les versions publiées avant ARM64 (x86_64). */
+  arch: z.string().max(20).optional(),
   name: z.string().regex(/^[\w.+-]{1,200}$/, 'nom de fichier invalide'),
   size: z.number().int().nonnegative(),
   sha256: z.string().regex(/^[0-9a-f]{64}$/),
@@ -49,15 +51,19 @@ export function parseRelease(raw: unknown): Release | null {
   return r.success ? r.data : null;
 }
 
-/** Fichier à proposer pour une plateforme (Android : l'APK). */
-export function downloadFor(release: Release, platform: string): ReleaseFile | undefined {
+/**
+ * Fichier à proposer pour une plateforme (Android : l'APK) et un processeur (`std::env::consts::ARCH` :
+ * x86_64, aarch64…). Jamais un fichier d'un autre processeur : mieux vaut la page de téléchargement.
+ */
+export function downloadFor(release: Release, platform: string, arch?: string): ReleaseFile | undefined {
   const order: Record<string, string[]> = {
     android: ['apk'],
     windows: ['nsis', 'msi'],
     linux: ['appimage', 'deb', 'rpm'],
     macos: ['dmg'],
   };
-  const files = release.files.filter((f) => f.platform === platform);
+  const fileArch = (f: ReleaseFile) => f.arch ?? (f.platform === 'linux' || f.platform === 'windows' ? 'x86_64' : 'universal');
+  const files = release.files.filter((f) => f.platform === platform && (!arch || [arch, 'universal'].includes(fileArch(f))));
   for (const kind of order[platform] ?? []) {
     const f = files.find((x) => x.kind === kind);
     if (f) return f;

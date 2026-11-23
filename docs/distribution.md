@@ -21,7 +21,11 @@ https://votre-domaine/chemin/
   .htaccess                    types de fichiers, HTTPS, cache (Apache)
   abbon.png
   releases/
-    Abbon-X.Y.Z-x86_64.AppImage, .deb, .rpm, -setup.exe, .msi, abbon-X.Y.Z.apk,
+    Abbon-X.Y.Z-x86_64.AppImage, Abbon_X.Y.Z_amd64.deb, Abbon-X.Y.Z-1.x86_64.rpm,
+    Abbon_X.Y.Z_x64-setup.exe, Abbon_X.Y.Z_x64_en-US.msi                 (x86-64 : Intel, AMD)
+    Abbon-X.Y.Z-aarch64.AppImage, Abbon_X.Y.Z_arm64.deb, Abbon-X.Y.Z-1.aarch64.rpm,
+    Abbon_X.Y.Z_arm64-setup.exe                                          (ARM64, pas de MSI)
+    abbon-X.Y.Z.apk,
     Abbon_X.Y.Z_universal.dmg, Abbon_X.Y.Z_universal.app.tar.gz (mises à jour macOS)
     version.json               description de la version (page, application Android)
     latest.json                mises à jour automatiques Linux / Windows / macOS (fichiers signés)
@@ -30,10 +34,20 @@ https://votre-domaine/chemin/
 
 | Plateforme | Mise à jour |
 |---|---|
-| Linux (AppImage, .deb, .rpm) | Automatique : téléchargement, vérification de la signature, installation, redémarrage. Pour .deb / .rpm, le mot de passe administrateur est demandé. |
-| Windows (.exe, .msi) | Automatique, comme Linux. |
+| Linux (AppImage, .deb, .rpm ; x86-64 et ARM64) | Automatique : téléchargement, vérification de la signature, installation, redémarrage. Pour .deb / .rpm, le mot de passe administrateur est demandé. |
+| Windows (.exe, .msi ; x86-64 et ARM64, sans MSI) | Automatique, comme Linux. |
 | macOS (.dmg) | Automatique, comme Linux : l'archive `.app.tar.gz` signée remplace l'application. Une seule application pour Apple silicon et Intel. |
 | Android (APK) | L'application signale la nouvelle version et ouvre l'APK dans le navigateur ; Android l'installe par-dessus l'ancienne (même clé de signature obligatoire). |
+
+**ARM64.** Linux (Raspberry Pi 4/5 avec un système 64 bits, ordinateurs et serveurs ARM) et Windows (Snapdragon X,
+Surface Pro…) sont aussi construits pour ARM64, sur des runners GitHub ARM natifs (`ubuntu-22.04-arm`,
+`windows-11-arm`, gratuits pour un dépôt public) : Tauri ne compile pas pour un autre processeur. Pas de MSI en
+ARM64 (WiX ne le produit pas), seulement l'installateur NSIS. Dans `latest.json`, chaque fichier a sa clé
+(`linux-aarch64-appimage`, `windows-aarch64-nsis`…) : le plugin updater de Tauri choisit celle de son processeur.
+`version.json` indique le processeur de chaque fichier (`arch` : `x86_64`, `aarch64`, `universal`), et
+l'application ne propose que celui de l'appareil ; les fichiers x86-64 y viennent en premier, pour les versions
+d'Abbon antérieures, qui ne connaissent pas ce champ. Au lancement manuel du workflow, la case « ARM64 » permet de
+s'en passer (construction plus rapide).
 
 L'application vérifie au plus une fois par jour, au démarrage (désactivable dans *Paramètres › Mises à jour*,
 où l'adresse du serveur peut aussi être changée). Les requêtes partent du code Rust, en HTTPS uniquement.
@@ -66,8 +80,8 @@ Signature de l'APK Android : voir [developpement_fr.md](../developpement_fr.md#s
 `ANDROID_CERT_SHA256` ; sur le poste, `keystore.properties` et `abbon.keystore`, ignorés par git).
 
 Noms des binaires : l'exécutable s'appelle `Abbon` (`/usr/bin/Abbon`, `Abbon.exe`) et l'AppImage suit la convention
-d'[AppImageHub](https://github.com/AppImage/appimage.github.io) : `Abbon-X.Y.Z-x86_64.AppImage` (nom et casse du
-dépôt, version, architecture).
+d'[AppImageHub](https://github.com/AppImage/appimage.github.io) : `Abbon-X.Y.Z-x86_64.AppImage` et
+`Abbon-X.Y.Z-aarch64.AppImage` (nom et casse du dépôt, version, architecture).
 
 ### Hébergement
 
