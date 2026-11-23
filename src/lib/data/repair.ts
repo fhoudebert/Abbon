@@ -1,5 +1,5 @@
 /**
- * Réparations des données au démarrage (application installée).
+ * Entretien des données : réparations au démarrage (application installée), remise à zéro des questionnaires.
  */
 import type { Repository } from './repository';
 
@@ -21,4 +21,15 @@ export async function releaseModuleCopies(repo: Repository): Promise<number> {
     n++;
   }
   return n;
+}
+
+/**
+ * Retire tous les questionnaires : QCM personnels et modules, catégories, images, tentatives (et historique mis de
+ * côté), boîte de révision. Réglages et code PIN gardés (les QCM de démonstration ne reviennent pas) ; points et
+ * ceinture aussi, sauf `dropRewards`.
+ */
+export async function clearContent(repo: Repository, dropRewards = false): Promise<void> {
+  const settings = await repo.listSettings();
+  const rewards = dropRewards ? [] : await repo.listRewards();
+  await repo.replaceAll({ categories: [], quizzes: [], attempts: [], answers: [], settings, media: [], modules: [], cards: [], rewards });
 }

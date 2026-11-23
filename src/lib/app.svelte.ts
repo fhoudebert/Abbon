@@ -1,6 +1,6 @@
 import { SITE } from '$lib/site';
 import { getRepository, type Repository } from '$lib/data';
-import { releaseModuleCopies } from '$lib/data/repair';
+import { clearContent, releaseModuleCopies } from '$lib/data/repair';
 import { seedDemo, tidyDemo } from '$lib/data/seed';
 import { progressOf, type ProgressInfo } from '$lib/domain/progress';
 import { createPin, verifyPin, type PinRecord } from '$lib/domain/pin';
@@ -369,6 +369,16 @@ class AppState {
   }
 
   /** Retire un module d'un bloc : QCM, catégories vides, fiches, puis images devenues inutiles. */
+  /**
+   * Retire tous les questionnaires d'un coup, pour repartir sur une base vide : QCM personnels et modules,
+   * catégories, images, tentatives (et historique mis de côté), boîte de révision. Les réglages et le code PIN
+   * sont gardés (les QCM de démonstration ne reviennent pas) ; les points et la ceinture aussi, sauf `dropRewards`.
+   */
+  async clearAllQuizzes(dropRewards = false) {
+    await clearContent(await this.repo(), dropRewards);
+    await this.reload();
+  }
+
   async uninstallModule(id: string, keepHistory: boolean) {
     await (await this.repo()).uninstallModule(id, keepHistory);
     await this.cleanMedia();
