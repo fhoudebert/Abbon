@@ -22,6 +22,11 @@ describe('fabrication et édition', () => {
     expect(ids(copy).some((id) => ids(src).includes(id))).toBe(false);
     expect(copy.questions.map((q) => q.prompt)).toEqual(src.questions.map((q) => q.prompt));
   });
+  it('la copie d’un QCM de module est un QCM personnel, modifiable', () => {
+    const copy = cloneQuiz({ ...demoQuizzes[0], moduleId: 'org.abbon.demo', status: 'published' }, '(copie)');
+    expect(copy.moduleId).toBeNull();
+    expect(copy.status).toBe('draft');
+  });
   it('déplace et renumérote', () => {
     const items = [{ position: 0, n: 'a' }, { position: 1, n: 'b' }, { position: 2, n: 'c' }];
     move(items, 2, -1);

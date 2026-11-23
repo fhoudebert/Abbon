@@ -59,6 +59,8 @@ export function cloneQuiz(quiz: Quiz, suffix: string, now = new Date()): Quiz {
   return {
     ...copy,
     id: newId(),
+    // La copie d'un QCM de module est un QCM personnel : modifiable, et gardée si le module est désinstallé.
+    moduleId: null,
     title: Object.fromEntries(Object.entries(copy.title).map(([l, v]) => [l, v ? `${v} ${suffix}` : v])),
     status: 'draft',
     version: 1,

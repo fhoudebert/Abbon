@@ -5,7 +5,9 @@ import { describe, expect, it } from 'vitest';
 import { startAttempt } from '$lib/domain/session';
 import type { Category, ModuleManifest, Quiz } from '$lib/domain/types';
 import { planModule } from '$lib/interchange/module';
+import { cloneQuiz } from '$lib/domain/factory';
 import { MemoryRepository } from './memory';
+import { releaseModuleCopies } from './repair';
 import type { Repository } from './repository';
 import { demoQuizzes } from './seed';
 import { SqliteRepository } from './sqlite';
@@ -57,6 +59,28 @@ describe.each<[string, () => Repository]>([
   ['SQLite', () => new SqliteRepository(nodeDriver())],
   ['mémoire', () => new MemoryRepository()],
 ])('modules (%s)', (_name, make) => {
+  it('« Dupliquer pour modifier » : la copie est un QCM personnel, gardé à la désinstallation', async () => {
+    const repo = make();
+    await install(repo, '1.0.0', ['m_a']);
+    const copy = cloneQuiz((await repo.getQuiz('m_a'))!, '(copie)');
+    await repo.saveQuiz(copy);
+    expect((await repo.getQuiz(copy.id))?.moduleId ?? null).toBeNull();
+    await repo.uninstallModule(ID, false);
+    expect(await repo.getQuiz('m_a')).toBeNull();
+    expect(await repo.getQuiz(copy.id)).not.toBeNull();
+  });
+
+  it('copies faites avant la correction (rattachées au module) : redeviennent personnelles au démarrage', async () => {
+    const repo = make();
+    await install(repo, '1.0.0', ['m_a']);
+    const copy = { ...cloneQuiz((await repo.getQuiz('m_a'))!, '(copie)'), moduleId: ID };
+    await repo.saveQuiz(copy);
+    expect(await releaseModuleCopies(repo)).toBe(1);
+    expect((await repo.getQuiz(copy.id))?.moduleId ?? null).toBeNull();
+    expect((await repo.getQuiz('m_a'))?.moduleId).toBe(ID); // le QCM du module reste protégé
+    expect(await releaseModuleCopies(repo)).toBe(0);
+  });
+
   it('installe un module : QCM et catégories marqués, fiche conservée', async () => {
     const repo = make();
     const plan = await install(repo, '1.0.0', ['m_a', 'm_b']);

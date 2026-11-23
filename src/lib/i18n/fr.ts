@@ -275,6 +275,7 @@ export const fr = {
   'qe.unpublish': 'Repasser en brouillon',
   'qe.preview': 'Aperçu',
   'qe.previewDirty': 'Enregistrez pour voir l’aperçu.',
+  'qe.copyCreated': 'Copie créée : vous modifiez votre copie, l’original est inchangé.',
   'qe.unsaved': 'Modifications non enregistrées',
   'qe.savedAt': 'Enregistré',
   'qe.issues': 'À corriger avant publication',

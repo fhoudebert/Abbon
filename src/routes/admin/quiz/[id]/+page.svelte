@@ -70,6 +70,8 @@
       savedJson = JSON.stringify(quiz);
       editLang = quiz.languages.includes(i18n.lang) ? i18n.lang : quiz.languages[0];
       selected = 0;
+      // Arrivée depuis « Dupliquer » : on modifie la copie, l'original est inchangé.
+      message = page.url.searchParams.has('copie') ? t('qe.copyCreated') : null;
     })();
   });
 
@@ -186,7 +188,7 @@
   async function duplicateLocked() {
     if (!locked) return;
     const copyId = await app.duplicateQuiz(locked.id, t('admin.copySuffix'));
-    await goto(`/admin/quiz/${copyId}`);
+    await goto(`/admin/quiz/${copyId}?copie`);
   }
 </script>
 

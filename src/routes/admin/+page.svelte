@@ -23,7 +23,7 @@
 
   async function duplicate(q: QuizSummary) {
     const id = await app.duplicateQuiz(q.id, t('admin.copySuffix'));
-    await goto(`/admin/quiz/${id}`);
+    await goto(`/admin/quiz/${id}?copie`);
   }
 
   const moduleTitle = (m: InstalledModule | undefined | null) => (m ? localize(m.manifest.title, lang) || m.manifest.id : '');

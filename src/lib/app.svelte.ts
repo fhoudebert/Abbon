@@ -1,5 +1,6 @@
 import { SITE } from '$lib/site';
 import { getRepository, type Repository } from '$lib/data';
+import { releaseModuleCopies } from '$lib/data/repair';
 import { seedDemo, tidyDemo } from '$lib/data/seed';
 import { progressOf, type ProgressInfo } from '$lib/domain/progress';
 import { createPin, verifyPin, type PinRecord } from '$lib/domain/pin';
@@ -95,6 +96,7 @@ class AppState {
       if (!SITE) {
         await seedDemo(repo);
         await tidyDemo(repo);
+        await releaseModuleCopies(repo);
       }
       await this.reload();
       this.ready = true;

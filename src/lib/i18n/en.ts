@@ -272,6 +272,7 @@ export const en: Messages = {
   'qe.unpublish': 'Back to draft',
   'qe.preview': 'Preview',
   'qe.previewDirty': 'Save to see the preview.',
+  'qe.copyCreated': 'Copy created: you are editing your copy; the original is unchanged.',
   'qe.unsaved': 'Unsaved changes',
   'qe.savedAt': 'Saved',
   'qe.issues': 'To fix before publishing',
