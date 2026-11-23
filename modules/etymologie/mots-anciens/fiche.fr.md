@@ -28,6 +28,24 @@ Ces mots ne servent plus guère au quotidien, faute de chose à nommer, mais ils
 - **Motte** : butte portant la tour ; **basse-cour** : cour des dépendances ; **lices** : palissades, terrain des tournois.
 - **Hourd** (bois) puis **mâchicoulis** (pierre) : galeries en surplomb pour défendre le pied des murs ; **barbacane** : ouvrage avancé devant une porte.
 
+## Deux cas en ancien français
+
+Jusqu'aux XIIIe et XIVe siècles, un nom avait deux formes : le **cas sujet** (CS, du nominatif latin), sujet ou attribut, et le **cas régime** (CR, de l'accusatif), pour tous les compléments. Le français moderne a surtout gardé le cas régime ; parfois les deux ont survécu, avec des sens différents.
+
+| Cas sujet | Cas régime | Latin |
+| --- | --- | --- |
+| chantre | chanteur | *cantor*, *cantorem* |
+| sire | seigneur (monseigneur) | *senior*, *seniorem* |
+| pâtre | pasteur | *pastor*, *pastorem* |
+| on | homme | *homo*, *hominem* |
+| copain (*compain*) | compagnon | *companio*, *companionem* |
+| gars (*garz*) | garçon | francique *wrakjo* (discuté) |
+| *li cuens*, *li quens* | *le conte*, aujourd'hui comte | *comes*, *comitem* |
+
+Exemples : « Le chantre entonne l'hymne à l'unisson des autres chanteurs » ; « Sire, recevez l'hommage de monseigneur » ; « Le pâtre garde les moutons, comme le pasteur ses ouailles » ; « Ce gars est suivi par un garçon » ; « Mon copain retrouve nos compagnons ».
+
+Attention aux homophones : dans « Quant li dus de Lemborc ot son conte finé », *conte* est le récit (de *conter*), pas le comte.
+
 ## Monnaies et mesures
 
 - 1 **livre** = 20 **sous** = 240 **deniers** ; la **maille** vaut un demi-denier. Le Royaume-Uni a gardé £ s d jusqu'en 1971.
