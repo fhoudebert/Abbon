@@ -135,7 +135,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libxdo-dev libssl-dev \
-            libayatana-appindicator3-dev librsvg2-dev rpm
+            libayatana-appindicator3-dev librsvg2-dev rpm zsync
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with: { workspaces: src-tauri }
@@ -150,6 +150,13 @@ jobs:
           APPIMAGE_EXTRACT_AND_RUN: '1'
         shell: bash
         run: |
+          # Information de mise à jour inscrite dans l'AppImage (AppImageUpdate, gestionnaires d'AppImage,
+          # demandée par AppImageHub) : fichier .zsync de la dernière release GitHub publiée. Lue par le
+          # greffon AppImage de linuxdeploy, qu'utilise Tauri. L'application garde sa propre mise à jour.
+          case "${{ matrix.arch }}" in x64) a=x86_64 ;; arm64) a=aarch64 ;; esac
+          export LDAI_UPDATE_INFORMATION="gh-releases-zsync|${GITHUB_REPOSITORY%%/*}|${GITHUB_REPOSITORY#*/}|latest|Abbon-*-$a.AppImage.zsync"
+          export UPDATE_INFORMATION="$LDAI_UPDATE_INFORMATION"
+          echo "Information de mise à jour : $LDAI_UPDATE_INFORMATION"
           EXTRA=()
           if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
             [ -n "$ABBON_UPDATER_PUBKEY" ] || { echo "::error::variable TAURI_UPDATER_PUBKEY manquante"; exit 1; }
@@ -160,11 +167,25 @@ jobs:
       - name: "Nom de l'AppImage selon AppImageHub : Abbon-<version>-x86_64.AppImage, Abbon-<version>-aarch64.AppImage"
         working-directory: src-tauri/target/release/bundle/appimage
         run: |
+          # Un éventuel .zsync de linuxdeploy porte l'ancien nom : refait ci-dessous.
+          rm -fv ./*.zsync
           for f in Abbon_*_amd64.AppImage* Abbon_*_aarch64.AppImage*; do
             [ -e "$f" ] || continue
             n=$(echo "$f" | sed -E 's/^Abbon_(.+)_amd64\.AppImage/Abbon-\1-x86_64.AppImage/; s/^Abbon_(.+)_aarch64\.AppImage/Abbon-\1-aarch64.AppImage/')
             mv -v "$f" "$n"
           done
+      - name: Information de mise à jour de l'AppImage et fichier .zsync
+        working-directory: src-tauri/target/release/bundle/appimage
+        shell: bash
+        run: |
+          f=$(ls Abbon-*.AppImage)
+          # Section .upd_info de l'exécutable de l'AppImage (spécification AppImage, type 2).
+          info=$(objcopy -O binary --only-section=.upd_info "$f" /dev/stdout | tr -d '\0')
+          echo "Information de mise à jour : $info"
+          [[ "$info" == gh-releases-zsync\|* ]] || { echo "::error::information de mise à jour absente de $f"; exit 1; }
+          # Delta de téléchargement pour AppImageUpdate : URL relative, le .zsync est publié à côté de l'AppImage.
+          zsyncmake -u "$f" -o "$f.zsync" "$f"
+          head -n 8 "$f.zsync"
       - name: Paquets produits (processeur attendu)
         shell: bash
         run: |
@@ -526,8 +547,8 @@ jobs:
           ls -l dist
           missing=0
           # x86-64 et ARM64 pour Linux et Windows (pas de MSI en ARM64), application universelle pour macOS.
-          for pattern in '*_amd64.deb' '*.x86_64.rpm' '*-x86_64.AppImage' '*_x64*.msi' '*_x64-setup.exe' \
-                         '*_arm64.deb' '*.aarch64.rpm' '*-aarch64.AppImage' '*_arm64-setup.exe' '*.dmg' '*.apk'; do
+          for pattern in '*_amd64.deb' '*.x86_64.rpm' '*-x86_64.AppImage' '*-x86_64.AppImage.zsync' '*_x64*.msi' '*_x64-setup.exe' \
+                         '*_arm64.deb' '*.aarch64.rpm' '*-aarch64.AppImage' '*-aarch64.AppImage.zsync' '*_arm64-setup.exe' '*.dmg' '*.apk'; do
             if ! compgen -G "dist/$pattern" > /dev/null; then echo "::error::aucun paquet $pattern dans dist/"; missing=1; fi
           done
           exit $missing

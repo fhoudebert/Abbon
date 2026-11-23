@@ -1,7 +1,7 @@
 ---
 id: mots-anciens-01
 title: { fr: "Chevaux, chevaliers et seigneurs" }
-description: { fr: "Mots du Moyen Âge sans équivalent moderne, à connaître pour lire les textes anciens : palefroi, destrier, haquenée, sommier, bidet, bachelier, adouber, estoc, ost et arrière-ban, banalités, champart, basse-cour, hourd et mâchicoulis, lice" }
+description: { fr: "Mots du Moyen Âge sans équivalent moderne, à connaître pour lire les textes anciens : palefroi, destrier, haquenée, sommier, bidet, bachelier, adouber, estoc, ost et arrière-ban, banalités, champart, basse-cour, hourd et mâchicoulis, lice ; et les deux cas de l'ancien français : chantre et chanteur, sire et seigneur, gars et garçon, copain et compagnon, li quens et le conte" }
 level: bases
 tags: [étymologie, culture générale, français, Moyen Âge]
 ---
@@ -145,3 +145,31 @@ D'où vient l'expression « entrer en lice » ?
 - [ ] D'une ancienne course à pied
 
 > Aujourd'hui, on entre en lice dans une compétition ou un débat. De nombreuses villes ont gardé une place des Lices, à l'emplacement de ces anciens terrains, comme à Rennes ou à Saint-Tropez.
+
+## deux-cas · multiple
+En ancien français, un nom avait deux formes : le cas sujet (CS), pour le sujet du verbe, et le cas régime (CR), pour les compléments. Le plus souvent, seul le cas régime a survécu ; parfois les deux, devenus deux mots. Quelles paires viennent ainsi des deux cas d'un même nom ?
+
+- [x] *Chantre* et *chanteur* (« Le chantre entonne l'hymne à l'unisson des autres chanteurs »)
+- [x] *Sire* et *seigneur* (« Sire, recevez l'hommage de monseigneur »)
+- [x] *Pâtre* et *pasteur* (« Le pâtre garde les moutons, comme le pasteur ses ouailles »)
+- [ ] *Conte* et *comte*
+- [ ] *Prince* et *principe*
+
+> Cas sujet issu du nominatif latin, cas régime de l'accusatif : *cantor* → chantre, *cantorem* → chanteur ; *senior* → sire, *seniorem* → seigneur ; *pastor* → pâtre, *pastorem* → pasteur. De même *on* et *homme* (*homo*, *hominem*), *gars* et *garçon*, *copain* et *compagnon*. *Conte* et *comte* sont deux mots différents (le comte vient de *comes*, le conte de *conter*), et *principe* est un emprunt savant au latin *principium*, sans rapport avec la déclinaison.
+
+## gars-copain · cloze
+Retrouvez le cas d'origine de chaque mot, en ancien français.
+
+= « Ce gars est suivi par un garçon » : gars vient du {cas sujet ~cas régime} garz, garçon du {cas régime ~cas sujet} garçon. « Mon copain retrouve nos compagnons » : copain vient du {cas sujet ~cas régime} compain, compagnon du {cas régime ~cas sujet} compagnon.
+
+> Le cas sujet servait au sujet du verbe, le cas régime à tous les compléments : *li garz* (le gars) *fiert le garçon* (frappe le garçon). *Compain* et *compagnon* viennent du bas latin *companio*, *companionem*, « celui qui partage le pain » (*cum*, avec, et *panis*, pain) ; *compain* s'est écrit *copain* au XIXe siècle. Comme souvent quand les deux cas ont survécu, chaque mot a pris un sens ou un registre propre : *gars* et *copain* sont familiers.
+
+## li-quens · single
+Le comte se déclinait : cas sujet *li cuens* ou *li quens*, cas régime *le conte*. Dans ces vers de la chanson de geste *Le Chevalier au cygne et Godefroid de Bouillon* : « Quant li dus de Lemborc ot son conte finé, / Li quens qui tint Namors a après lui parlé », que désignent *son conte* et *li quens* ?
+
+- [x] *Son conte* est son récit, son discours, et *li quens* est le comte de Namur, au cas sujet : « Quand le duc de Limbourg eut fini de parler, le comte qui tenait Namur prit la parole après lui »
+- [ ] Deux formes du même mot « comte » : *son conte* au cas régime (son comte, son vassal), *li quens* au cas sujet
+- [ ] Le même comte de Namur, nommé deux fois
+- [ ] *Son conte* est son comté, le territoire du duc, et *li quens* son successeur
+
+> Piège de l'homophonie : *finer son conte*, c'est finir son récit (*conte* vient de *conter*, comme *compte* de *compter* : un seul verbe latin, *computare*). Le cas régime de « comte », *conte* lui aussi, vient du latin *comitem* ; le *m* de *comte* a été ajouté plus tard pour distinguer le titre du récit. *Li quens*, sujet de « a parlé », est bien le cas sujet, issu du nominatif *comes*.
