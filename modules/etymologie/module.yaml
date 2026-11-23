@@ -4,12 +4,12 @@
 # Format des sources : docs/modules.md. Vérifier : npm run module:check ; construire : npm run module:build
 
 id: org.abbon.etymologie
-version: 0.1.0
-date: 2026-11-22
+version: 0.3.0
+date: 2026-11-23
 title:
   fr: "Étymologie : curiosités méconnues"
 description:
-  fr: "Le travail et l'instrument à trois pieux, le capital et le cheptel, le cafard et le mouchard, l'abricot qui a fait le tour de la Méditerranée, le jean venu de Gênes : l'histoire surprenante de mots de tous les jours. Version pilote : 36 questions et leurs fiches."
+  fr: "Le travail et l'instrument à trois pieux, le capital et le cheptel, le cafard et le mouchard, l'abricot qui a fait le tour de la Méditerranée, le jean venu de Gênes : l'histoire surprenante de mots de tous les jours. Et les mots anciens sans équivalent moderne, à connaître pour lire les textes d'autrefois : palefroi, destrier, ost, banalités, maille, aloi, hue et dia… Enfin, les noms de lieux : Plessis, Ferté, puy et morne, Aigues-Mortes, Caudebec, ponts, gués et confluents. 95 questions et leurs fiches."
 level: culture générale
 license: CC-BY-NC-SA-4.0
 authors: [Abbon]
@@ -27,3 +27,7 @@ categories:
     name: { fr: "Mots voyageurs et allers-retours" }
   - id: noms-propres
     name: { fr: "Noms propres et fausses pistes" }
+  - id: mots-anciens
+    name: { fr: "Mots anciens toujours vivants" }
+  - id: toponymie
+    name: { fr: "Noms de lieux" }

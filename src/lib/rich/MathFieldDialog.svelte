@@ -140,6 +140,14 @@
     --contains-highlight-background-color: color-mix(in srgb, var(--accent) 12%, transparent);
     --primary: var(--accent);
   }
+  /* Bouton « clavier virtuel » masqué avec une souris et un clavier physique : le clavier de MathLive, rendu dans
+     la fenêtre modale, ne s'affiche pas dans toutes les vues web (WebKit de l'application de bureau). Sur écran
+     tactile, le bouton reste, et le clavier s'ouvre de toute façon quand la formule prend le focus. */
+  @media (hover: hover) and (pointer: fine) {
+    math-field::part(virtual-keyboard-toggle) {
+      display: none;
+    }
+  }
   math-field:focus-within {
     outline: 2px solid var(--accent);
     outline-offset: 2px;

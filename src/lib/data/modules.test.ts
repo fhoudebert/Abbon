@@ -5,9 +5,11 @@ import { describe, expect, it } from 'vitest';
 import { startAttempt } from '$lib/domain/session';
 import type { Category, ModuleManifest, Quiz } from '$lib/domain/types';
 import { planModule } from '$lib/interchange/module';
+import { cloneQuiz } from '$lib/domain/factory';
 import { MemoryRepository } from './memory';
+import { clearContent, releaseModuleCopies } from './repair';
 import type { Repository } from './repository';
-import { demoQuizzes } from './seed';
+import { demoQuizzes, seedDemo } from './seed';
 import { SqliteRepository } from './sqlite';
 import { nodeDriver } from './sqlite.testing';
 
@@ -57,6 +59,65 @@ describe.each<[string, () => Repository]>([
   ['SQLite', () => new SqliteRepository(nodeDriver())],
   ['mémoire', () => new MemoryRepository()],
 ])('modules (%s)', (_name, make) => {
+  it('« Dupliquer pour modifier » : la copie est un QCM personnel, gardé à la désinstallation', async () => {
+    const repo = make();
+    await install(repo, '1.0.0', ['m_a']);
+    const copy = cloneQuiz((await repo.getQuiz('m_a'))!, '(copie)');
+    await repo.saveQuiz(copy);
+    expect((await repo.getQuiz(copy.id))?.moduleId ?? null).toBeNull();
+    await repo.uninstallModule(ID, false);
+    expect(await repo.getQuiz('m_a')).toBeNull();
+    expect(await repo.getQuiz(copy.id)).not.toBeNull();
+  });
+
+  it('copies faites avant la correction (rattachées au module) : redeviennent personnelles au démarrage', async () => {
+    const repo = make();
+    await install(repo, '1.0.0', ['m_a']);
+    const copy = { ...cloneQuiz((await repo.getQuiz('m_a'))!, '(copie)'), moduleId: ID };
+    await repo.saveQuiz(copy);
+    expect(await releaseModuleCopies(repo)).toBe(1);
+    expect((await repo.getQuiz(copy.id))?.moduleId ?? null).toBeNull();
+    expect((await repo.getQuiz('m_a'))?.moduleId).toBe(ID); // le QCM du module reste protégé
+    expect(await releaseModuleCopies(repo)).toBe(0);
+  });
+
+  it('« Retirer tous les questionnaires » : base vide, réglages et code PIN gardés, points au choix', async () => {
+    for (const drop of [false, true]) {
+      const repo = make();
+      await seedDemo(repo);
+      await install(repo, '1.0.0', ['m_a']);
+      const a = await attemptOn(repo, 'm_a');
+      const q = (await repo.getQuiz('m_a'))!;
+      await repo.saveCard({
+        questionId: q.questions[0].id,
+        quizId: q.id,
+        box: 1,
+        dueAt: '2026-01-01T00:00:00Z',
+        addedAt: '2026-01-01T00:00:00Z',
+        lastAt: null,
+        reviews: 0,
+        lapses: 0,
+        snapshot: { question: q.questions[0], quizTitle: q.title, languages: q.languages },
+      });
+      await repo.addRewards([{ kind: 'quiz', ref: a, points: 10, at: '2026-01-01T00:00:00Z' }]);
+      await repo.setSetting('admin_pin', '1234');
+      await repo.setSetting('lang', 'fr');
+      await clearContent(repo, drop);
+      expect(await repo.listQuizzes()).toEqual([]);
+      expect(await repo.listCategories()).toEqual([]);
+      expect(await repo.listModules()).toEqual([]);
+      expect(await repo.listAttempts()).toEqual([]);
+      expect(await repo.listCards()).toEqual([]);
+      expect(await repo.listMediaHashes()).toEqual([]);
+      expect(await repo.getSetting('admin_pin')).toBe('1234');
+      expect(await repo.getSetting('lang')).toBe('fr');
+      expect((await repo.listRewards()).length).toBe(drop ? 0 : 1);
+      // Les QCM de démonstration ne reviennent pas.
+      expect(await seedDemo(repo)).toBe(false);
+      expect(await repo.listQuizzes()).toEqual([]);
+    }
+  });
+
   it('installe un module : QCM et catégories marqués, fiche conservée', async () => {
     const repo = make();
     const plan = await install(repo, '1.0.0', ['m_a', 'm_b']);

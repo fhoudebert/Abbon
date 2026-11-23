@@ -2,7 +2,7 @@
  * Arbre des catégories (lot 17) : regroupements comme « Physique » au-dessus des catégories des modules ou
  * de l'utilisateur. Fonctions pures.
  */
-import type { Category } from './types';
+import type { Category, I18nText } from './types';
 
 /** La catégorie et toutes ses descendantes (protégé contre une boucle de parents). */
 export function withDescendants(id: string, categories: readonly Category[]): Set<string> {
@@ -52,4 +52,55 @@ export function categoryTree(categories: readonly Category[], used: ReadonlySet<
   };
   visit(null, 0);
   return out;
+}
+
+/** Entrée du filtre de l'accueil : un module entier (« Étymologie », « Maths spécialité »…) ou une catégorie. */
+export interface FilterNode {
+  /** `module:<id>` pour un module, sinon l'identifiant de la catégorie. */
+  value: string;
+  depth: number;
+  module?: { id: string; title: I18nText };
+  category?: Category;
+}
+
+export const MODULE_FILTER = 'module:';
+
+/**
+ * Filtre de l'accueil : d'abord les catégories personnelles (en arbre), puis chaque module qui a des QCM, choisi
+ * d'un coup ou par catégorie (ses catégories en arbre, en retrait). Seules les catégories qui contiennent des QCM
+ * sont proposées ; les modules sont dans l'ordre de leur titre.
+ */
+export function homeFilters(
+  categories: readonly Category[],
+  modules: readonly { id: string; title: I18nText }[],
+  quizzes: readonly { categoryId?: string | null; moduleId?: string | null }[],
+  titleOf: (t: I18nText) => string,
+): FilterNode[] {
+  const used = new Set(quizzes.map((q) => q.categoryId).filter((id): id is string => !!id));
+  const out: FilterNode[] = categoryTree(
+    categories.filter((c) => !c.moduleId),
+    used,
+  ).map((n) => ({ value: n.category.id, depth: n.depth, category: n.category }));
+  const withQuizzes = new Set(quizzes.map((q) => q.moduleId).filter((id): id is string => !!id));
+  const sorted = modules.filter((m) => withQuizzes.has(m.id)).sort((a, b) => titleOf(a.title).localeCompare(titleOf(b.title)));
+  for (const m of sorted) {
+    out.push({ value: `${MODULE_FILTER}${m.id}`, depth: 0, module: m });
+    const own = categories.filter((c) => c.moduleId === m.id);
+    const usedHere = new Set(quizzes.filter((q) => q.moduleId === m.id).map((q) => q.categoryId).filter((id): id is string => !!id));
+    // Une seule catégorie : le module suffit.
+    const tree = categoryTree(own, usedHere);
+    if (tree.length > 1) for (const n of tree) out.push({ value: n.category.id, depth: n.depth + 1, category: n.category });
+  }
+  return out;
+}
+
+/** Le QCM correspond-il au filtre choisi (module entier, ou catégorie et ses descendantes) ? */
+export function matchesFilter(
+  quiz: { categoryId?: string | null; moduleId?: string | null },
+  value: string,
+  categories: readonly Category[],
+): boolean {
+  if (!value) return true;
+  if (value.startsWith(MODULE_FILTER)) return quiz.moduleId === value.slice(MODULE_FILTER.length);
+  return !!quiz.categoryId && withDescendants(value, categories).has(quiz.categoryId);
 }

@@ -13,6 +13,22 @@
   let exporter: ExportDialog;
   let toUninstall = $state<InstalledModule | null>(null);
   let uninstaller: ConfirmDialog;
+  let clearer: ConfirmDialog;
+  let cleared = $state<string | null>(null);
+
+  async function clearAll(dropRewards: boolean) {
+    const n = app.quizzes.length;
+    // Sauvegarde automatique d'abord (application installée) : sans elle, rien n'est retiré.
+    let backup: string | null;
+    try {
+      backup = await app.autoBackup();
+    } catch (e) {
+      cleared = t('common.error', { error: e instanceof Error ? e.message : String(e) });
+      return;
+    }
+    await app.clearAllQuizzes(dropRewards);
+    cleared = [t('admin.clearAll.done', { n }), backup ? t('import.backupDone', { name: backup }) : ''].filter(Boolean).join(' ');
+  }
 
   const lang = $derived(i18n.lang);
   const title = (q: QuizSummary) => localize(q.title, lang, q.languages[0]) || t('admin.untitled');
@@ -23,7 +39,7 @@
 
   async function duplicate(q: QuizSummary) {
     const id = await app.duplicateQuiz(q.id, t('admin.copySuffix'));
-    await goto(`/admin/quiz/${id}`);
+    await goto(`/admin/quiz/${id}?copie`);
   }
 
   const moduleTitle = (m: InstalledModule | undefined | null) => (m ? localize(m.manifest.title, lang) || m.manifest.id : '');
@@ -122,6 +138,14 @@
       {/each}
     </ul>
   {/if}
+
+  <!-- Repartir de zéro : tous les QCM, catégories, modules et l'historique, après confirmation. -->
+  <section class="danger-zone" aria-labelledby="h-clear">
+    <h2 id="h-clear">{t('admin.clearAll.heading')}</h2>
+    <p class="muted small">{t('admin.clearAll.hint')}</p>
+    {#if cleared}<p role="status">{cleared}</p>{/if}
+    <button class="ghost danger" disabled={!app.quizzes.length && !app.modules.length} onclick={() => clearer.open()}>{t('admin.clearAll.button')}</button>
+  </section>
 </AdminGate>
 
 <ExportDialog bind:this={exporter} />
@@ -156,7 +180,34 @@
   {/snippet}
 </ConfirmDialog>
 
+<ConfirmDialog
+  bind:this={clearer}
+  title={t('admin.clearAll.title', { n: app.quizzes.length })}
+  body={t('admin.clearAll.body')}
+  confirmLabel={t('admin.clearAll.keepPoints')}
+  danger
+  onconfirm={() => clearAll(false)}
+>
+  {#snippet extra(close)}
+    <button
+      class="danger-button"
+      onclick={async () => {
+        close();
+        await clearAll(true);
+      }}>{t('admin.clearAll.dropPoints')}</button
+    >
+  {/snippet}
+</ConfirmDialog>
+
 <style>
+  .danger-zone {
+    margin-block-start: 2.5rem;
+    padding-block-start: 1rem;
+    border-block-start: 1px solid var(--border);
+  }
+  .danger-zone h2 {
+    font-size: 1.1rem;
+  }
   .modules {
     margin-block-end: 1.5rem;
   }

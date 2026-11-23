@@ -6,6 +6,12 @@ Leur contenu est repris tel quel dans les notes de version (page de télécharge
 ## 0.2.0
 
 ### fr
+- Administration : « Retirer tous les questionnaires », après confirmation, pour repartir d'une base vide (QCM personnels et modules, catégories, images, historique, boîte de révision) ; réglages et code PIN gardés, points et ceinture au choix ; sauvegarde complète automatique juste avant.
+- Accueil : le filtre propose chaque module entier (« Étymologie », « Maths spécialité »…) avant ses catégories, en retrait ; le filtre et la recherche sont gardés en revenant d'un QCM.
+- Module « Étymologie » 0.3.0 : nouvelle catégorie « Noms de lieux », 30 questions et une fiche (hauteurs, enclos et forteresses ; l'eau, les sources et les gués), avec des exemples de toutes les régions, Antilles comprises.
+- Module « Étymologie » 0.2.0 : nouvelle catégorie « Mots anciens toujours vivants », 29 questions et une fiche (chevaux, chevaliers et seigneurs ; monnaies, mesures et expressions d'autrefois ; premiers noms de lieux).
+- Éditeur visuel de formules : le bouton du clavier virtuel, inopérant dans l'application de bureau, est masqué avec une souris et un clavier physique ; il reste sur écran tactile, où le clavier s'ouvre de lui-même.
+- Correction : « Dupliquer pour modifier » un QCM de module ouvrait une copie encore protégée, impossible à modifier (et qui aurait disparu avec le module). La copie est désormais un QCM personnel, ouvert directement dans l'éditeur avec le message « Copie créée » ; les copies déjà faites sont réparées au démarrage.
 - QCM livrés avec l'application : « Formules et figures » est signalé comme questionnaire de démonstration ; « Anglais – verbes irréguliers » (une question) n'est plus installé, et il est retiré d'une installation existante s'il n'a pas été modifié.
 - Modules de contenu : un fichier `.qcm` s'installe, se met à jour et se retire d'un bloc ; ses QCM sont protégés (« Dupliquer pour modifier » en fait une copie personnelle).
 - Fiches de révision par catégorie, depuis la page d'un QCM et depuis le corrigé.
@@ -49,6 +55,12 @@ Leur contenu est repris tel quel dans les notes de version (page de télécharge
 - Modules de révision du bac « Philosophie, terminale générale » (notions par perspective, auteurs, repères) et « Histoire, terminale générale » (les quatre thèmes du tronc commun, avec une frise par thème), en version pilote : 40 questions chacun, avec leurs fiches.
 - Maths spécialité 0.5.0 : géométrie dans l'espace, logique et raisonnement, algorithmique et méthodes numériques (32 questions), communes au programme de 2019 et au nouveau programme de terminale (rentrée 2027). Physique-chimie 0.9.0 : mécanique des fluides (10 questions).
 ### en
+- Admin: “Remove all quizzes”, after confirmation, to start from an empty base (personal quizzes and modules, categories, images, history, review box); settings and PIN kept, points and belt optional; automatic full backup just before.
+- Home: the filter offers each whole module (“Etymology”, “Maths”…) before its categories, indented; the filter and search are kept when coming back from a quiz.
+- “Etymology” module 0.3.0: new category “Place names”, 30 questions and a revision sheet (heights, enclosures and fortresses; water, springs and fords), with examples from every region, including the French Caribbean (French only).
+- “Etymology” module 0.2.0: new category “Old words still alive”, 29 questions and a revision sheet (horses, knights and lords; old coins, measures and sayings; first place names; French only).
+- Visual formula editor: the virtual keyboard button, which did nothing in the desktop app, is hidden with a mouse and physical keyboard; it stays on touch screens, where the keyboard opens by itself.
+- Fix: “Duplicate to edit” on a module quiz opened a copy that was still protected and could not be edited (and would have disappeared with the module). The copy is now a personal quiz, opened straight in the editor with a “Copy created” message; existing copies are repaired at startup.
 - Quizzes shipped with the app: “Formulas and figures” is labelled as a demo quiz; “English – irregular verbs” (a single question) is no longer installed, and is removed from an existing installation if it was not modified.
 - Content modules: a `.qcm` file is installed, updated and removed as a whole; its quizzes are protected (“Duplicate to edit” makes a personal copy).
 - Revision sheets per category, from the quiz page and from the answers.
