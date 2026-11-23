@@ -17,6 +17,8 @@ import {
 
 interface Support {
   platform: string;
+  /** Processeur (x86_64, aarch64…) ; absent avant la version qui le fournit. */
+  arch?: string;
   selfUpdate: boolean;
   defaultServer: string | null;
 }
@@ -49,7 +51,7 @@ class Updates {
   readonly current = __APP_VERSION__;
   /** Fichier proposé pour cet appareil (APK sur Android). */
   file = $derived<ReleaseFile | undefined>(
-    this.release && this.support ? downloadFor(this.release, this.support.platform) : undefined,
+    this.release && this.support ? downloadFor(this.release, this.support.platform, this.support.arch) : undefined,
   );
 
   async init() {

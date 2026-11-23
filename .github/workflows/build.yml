@@ -1,4 +1,7 @@
 # Paquets d'Abbon, dans l'ordre de priorité : Linux, Android, Windows, macOS.
+# Linux et Windows en x86-64 et en ARM64 : Tauri ne compile pas pour un autre processeur, l'ARM64 est
+# construit sur des runners ARM natifs (ubuntu-22.04-arm, windows-11-arm), gratuits pour les dépôts publics.
+# Modèle : le workflow de publication de tabulon, même pile Tauri 2. macOS : une application universelle.
 #
 # Déclenchement :
 # - À la demande (onglet Actions → Build → Run workflow) : branche, tag ou commit en paramètre,
@@ -41,6 +44,10 @@ on:
         description: 'Windows : MSI, NSIS'
         type: boolean
         default: true
+      arm64:
+        description: 'Linux et Windows aussi en ARM64 (runners ARM natifs)'
+        type: boolean
+        default: true
       macos:
         description: 'macOS : application universelle (.dmg)'
         type: boolean
@@ -65,6 +72,9 @@ jobs:
     outputs:
       version: ${{ steps.v.outputs.version }}
       sha: ${{ steps.v.outputs.sha }}
+      linux: ${{ steps.m.outputs.linux }}
+      windows: ${{ steps.m.outputs.windows }}
+      smoke_linux: ${{ steps.m.outputs.smoke_linux }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -77,6 +87,24 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "sha=$SHA" >> "$GITHUB_OUTPUT"
           echo "### Abbon $VERSION — $BUILD_REF ($SHA)" >> "$GITHUB_STEP_SUMMARY"
+      # Matrices des jobs Linux, Windows et des tests d'installation : x86-64, plus ARM64 sauf si
+      # décoché au lancement manuel (toujours pour un tag). Le nom (x64, arm64) suit les artefacts.
+      - id: m
+        name: Architectures
+        env:
+          ARM64: ${{ github.event_name == 'push' || inputs.arm64 }}
+        run: |
+          linux='[{"arch":"x64","os":"ubuntu-22.04"}'
+          windows='[{"arch":"x64","os":"windows-latest","bundles":"msi,nsis"}'
+          smoke='[{"arch":"x64","runner":"ubuntu-24.04","image":"debian:12","kind":"deb"},{"arch":"x64","runner":"ubuntu-24.04","image":"debian:13","kind":"deb"},{"arch":"x64","runner":"ubuntu-24.04","image":"ubuntu:24.04","kind":"deb"},{"arch":"x64","runner":"ubuntu-24.04","image":"fedora:latest","kind":"rpm"},{"arch":"x64","runner":"ubuntu-24.04","image":"ubuntu:24.04","kind":"appimage"}'
+          if [ "$ARM64" = true ]; then
+            # Même Ubuntu 22.04 qu'en x86-64 (glibc ancienne). Pas de MSI en ARM64 : WiX ne le produit pas.
+            linux+=',{"arch":"arm64","os":"ubuntu-22.04-arm"}'
+            windows+=',{"arch":"arm64","os":"windows-11-arm","bundles":"nsis"}'
+            smoke+=',{"arch":"arm64","runner":"ubuntu-24.04-arm","image":"debian:12","kind":"deb"},{"arch":"arm64","runner":"ubuntu-24.04-arm","image":"fedora:latest","kind":"rpm"},{"arch":"arm64","runner":"ubuntu-24.04-arm","image":"ubuntu:24.04","kind":"appimage"}'
+          fi
+          { echo "linux=$linux]"; echo "windows=$windows]"; echo "smoke_linux=$smoke]"; } >> "$GITHUB_OUTPUT"
+          echo "Architectures : x86-64$([ "$ARM64" = true ] && echo ', ARM64')" >> "$GITHUB_STEP_SUMMARY"
       - name: Le tag correspond à la version de package.json
         if: github.event_name == 'push'
         run: |
@@ -90,7 +118,13 @@ jobs:
     needs: prepare
     if: github.event_name == 'push' || inputs.linux
     # Ubuntu 22.04 : glibc plus ancienne, donc AppImage compatible avec plus de distributions.
-    runs-on: ubuntu-22.04
+    # ARM64 (Raspberry Pi 4/5 en 64 bits, portables et serveurs ARM) : ubuntu-22.04-arm, même raison.
+    name: linux (${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.prepare.outputs.linux) }}
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -112,6 +146,8 @@ jobs:
           ABBON_UPDATER_PUBKEY: ${{ vars.TAURI_UPDATER_PUBKEY }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          # linuxdeploy (outil de l'AppImage) est lui-même une AppImage : sans FUSE, extraite puis lancée.
+          APPIMAGE_EXTRACT_AND_RUN: '1'
         shell: bash
         run: |
           EXTRA=()
@@ -121,17 +157,31 @@ jobs:
             EXTRA=(--config "$(node -p 'JSON.stringify({bundle:{createUpdaterArtifacts:true},plugins:{updater:{pubkey:process.env.ABBON_UPDATER_PUBKEY}}})')")
           fi
           npx tauri build --bundles deb,rpm,appimage "${EXTRA[@]}"
-      - name: "Nom de l'AppImage selon AppImageHub : Abbon-<version>-x86_64.AppImage"
+      - name: "Nom de l'AppImage selon AppImageHub : Abbon-<version>-x86_64.AppImage, Abbon-<version>-aarch64.AppImage"
         working-directory: src-tauri/target/release/bundle/appimage
         run: |
-          for f in Abbon_*_amd64.AppImage*; do
+          for f in Abbon_*_amd64.AppImage* Abbon_*_aarch64.AppImage*; do
             [ -e "$f" ] || continue
-            n=$(echo "$f" | sed -E 's/^Abbon_(.+)_amd64\.AppImage/Abbon-\1-x86_64.AppImage/')
+            n=$(echo "$f" | sed -E 's/^Abbon_(.+)_amd64\.AppImage/Abbon-\1-x86_64.AppImage/; s/^Abbon_(.+)_aarch64\.AppImage/Abbon-\1-aarch64.AppImage/')
             mv -v "$f" "$n"
           done
+      - name: Paquets produits (processeur attendu)
+        shell: bash
+        run: |
+          cd src-tauri/target/release/bundle
+          ls -l deb rpm appimage
+          case "${{ matrix.arch }}" in
+            x64) want='_amd64.deb|x86_64.rpm|-x86_64.AppImage' ;;
+            arm64) want='_arm64.deb|aarch64.rpm|-aarch64.AppImage' ;;
+          esac
+          for p in ${want//|/ }; do
+            compgen -G "*/*$p" > /dev/null || { echo "::error::aucun paquet *$p"; exit 1; }
+          done
+          # Processeur de l'exécutable (mainBinaryName : Abbon).
+          file ../Abbon
       - uses: actions/upload-artifact@v7
         with:
-          name: abbon-linux-${{ needs.prepare.outputs.version }}-${{ needs.prepare.outputs.sha }}
+          name: abbon-linux-${{ matrix.arch }}-${{ needs.prepare.outputs.version }}-${{ needs.prepare.outputs.sha }}
           path: |
             src-tauri/target/release/bundle/deb/*.deb*
             src-tauri/target/release/bundle/rpm/*.rpm*
@@ -223,7 +273,13 @@ jobs:
   windows:
     needs: prepare
     if: github.event_name == 'push' || inputs.windows
-    runs-on: windows-latest
+    # ARM64 (Snapdragon X, Surface Pro…) : windows-11-arm, installateur NSIS seulement.
+    name: windows (${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.prepare.outputs.windows) }}
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -248,10 +304,16 @@ jobs:
             # La clé publique doit aussi figurer dans la configuration : le bundler la vérifie en signant.
             EXTRA=(--config "$(node -p 'JSON.stringify({bundle:{createUpdaterArtifacts:true},plugins:{updater:{pubkey:process.env.ABBON_UPDATER_PUBKEY}}})')")
           fi
-          npx tauri build --bundles msi,nsis "${EXTRA[@]}"
+          npx tauri build --bundles ${{ matrix.bundles }} "${EXTRA[@]}"
+      - name: Paquets produits (processeur attendu)
+        shell: bash
+        run: |
+          ls -l src-tauri/target/release/bundle/*/
+          compgen -G "src-tauri/target/release/bundle/nsis/*_${{ matrix.arch }}-setup.exe" > /dev/null \
+            || { echo "::error::aucun installateur *_${{ matrix.arch }}-setup.exe"; exit 1; }
       - uses: actions/upload-artifact@v7
         with:
-          name: abbon-windows-${{ needs.prepare.outputs.version }}-${{ needs.prepare.outputs.sha }}
+          name: abbon-windows-${{ matrix.arch }}-${{ needs.prepare.outputs.version }}-${{ needs.prepare.outputs.sha }}
           path: |
             src-tauri/target/release/bundle/msi/*.msi*
             src-tauri/target/release/bundle/nsis/*.exe*
@@ -330,18 +392,14 @@ jobs:
   smoke-linux:
     needs: [prepare, linux]
     if: github.event_name == 'push' || inputs.smoke
-    runs-on: ubuntu-24.04
+    # x86-64 et ARM64 (runner ubuntu-24.04-arm : les images debian, ubuntu et fedora existent pour les deux).
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - { image: 'debian:12', kind: deb }
-          - { image: 'debian:13', kind: deb }
-          - { image: 'ubuntu:24.04', kind: deb }
-          - { image: 'fedora:latest', kind: rpm }
-          - { image: 'ubuntu:24.04', kind: appimage }
+        include: ${{ fromJSON(needs.prepare.outputs.smoke_linux) }}
     container: ${{ matrix.image }}
-    # Nom fixe : GitHub y ajoute lui-même les valeurs de la matrice (« smoke-linux (debian:12, deb) »).
+    # Nom fixe : GitHub y ajoute lui-même les valeurs de la matrice (« smoke-linux (x64, …, debian:12, deb) »).
     # Avec un nom construit sur matrix.*, un job ignoré s'affichait tel quel : « smoke ${{ matrix.image }} … ».
     name: smoke-linux
     steps:
@@ -351,7 +409,7 @@ jobs:
           ref: ${{ env.BUILD_REF }}
       - uses: actions/download-artifact@v8
         with:
-          name: abbon-linux-${{ needs.prepare.outputs.version }}-${{ needs.prepare.outputs.sha }}
+          name: abbon-linux-${{ matrix.arch }}-${{ needs.prepare.outputs.version }}-${{ needs.prepare.outputs.sha }}
           path: dist
       - name: Installation (${{ matrix.kind }})
         run: |
@@ -375,7 +433,12 @@ jobs:
   smoke-windows:
     needs: [prepare, windows]
     if: github.event_name == 'push' || inputs.smoke
-    runs-on: windows-latest
+    name: smoke-windows
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.prepare.outputs.windows) }}
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -383,7 +446,7 @@ jobs:
           sparse-checkout: scripts/smoke
       - uses: actions/download-artifact@v8
         with:
-          name: abbon-windows-${{ needs.prepare.outputs.version }}-${{ needs.prepare.outputs.sha }}
+          name: abbon-windows-${{ matrix.arch }}-${{ needs.prepare.outputs.version }}-${{ needs.prepare.outputs.sha }}
           path: dist
       - name: Installation et lancement
         shell: pwsh
@@ -462,7 +525,9 @@ jobs:
           find dist -mindepth 1 -type d -empty -delete
           ls -l dist
           missing=0
-          for pattern in '*.deb' '*.rpm' '*.AppImage' '*.msi' '*.exe' '*.dmg' '*.apk'; do
+          # x86-64 et ARM64 pour Linux et Windows (pas de MSI en ARM64), application universelle pour macOS.
+          for pattern in '*_amd64.deb' '*.x86_64.rpm' '*-x86_64.AppImage' '*_x64*.msi' '*_x64-setup.exe' \
+                         '*_arm64.deb' '*.aarch64.rpm' '*-aarch64.AppImage' '*_arm64-setup.exe' '*.dmg' '*.apk'; do
             if ! compgen -G "dist/$pattern" > /dev/null; then echo "::error::aucun paquet $pattern dans dist/"; missing=1; fi
           done
           exit $missing

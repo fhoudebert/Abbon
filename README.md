@@ -34,7 +34,8 @@ Linux, Windows, macOS and Android; no account, no data sent anywhere.
 ## Download
 
 - App: [latest release](https://github.com/fhoudebert/Abbon/releases/latest) (`.deb`, `.rpm`, AppImage, `.msi`,
-  `.exe`, `.dmg`, `.apk`). The app tells you when a new version is out.
+  `.exe`, `.dmg`, `.apk`); Linux and Windows for Intel/AMD (x86-64) and ARM64 (Raspberry Pi 4/5, Snapdragon…),
+  macOS for Apple silicon and Intel. The app tells you when a new version is out.
 - Quizzes: [catalogue](https://fhoudebert.github.io/abbon/questionnaires/), or from the app (About → Quizzes),
   then Admin → Import.
 

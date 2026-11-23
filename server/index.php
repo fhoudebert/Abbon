@@ -35,6 +35,10 @@ $texts = [
         'macHelp' => 'Pour Mac à processeur Apple ou Intel. L’application n’est pas notarisée par Apple : au premier lancement, clic droit sur Abbon › Ouvrir, ou Réglages › Confidentialité et sécurité › Ouvrir quand même.',
         'apkHelp' => 'Android demandera d’autoriser l’installation depuis votre navigateur. Les mises à jour suivantes se font depuis l’application (Paramètres › Mises à jour).',
         'winHelp' => 'Windows 10 ou plus récent.',
+        'x86_64' => 'Intel / AMD (x86-64)',
+        'aarch64' => 'ARM64',
+        'armLinux' => 'ARM64 : Raspberry Pi 4 ou 5 avec un système 64 bits, ordinateurs et serveurs ARM.',
+        'armWindows' => 'ARM64 : PC à processeur Snapdragon X, Surface Pro… (pas de MSI, seulement l’installateur .exe).',
         'checksums' => 'Empreintes SHA-256',
         'license' => 'Logiciel libre sous licence MIT.',
         'other' => 'English',
@@ -60,6 +64,10 @@ $texts = [
         'macHelp' => 'For Macs with Apple or Intel processors. The app is not notarised by Apple: on first launch, right-click Abbon › Open, or System Settings › Privacy & Security › Open Anyway.',
         'apkHelp' => 'Android will ask you to allow installs from your browser. Later updates are offered in the app (Settings › Updates).',
         'winHelp' => 'Windows 10 or later.',
+        'x86_64' => 'Intel / AMD (x86-64)',
+        'aarch64' => 'ARM64',
+        'armLinux' => 'ARM64: Raspberry Pi 4 or 5 running a 64-bit system, ARM computers and servers.',
+        'armWindows' => 'ARM64: PCs with Snapdragon X processors, Surface Pro… (no MSI, only the .exe installer).',
         'checksums' => 'SHA-256 checksums',
         'license' => 'Free software under the MIT licence.',
         'other' => 'Français',
@@ -109,12 +117,19 @@ if ($release) {
         $groups[$platform][] = [
             'name' => $name,
             'kind' => (string) ($f['kind'] ?? ''),
+            // Versions publiées avant ARM64 : pas d'architecture, x86-64.
+            'arch' => (string) ($f['arch'] ?? (in_array($platform, ['linux', 'windows'], true) ? 'x86_64' : 'universal')),
             'size' => (int) ($f['size'] ?? 0),
             'sha256' => preg_match('/^[0-9a-f]{64}$/', (string) ($f['sha256'] ?? '')) ? $f['sha256'] : '',
         ];
     }
 }
 $order = ['linux', 'android', 'windows', 'macos'];
+// Processeur affiché seulement quand un système en a plusieurs (x86-64 et ARM64).
+$multiArch = [];
+foreach ($groups as $platform => $files) {
+    $multiArch[$platform] = count(array_unique(array_column($files, 'arch'))) > 1;
+}
 $notes = $release['notes'][$lang] ?? $release['notes']['en'] ?? $release['notes']['fr'] ?? '';
 $date = $release ? substr((string) ($release['date'] ?? ''), 0, 10) : '';
 ?><!doctype html>
@@ -173,12 +188,14 @@ $date = $release ? substr((string) ($release['date'] ?? ''), 0, 10) : '';
       <?php foreach ($groups[$platform] as $f): ?>
       <li>
         <a class="dl" href="releases/<?= h(rawurlencode($f['name'])) ?>" download><?= h($t[$f['kind']] ?? $f['name']) ?></a>
+        <?php if (!empty($multiArch[$platform]) && isset($t[$f['arch']])): ?><strong><?= h($t[$f['arch']]) ?></strong><?php endif; ?>
         <span class="muted"><?= h($f['name']) ?> · <?= h(size($f['size'], $lang)) ?></span>
       </li>
       <?php endforeach; ?>
     </ul>
     <?php if ($platform === 'android'): ?><p class="muted"><?= h($t['apkHelp']) ?></p><?php endif; ?>
-    <?php if ($platform === 'windows'): ?><p class="muted"><?= h($t['winHelp']) ?></p><?php endif; ?>
+    <?php if ($platform === 'linux' && !empty($multiArch['linux'])): ?><p class="muted"><?= h($t['armLinux']) ?></p><?php endif; ?>
+    <?php if ($platform === 'windows'): ?><p class="muted"><?= h($t['winHelp']) ?><?php if (!empty($multiArch['windows'])): ?> <?= h($t['armWindows']) ?><?php endif; ?></p><?php endif; ?>
     <?php if ($platform === 'macos'): ?><p class="muted"><?= h($t['macHelp']) ?></p><?php endif; ?>
   </section>
   <?php endforeach; ?>

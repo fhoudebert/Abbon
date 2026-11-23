@@ -80,6 +80,8 @@ pub fn release_file(base: &Url, name: &str) -> Result<Url, String> {
 pub struct UpdateSupport {
     /// linux, windows, macos, android, ios
     platform: &'static str,
+    /// x86_64, aarch64… (fichier à proposer au téléchargement)
+    arch: &'static str,
     /// Mise à jour automatique possible (ordinateur avec clé de signature).
     self_update: bool,
     default_server: Option<&'static str>,
@@ -89,6 +91,7 @@ pub struct UpdateSupport {
 pub fn update_support() -> UpdateSupport {
     UpdateSupport {
         platform: std::env::consts::OS,
+        arch: std::env::consts::ARCH,
         self_update: cfg!(desktop) && pubkey().is_some(),
         default_server: default_server(),
     }

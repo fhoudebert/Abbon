@@ -30,14 +30,20 @@ const CHANGELOG = `# Journal
 
 describe('manifestes de release', () => {
   it('reconnaît les paquets', () => {
-    expect(classify('x.AppImage')).toEqual({ platform: 'linux', kind: 'appimage' });
-    expect(classify('x-setup.exe')).toEqual({ platform: 'windows', kind: 'nsis' });
-    expect(classify('x.apk')).toEqual({ platform: 'android', kind: 'apk' });
-    expect(classify('Abbon_0.2.0_universal.dmg')).toEqual({ platform: 'macos', kind: 'dmg' });
-    expect(classify('Abbon_0.2.0_universal.app.tar.gz')).toEqual({ platform: 'macos', kind: 'app' });
+    expect(classify('x.AppImage')).toEqual({ platform: 'linux', kind: 'appimage', arch: 'x86_64' });
+    expect(classify('x-setup.exe')).toEqual({ platform: 'windows', kind: 'nsis', arch: 'x86_64' });
+    expect(classify('x.apk')).toEqual({ platform: 'android', kind: 'apk', arch: 'universal' });
+    expect(classify('Abbon_0.2.0_universal.dmg')).toEqual({ platform: 'macos', kind: 'dmg', arch: 'universal' });
+    expect(classify('Abbon_0.2.0_universal.app.tar.gz')).toEqual({ platform: 'macos', kind: 'app', arch: 'universal' });
     expect(classify('Abbon_0.2.0_universal.app.tar.gz.sig')).toBeNull();
     expect(classify('SHA256SUMS.txt')).toBeNull();
     expect(classify('x.AppImage.sig')).toBeNull();
+  });
+
+  it('reconnaît le processeur dans les noms de Tauri', () => {
+    const arch = (n: string) => classify(n)?.arch;
+    expect(['Abbon-0.5.0-x86_64.AppImage', 'Abbon_0.5.0_amd64.deb', 'Abbon-0.5.0-1.x86_64.rpm', 'Abbon_0.5.0_x64-setup.exe', 'Abbon_0.5.0_x64_en-US.msi'].map(arch)).toEqual(Array(5).fill('x86_64'));
+    expect(['Abbon-0.5.0-aarch64.AppImage', 'Abbon_0.5.0_arm64.deb', 'Abbon-0.5.0-1.aarch64.rpm', 'Abbon_0.5.0_arm64-setup.exe'].map(arch)).toEqual(Array(4).fill('aarch64'));
   });
 
   it('extrait les notes du CHANGELOG par langue', () => {
@@ -97,5 +103,47 @@ describe('macOS', () => {
     const v = parseRelease(buildVersionJson('0.2.0', 'd', {}, [...mac].reverse()))!;
     expect(v.files.map((f) => [f.platform, f.kind])).toEqual([['macos', 'app'], ['macos', 'dmg']]);
     expect(downloadFor(v, 'macos')?.name).toBe('Abbon_0.2.0_universal.dmg');
+  });
+});
+
+describe('ARM64 (Linux et Windows)', () => {
+  const both = [
+    { name: 'Abbon-0.5.0-aarch64.AppImage', size: 1, sha256: h('1'), signature: 'sigLA' },
+    { name: 'Abbon-0.5.0-x86_64.AppImage', size: 1, sha256: h('2'), signature: 'sigLX' },
+    { name: 'Abbon_0.5.0_arm64.deb', size: 1, sha256: h('3'), signature: 'sigDA' },
+    { name: 'Abbon_0.5.0_amd64.deb', size: 1, sha256: h('4'), signature: 'sigDX' },
+    { name: 'Abbon_0.5.0_arm64-setup.exe', size: 1, sha256: h('5'), signature: 'sigWA' },
+    { name: 'Abbon_0.5.0_x64-setup.exe', size: 1, sha256: h('6'), signature: 'sigWX' },
+    { name: 'Abbon_0.5.0_x64_en-US.msi', size: 1, sha256: h('7'), signature: 'sigMX' },
+  ];
+
+  it('latest.json : une entrée par processeur, valeurs par défaut pour chacun', () => {
+    const p = buildLatestJson('0.5.0', 'd', 'n', 'https://exemple.fr', both).platforms;
+    expect(p['linux-aarch64'].signature).toBe('sigLA');
+    expect(p['linux-x86_64'].signature).toBe('sigLX');
+    expect(p['linux-aarch64-deb'].signature).toBe('sigDA');
+    expect(p['windows-aarch64'].signature).toBe('sigWA');
+    expect(p['windows-aarch64-nsis'].signature).toBe('sigWA');
+    expect(p['windows-aarch64-msi']).toBeUndefined();
+    expect(p['windows-x86_64'].signature).toBe('sigWX');
+  });
+
+  it('version.json : x86_64 en premier (anciennes versions), le bon fichier pour chaque processeur', () => {
+    const v = parseRelease(buildVersionJson('0.5.0', 'd', {}, both))!;
+    // Une version antérieure (sans processeur) prend le premier fichier de son type : celui pour x86_64.
+    expect(v.files.find((f) => f.kind === 'appimage')?.name).toBe('Abbon-0.5.0-x86_64.AppImage');
+    expect(v.files.find((f) => f.kind === 'nsis')?.name).toBe('Abbon_0.5.0_x64-setup.exe');
+    expect(downloadFor(v, 'linux', 'aarch64')?.name).toBe('Abbon-0.5.0-aarch64.AppImage');
+    expect(downloadFor(v, 'linux', 'x86_64')?.name).toBe('Abbon-0.5.0-x86_64.AppImage');
+    expect(downloadFor(v, 'windows', 'aarch64')?.name).toBe('Abbon_0.5.0_arm64-setup.exe');
+    expect(downloadFor(v, 'windows', 'x86_64')?.name).toBe('Abbon_0.5.0_x64-setup.exe');
+  });
+
+  it('jamais le fichier d’un autre processeur ; anciennes releases : x86_64', () => {
+    const old = parseRelease(buildVersionJson('0.4.0', 'd', {}, artifacts))!;
+    for (const f of old.files) delete (f as { arch?: string }).arch;
+    expect(downloadFor(old, 'linux', 'aarch64')).toBeUndefined();
+    expect(downloadFor(old, 'linux', 'x86_64')?.kind).toBe('appimage');
+    expect(downloadFor(old, 'android', 'aarch64')?.kind).toBe('apk');
   });
 });

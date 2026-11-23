@@ -13,25 +13,44 @@ export interface Artifact {
   signature?: string;
 }
 
+export type Arch = 'x86_64' | 'aarch64' | 'universal';
+
 export interface Kind {
   platform: 'linux' | 'windows' | 'android' | 'macos';
   /** app : archive .app.tar.gz de l'application macOS, pour les mises à jour automatiques. */
   kind: 'appimage' | 'deb' | 'rpm' | 'nsis' | 'msi' | 'apk' | 'dmg' | 'app';
+  /**
+   * Processeur : x86_64 (Intel, AMD) ou aarch64 (ARM64), d'après le nom donné par Tauri (amd64, x64,
+   * x86_64 ; arm64, aarch64). universal : application macOS (Apple silicon et Intel) et APK Android.
+   */
+  arch: Arch;
 }
+
+const KINDS: [string, Kind['platform'], Kind['kind']][] = [
+  ['.appimage', 'linux', 'appimage'],
+  ['.deb', 'linux', 'deb'],
+  ['.rpm', 'linux', 'rpm'],
+  ['.msi', 'windows', 'msi'],
+  ['.exe', 'windows', 'nsis'],
+  ['.apk', 'android', 'apk'],
+  ['.dmg', 'macos', 'dmg'],
+  ['.app.tar.gz', 'macos', 'app'],
+];
 
 /** Reconnaît le type de fichier d'après son nom ; null pour les autres (ex. SHA256SUMS.txt). */
 export function classify(name: string): Kind | null {
   const n = name.toLowerCase();
-  if (n.endsWith('.appimage')) return { platform: 'linux', kind: 'appimage' };
-  if (n.endsWith('.deb')) return { platform: 'linux', kind: 'deb' };
-  if (n.endsWith('.rpm')) return { platform: 'linux', kind: 'rpm' };
-  if (n.endsWith('.msi')) return { platform: 'windows', kind: 'msi' };
-  if (n.endsWith('.exe')) return { platform: 'windows', kind: 'nsis' };
-  if (n.endsWith('.apk')) return { platform: 'android', kind: 'apk' };
-  if (n.endsWith('.dmg')) return { platform: 'macos', kind: 'dmg' };
-  if (n.endsWith('.app.tar.gz')) return { platform: 'macos', kind: 'app' };
-  return null;
+  const found = KINDS.find(([ext]) => n.endsWith(ext));
+  if (!found) return null;
+  const [, platform, kind] = found;
+  if (platform === 'macos' || platform === 'android') return { platform, kind, arch: 'universal' };
+  // Sans indication (anciens noms) : x86_64, la seule architecture publiée avant ARM64.
+  const arch: Arch = /(^|[^a-z0-9])(arm64|aarch64)([^a-z0-9]|$)/.test(n) ? 'aarch64' : 'x86_64';
+  return { platform, kind, arch };
 }
+
+/** x86_64 d'abord : les versions d'Abbon antérieures à ARM64 proposent le premier fichier de leur système. */
+const ARCH_RANK: Record<Arch, number> = { universal: 0, x86_64: 0, aarch64: 1 };
 
 /** Notes d'une version dans CHANGELOG.md : section « ## X.Y.Z », sous-sections « ### fr », « ### en ». */
 export function notesFromChangelog(markdown: string, version: string): Record<string, string> {
@@ -62,16 +81,18 @@ export function buildVersionJson(version: string, date: string, notes: Record<st
     version,
     date,
     notes,
-    files: artifacts.flatMap((a) => {
-      const k = classify(a.name);
-      return k ? [{ platform: k.platform, kind: k.kind, name: a.name, size: a.size, sha256: a.sha256 }] : [];
-    }),
+    files: artifacts
+      .flatMap((a) => {
+        const k = classify(a.name);
+        return k ? [{ platform: k.platform, kind: k.kind, arch: k.arch, name: a.name, size: a.size, sha256: a.sha256 }] : [];
+      })
+      .sort((x, y) => ARCH_RANK[x.arch] - ARCH_RANK[y.arch]),
   };
 }
 
 /**
  * latest.json du plugin updater. Clés « os-arch-type » (le plugin les cherche en premier), plus
- * « linux-x86_64 », « windows-x86_64 » et « darwin-<arch> » par défaut. Seuls les fichiers signés y
+ * « linux-<arch> », « windows-<arch> » et « darwin-<arch> » par défaut (arch : x86_64, aarch64). Seuls les fichiers signés y
  * figurent. L'application macOS est universelle : la même archive sert Apple silicon et Intel.
  * `baseUrl` : adresse du site (fichiers dans `releases/`), ou fonction donnant l'adresse de chaque fichier
  * (release GitHub : `…/releases/download/vX.Y.Z/<nom>`).
@@ -92,14 +113,17 @@ export function buildLatestJson(
     const k = classify(a.name);
     if (!k || !a.signature) continue;
     const entry = { signature: a.signature.trim(), url: urlFor(a.name) };
-    if (k.platform === 'linux' || k.platform === 'windows') platforms[`${k.platform}-x86_64-${k.kind}`] = entry;
+    if (k.platform === 'linux' || k.platform === 'windows') platforms[`${k.platform}-${k.arch}-${k.kind}`] = entry;
     else if (k.platform === 'macos' && k.kind === 'app')
       for (const arch of ['aarch64', 'x86_64']) platforms[`darwin-${arch}-app`] = platforms[`darwin-${arch}`] = entry;
   }
   // Valeurs par défaut quand le type d'installation n'est pas connu.
-  if (platforms['linux-x86_64-appimage']) platforms['linux-x86_64'] = platforms['linux-x86_64-appimage'];
-  const win = platforms['windows-x86_64-nsis'] ?? platforms['windows-x86_64-msi'];
-  if (win) platforms['windows-x86_64'] = win;
+  for (const arch of ['x86_64', 'aarch64']) {
+    const linux = platforms[`linux-${arch}-appimage`];
+    if (linux) platforms[`linux-${arch}`] = linux;
+    const win = platforms[`windows-${arch}-nsis`] ?? platforms[`windows-${arch}-msi`];
+    if (win) platforms[`windows-${arch}`] = win;
+  }
   return { version, notes, pub_date: date, platforms };
 }
 
