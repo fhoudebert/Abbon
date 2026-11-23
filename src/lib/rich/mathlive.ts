@@ -27,4 +27,8 @@ export function loadMathLive(): Promise<void> {
 
 /** Clavier virtuel de MathLive (global), s'il est chargé. */
 export const mathKeyboard = () =>
-  (globalThis as unknown as { mathVirtualKeyboard?: { container: HTMLElement | null; hide: () => void } }).mathVirtualKeyboard;
+  (
+    globalThis as unknown as {
+      mathVirtualKeyboard?: EventTarget & { container: HTMLElement | null; hide: () => void; boundingRect: DOMRect };
+    }
+  ).mathVirtualKeyboard;

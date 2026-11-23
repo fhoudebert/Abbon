@@ -513,7 +513,7 @@ export const en: Messages = {
   'editor.mathVisualTitle': 'Formula',
   'editor.mathVisualField': 'Formula, visual input',
   'editor.mathVisualSource': 'LaTeX source and rendering',
-  'editor.mathVisualHint': 'Type the formula as it reads: / for a fraction, ^ for an exponent, _ for a subscript; arrow keys move the cursor. On a touch screen, a math keyboard appears.',
+  'editor.mathVisualHint': 'Type the formula as it reads: / for a fraction, ^ for an exponent, _ for a subscript; arrow keys move the cursor. The keyboard button in the field opens a math keyboard (exponential, roots, Greek letters, symbols…); on a touch screen, it opens by itself.',
   'editor.mathVisualApply': 'Apply',
   'editor.mathVisualLoading': 'Loading the editor…',
   'nav.leitner': 'Review',

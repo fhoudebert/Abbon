@@ -516,7 +516,7 @@ export const fr = {
   'editor.mathVisualTitle': 'Formule',
   'editor.mathVisualField': 'Formule, saisie visuelle',
   'editor.mathVisualSource': 'Source LaTeX et rendu',
-  'editor.mathVisualHint': 'Tapez la formule comme elle se lit : / pour une fraction, ^ pour un exposant, _ pour un indice ; les flèches déplacent le curseur. Sur écran tactile, un clavier mathématique s\'affiche.',
+  'editor.mathVisualHint': 'Tapez la formule comme elle se lit : / pour une fraction, ^ pour un exposant, _ pour un indice ; les flèches déplacent le curseur. Le bouton clavier du champ ouvre un clavier mathématique (exponentielle, racines, lettres grecques, symboles…) ; sur écran tactile, il s\'ouvre de lui-même.',
   'editor.mathVisualApply': 'Valider',
   'editor.mathVisualLoading': 'Chargement de l\'éditeur…',
   'nav.leitner': 'Révision',

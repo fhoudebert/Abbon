@@ -6,7 +6,9 @@ single HTML file; save it and open it with a double click). Version française :
 
 ## Typing
 
-- **Maths**: visual editor (maths keyboard on touch screens) or LaTeX; both fields stay in sync.
+- **Maths**: visual editor or LaTeX; both fields stay in sync. The keyboard button in the visual field opens the
+  maths keyboard (exponential, powers, roots, integrals, Greek letters, symbols); on touch screens it opens by
+  itself. MathLive-specific LaTeX (`\exponentialE`…) becomes standard LaTeX (`\mathrm{e}`) when leaving the field.
 - **Chemistry**: mhchem notation, e.g. `2H2 + O2 -> 2H2O`, `CH3COOH <=> CH3COO- + H+`, `Fe^{3+}`, `CaCO3(s)`.
   The palette inserts arrows, states, charges, gas (`^`) and precipitate (`v`).
 

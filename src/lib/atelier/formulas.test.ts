@@ -18,6 +18,11 @@ describe('atelier de formules', () => {
     expect(m).toContain('→');
   });
 
+  it('commandes de MathLive (touche e du clavier) : MathML standard', () => {
+    expect(formulaError('\\exponentialE^{x}')).toBeNull();
+    expect(toMathML('\\exponentialE^{x}')).toContain('<mi mathvariant="normal">e</mi>');
+  });
+
   it('LibreOffice : prologue XML', () => {
     expect(toLibreOfficeMathML('<math/>')).toBe('<?xml version="1.0" encoding="UTF-8"?>\n<math/>');
   });

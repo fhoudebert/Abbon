@@ -1,6 +1,7 @@
 <script lang="ts">
   /**
-   * Saisie visuelle d'une formule avec MathLive (clavier virtuel sur écran tactile).
+   * Saisie visuelle d'une formule avec MathLive, et son clavier virtuel (de lui-même sur écran tactile, par le
+   * bouton du champ ailleurs).
    *
    * MathLive pèse environ 800 Ko : il n'est chargé qu'à la première ouverture. Il lit et produit le LaTeX
    * que contiennent déjà les nœuds de formule ; une formule ouverte puis validée sans modification garde
@@ -10,6 +11,7 @@
   import { t } from '$lib/i18n/index.svelte';
   import { loadMathLive, mathKeyboard } from './mathlive';
   import { renderMath } from './math';
+  import { standardLatex } from './macros';
 
   type MathField = HTMLElement & { value: string };
 
@@ -38,7 +40,10 @@
       ready = true;
       // Le clavier virtuel doit vivre dans la fenêtre modale, sinon il passe dessous.
       const kb = keyboard();
-      if (kb) kb.container = dialog;
+      if (kb) {
+        kb.container = dialog;
+        kb.addEventListener('geometrychange', onGeometry);
+      }
       await tick();
       if (!field) return;
       field.value = src;
@@ -50,17 +55,25 @@
     }
   }
 
+  /** Hauteur du clavier : la boîte remonte et se raccourcit d'autant (CSS --keyboard-height). */
+  function onGeometry() {
+    dialog.style.setProperty('--keyboard-height', `${keyboard()?.boundingRect.height ?? 0}px`);
+  }
+
   function close() {
     const kb = keyboard();
     kb?.hide();
-    if (kb) kb.container = document.body;
+    if (kb) {
+      kb.container = document.body;
+      kb.removeEventListener('geometrychange', onGeometry);
+    }
     dialog.close();
   }
 
   function validate() {
     const value = field?.value ?? source;
     // Inchangée : la source d'origine est gardée telle quelle.
-    onsave?.(value === initial ? source : value);
+    onsave?.(value === initial ? source : standardLatex(value));
     close();
   }
 
@@ -70,53 +83,80 @@
 </script>
 
 <dialog bind:this={dialog} aria-labelledby="mf-title" onclose={() => keyboard()?.hide()}>
-  <h2 id="mf-title">{t('editor.mathVisualTitle')}</h2>
-  {#if failed}
-    <p class="error" role="alert">{failed}</p>
-  {:else if !ready}
-    <p class="muted" role="status">{t('editor.mathVisualLoading')}</p>
-  {:else}
-    <math-field
-      bind:this={field}
-      class:block={display}
-      aria-label={t('editor.mathVisualField')}
-      math-virtual-keyboard-policy="auto"
-      oninput={() => (latex = field?.value ?? '')}
-    ></math-field>
-    <details>
-      <summary>{t('editor.mathVisualSource')}</summary>
-      <code class="src">{latex}</code>
-      <div class="preview" aria-hidden="true">{@html renderMath(latex, display)}</div>
-    </details>
-    <p class="muted hint">{t('editor.mathVisualHint')}</p>
-  {/if}
-  <div class="actions">
-    <button type="button" class="secondary" onclick={close}>{t('common.cancel')}</button>
-    <button type="button" disabled={!ready || !!failed} onclick={validate}>{t('editor.mathVisualApply')}</button>
+  <div class="box">
+    <h2 id="mf-title">{t('editor.mathVisualTitle')}</h2>
+    {#if failed}
+      <p class="error" role="alert">{failed}</p>
+    {:else if !ready}
+      <p class="muted" role="status">{t('editor.mathVisualLoading')}</p>
+    {:else}
+      <math-field
+        bind:this={field}
+        class:block={display}
+        aria-label={t('editor.mathVisualField')}
+        math-virtual-keyboard-policy="auto"
+        oninput={() => (latex = field?.value ?? '')}
+      ></math-field>
+      <details>
+        <summary>{t('editor.mathVisualSource')}</summary>
+        <code class="src">{latex}</code>
+        <div class="preview" aria-hidden="true">{@html renderMath(latex, display)}</div>
+      </details>
+      <p class="muted hint">{t('editor.mathVisualHint')}</p>
+    {/if}
+    <div class="actions">
+      <button type="button" class="secondary" onclick={close}>{t('common.cancel')}</button>
+      <button type="button" disabled={!ready || !!failed} onclick={validate}>{t('editor.mathVisualApply')}</button>
+    </div>
   </div>
 </dialog>
 
 <style>
-  dialog {
+  /* La fenêtre modale couvre tout l'écran, transparente, et la boîte visible est à l'intérieur : WebKit (application
+     de bureau sous Linux et macOS) place les éléments « fixed » d'une fenêtre modale par rapport à elle, et le
+     clavier virtuel de MathLive, rangé dans la fenêtre pour passer au-dessus, y était coupé. */
+  dialog[open] {
+    position: fixed;
+    inset: 0;
+    margin: 0;
+    padding: 0.5rem;
+    border: none;
+    background: transparent;
+    inline-size: 100%;
+    block-size: 100%;
+    max-inline-size: none;
+    max-block-size: none;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+  .box {
     border: 1px solid var(--border);
     border-radius: var(--radius);
     background: var(--surface);
     color: var(--text);
+    padding: 1rem;
     inline-size: min(40rem, 94vw);
     max-block-size: 94vh;
+    overflow: auto;
+    box-sizing: border-box;
   }
   /* Clavier virtuel de MathLive, placé dans la fenêtre (couche supérieure) : collé au bas de l'écran,
-     la fenêtre remontant en haut pour lui laisser la place. */
+     la boîte remontant en haut pour lui laisser la place. */
   dialog :global(.ML__keyboard) {
-    --keyboard-accent-color: var(--accent);
-    --keyboard-toolbar-text-active: var(--accent);
+    --keyboard-accent-color: var(--keyboard-accent);
+    --keyboard-toolbar-text-active: var(--keyboard-accent);
     position: fixed;
     inset: auto 0 0 0;
     overflow: visible;
   }
   dialog:has(:global(.ML__keyboard.is-visible)) {
-    margin-block-start: 0.5rem;
-    max-block-size: calc(100vh - var(--keyboard-height, 0px) - 1rem);
+    align-items: flex-start;
+  }
+  dialog:has(:global(.ML__keyboard.is-visible)) .box {
+    max-block-size: calc(100% - var(--keyboard-height, 0px) - 0.5rem);
   }
   dialog::backdrop {
     background: rgb(0 0 0 / 0.4);
@@ -139,14 +179,6 @@
     --selection-color: var(--text);
     --contains-highlight-background-color: color-mix(in srgb, var(--accent) 12%, transparent);
     --primary: var(--accent);
-  }
-  /* Bouton « clavier virtuel » masqué avec une souris et un clavier physique : le clavier de MathLive, rendu dans
-     la fenêtre modale, ne s'affiche pas dans toutes les vues web (WebKit de l'application de bureau). Sur écran
-     tactile, le bouton reste, et le clavier s'ouvre de toute façon quand la formule prend le focus. */
-  @media (hover: hover) and (pointer: fine) {
-    math-field::part(virtual-keyboard-toggle) {
-      display: none;
-    }
   }
   math-field:focus-within {
     outline: 2px solid var(--accent);

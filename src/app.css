@@ -13,6 +13,8 @@
   --border: #dfe5d9;
   --accent: var(--green-7);
   --accent-soft: var(--green-1);
+  /* Touches et onglet actifs du clavier mathématique (MathLive) : plus foncé, sur le gris du clavier. */
+  --keyboard-accent: #1f520c;
   --warn: #9a5b00;
   --ok: #1f7a1f;
   --ok-soft: #e3f4e0;
@@ -52,6 +54,7 @@
   --border: #2e3729;
   --accent: #8fd16b;
   --accent-soft: #23301c;
+  --keyboard-accent: var(--accent);
   --warn: #f0b45a;
   --ok: #8fd16b;
   --ok-soft: #1f3318;
@@ -78,6 +81,7 @@
     --border: #2e3729;
     --accent: #8fd16b;
     --accent-soft: #23301c;
+    --keyboard-accent: var(--accent);
     --warn: #f0b45a;
     --ok: #8fd16b;
     --ok-soft: #1f3318;

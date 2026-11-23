@@ -5,6 +5,7 @@
  */
 import katex from 'katex';
 import 'katex/contrib/mhchem';
+import { mathMacros } from '$lib/rich/macros';
 
 let styles: Promise<string> | null = null;
 
@@ -37,7 +38,7 @@ export function katexStyles(): Promise<string> {
 export async function formulaPng(latex: string, opts: { scale?: number; background?: string } = {}): Promise<Blob> {
   const scale = opts.scale ?? 3;
   const css = await katexStyles();
-  const html = katex.renderToString(latex, { output: 'html', displayMode: false, throwOnError: true, strict: 'ignore', trust: false });
+  const html = katex.renderToString(latex, { output: 'html', displayMode: false, throwOnError: true, strict: 'ignore', trust: false, macros: mathMacros() });
   const box = 'font-size:24px;color:#000;padding:6px;display:inline-block;white-space:nowrap';
   // Mesure dans la page, hors écran, avec la même feuille de style.
   const probe = document.createElement('div');

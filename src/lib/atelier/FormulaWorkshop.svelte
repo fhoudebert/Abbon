@@ -7,6 +7,7 @@
   import { tick } from 'svelte';
   import { i18n, t } from '$lib/i18n/index.svelte';
   import MathInput from '$lib/rich/MathInput.svelte';
+  import { standardLatex } from '$lib/rich/macros';
   import { fileSafe, saveFile } from '$lib/files';
   import { formulaError, fromMarkdown, renderFormula, toLatex, toLibreOfficeMathML, toMarkdown, toMathML, type Entry } from './formulas';
   import { formulaPng } from './image';
@@ -112,6 +113,16 @@
     await saveFile(`${fileSafe(title, t('atelier.fileName'))}.png`, bytes, [{ name: 'PNG', extensions: ['png'] }]);
   }
 
+  /**
+   * Sortie de l'éditeur visuel : LaTeX standard dans le champ LaTeX (`\mathrm{e}` au lieu de `\exponentialE`).
+   * Pas pendant la saisie (le curseur sauterait) : le clavier virtuel garde le focus dans le champ.
+   */
+  function leaveVisual() {
+    setTimeout(() => {
+      if (!document.activeElement?.closest('math-field')) mathSource = standardLatex(mathSource);
+    }, 0);
+  }
+
   // ---- saisie chimie ----
   const CHEM_PALETTE = $derived<readonly [string, string][]>([
     ['->', '→'],
@@ -204,7 +215,14 @@
 
     {#if !chem}
       <p class="label">{t('atelier.visual')}</p>
-      <MathInput label={t('atelier.visual')} value={mathSource} oninput={(v) => (mathSource = v)} />
+      <MathInput
+        label={t('atelier.visual')}
+        describedby="atelier-visual-help"
+        value={mathSource}
+        oninput={(v) => (mathSource = v)}
+        onblur={leaveVisual}
+      />
+      <p id="atelier-visual-help" class="help">{t('editor.mathVisualHint')}</p>
       <label class="label" for="atelier-latex">{t('atelier.latex')}</label>
       <textarea id="atelier-latex" class="code" rows="2" spellcheck="false" autocapitalize="off" bind:value={mathSource}></textarea>
     {:else}
@@ -348,11 +366,6 @@
     font-weight: 600;
     font-size: 1rem;
     margin: 0.75rem 0 0.3rem;
-  }
-  @media (hover: hover) and (pointer: fine) {
-    .workshop :global(math-field::part(virtual-keyboard-toggle)) {
-      display: none;
-    }
   }
   textarea,
   input[type='text'] {

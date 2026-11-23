@@ -7,8 +7,10 @@ English version: [formula-workshop.md](formula-workshop.md).
 
 ## Saisir
 
-- **Mathématiques** : éditeur visuel (clavier mathématique sur écran tactile) ou LaTeX ; les deux champs
-  restent synchronisés.
+- **Mathématiques** : éditeur visuel ou LaTeX ; les deux champs restent synchronisés. Le bouton clavier du
+  champ visuel ouvre le clavier mathématique (exponentielle, puissances, racines, intégrales, lettres grecques,
+  symboles) ; sur écran tactile, il s'ouvre de lui-même. Le LaTeX propre à MathLive (`\exponentialE`…) devient
+  du LaTeX standard (`\mathrm{e}`) en quittant le champ.
 - **Chimie** : notation mhchem, par exemple `2H2 + O2 -> 2H2O`, `CH3COOH <=> CH3COO- + H+`, `Fe^{3+}`,
   `CaCO3(s)`. La palette insère flèches, états physiques, charges, dégagement gazeux (`^`) et précipité (`v`).
 

@@ -4,18 +4,22 @@
  */
 import katex from 'katex';
 import 'katex/contrib/mhchem';
+import { mathMacros, standardLatex } from '$lib/rich/macros';
 
 export const MATHML_NS = 'http://www.w3.org/1998/Math/MathML';
 
-/** Formule complète en LaTeX : la chimie est écrite en notation mhchem, entourée de `\ce{…}`. */
-export const toLatex = (source: string, chem: boolean) => (chem ? `\\ce{${source.trim()}}` : source.trim());
+/**
+ * Formule complète en LaTeX standard : la chimie est écrite en notation mhchem, entourée de `\ce{…}` ; les
+ * commandes propres à MathLive (`\exponentialE`…) sont remplacées.
+ */
+export const toLatex = (source: string, chem: boolean) => (chem ? `\\ce{${source.trim()}}` : standardLatex(source.trim()));
 
 /**
  * MathML d'une formule, pour le presse-papiers. Word convertit en équation un texte qui commence exactement
  * par `<math xmlns="…">` : pas d'autre attribut, pas d'annotation LaTeX. Erreur explicite si la formule est fausse.
  */
 export function toMathML(latex: string): string {
-  const html = katex.renderToString(latex, { output: 'mathml', displayMode: true, throwOnError: true, trust: false, strict: 'ignore' });
+  const html = katex.renderToString(latex, { output: 'mathml', displayMode: true, throwOnError: true, trust: false, strict: 'ignore', macros: mathMacros() });
   const start = html.indexOf('<math');
   const end = html.lastIndexOf('</math>');
   if (start < 0 || end < 0) throw new Error('MathML introuvable');
@@ -29,13 +33,13 @@ export const toLibreOfficeMathML = (mathml: string) => `<?xml version="1.0" enco
 
 /** Rendu HTML + MathML (aperçu, carnet). La page charge elle-même la feuille de style de KaTeX. */
 export const renderFormula = (latex: string, display: boolean) =>
-  katex.renderToString(latex, { output: 'htmlAndMathml', displayMode: display, throwOnError: false, trust: false, strict: 'ignore' });
+  katex.renderToString(latex, { output: 'htmlAndMathml', displayMode: display, throwOnError: false, trust: false, strict: 'ignore', macros: mathMacros() });
 
 /** Message d'erreur d'une formule, ou null. */
 export function formulaError(latex: string): string | null {
   if (!latex.trim()) return null;
   try {
-    katex.renderToString(latex, { throwOnError: true, strict: 'ignore', trust: false });
+    katex.renderToString(latex, { throwOnError: true, strict: 'ignore', trust: false, macros: mathMacros() });
     return null;
   } catch (e) {
     return (e as Error).message.replace(/^KaTeX parse error: /, '');
