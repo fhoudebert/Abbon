@@ -62,7 +62,7 @@ Dans le dépôt GitHub, *Settings › Secrets and variables › Actions* :
 La clé publique et l'adresse sont intégrées à la compilation. Sans clé, l'application se construit normalement
 mais ne propose pas de mise à jour automatique (seulement le lien de téléchargement).
 
-Signature de l'APK Android : voir le README (secrets `ANDROID_KEYSTORE_*`, variable facultative
+Signature de l'APK Android : voir [developpement_fr.md](../developpement_fr.md#signature-de-lapk) (secrets `ANDROID_KEYSTORE_*`, variable facultative
 `ANDROID_CERT_SHA256` ; sur le poste, `keystore.properties` et `abbon.keystore`, ignorés par git).
 
 Noms des binaires : l'exécutable s'appelle `Abbon` (`/usr/bin/Abbon`, `Abbon.exe`) et l'AppImage suit la convention

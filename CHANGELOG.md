@@ -6,6 +6,8 @@ Leur contenu est repris tel quel dans les notes de version (page de télécharge
 ## 0.2.0
 
 ### fr
+- Trois modules en anglais : « French for English speakers: classic traps » (faux amis et pièges de grammaire, 24 questions), « Word stories: playful English etymology » (24 questions) et « Abbon showcase » (tour de tous les types de questions, 14 questions).
+- Documentation : README.md en anglais, lisezMoi.md en français, présentation synthétique des fonctions ; les explications techniques passent dans developpement_fr.md et development.md.
 - Administration : « Retirer tous les questionnaires », après confirmation, pour repartir d'une base vide (QCM personnels et modules, catégories, images, historique, boîte de révision) ; réglages et code PIN gardés, points et ceinture au choix ; sauvegarde complète automatique juste avant.
 - Accueil : le filtre propose chaque module entier (« Étymologie », « Maths spécialité »…) avant ses catégories, en retrait ; le filtre et la recherche sont gardés en revenant d'un QCM.
 - Module « Étymologie » 0.3.0 : nouvelle catégorie « Noms de lieux », 30 questions et une fiche (hauteurs, enclos et forteresses ; l'eau, les sources et les gués), avec des exemples de toutes les régions, Antilles comprises.
@@ -55,6 +57,8 @@ Leur contenu est repris tel quel dans les notes de version (page de télécharge
 - Modules de révision du bac « Philosophie, terminale générale » (notions par perspective, auteurs, repères) et « Histoire, terminale générale » (les quatre thèmes du tronc commun, avec une frise par thème), en version pilote : 40 questions chacun, avec leurs fiches.
 - Maths spécialité 0.5.0 : géométrie dans l'espace, logique et raisonnement, algorithmique et méthodes numériques (32 questions), communes au programme de 2019 et au nouveau programme de terminale (rentrée 2027). Physique-chimie 0.9.0 : mécanique des fluides (10 questions).
 ### en
+- Three English modules: “French for English speakers: classic traps” (false friends and grammar traps, 24 questions), “Word stories: playful English etymology” (24 questions) and “Abbon showcase” (a tour of every question type, 14 questions).
+- Documentation: README.md in English, lisezMoi.md in French, with a short overview of the features; technical instructions move to development.md and developpement_fr.md.
 - Admin: “Remove all quizzes”, after confirmation, to start from an empty base (personal quizzes and modules, categories, images, history, review box); settings and PIN kept, points and belt optional; automatic full backup just before.
 - Home: the filter offers each whole module (“Etymology”, “Maths”…) before its categories, indented; the filter and search are kept when coming back from a quiz.
 - “Etymology” module 0.3.0: new category “Place names”, 30 questions and a revision sheet (heights, enclosures and fortresses; water, springs and fords), with examples from every region, including the French Caribbean (French only).

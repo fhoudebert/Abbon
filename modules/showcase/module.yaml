@@ -1,0 +1,24 @@
+# Module « Abbon showcase: every question type » — a short tour of what Abbon can do, in English: single and
+# multiple choice, typed answers, numbers with units, fill-in-the-gaps (typed or drop-down), flashcards,
+# mathematical expressions, chemical equations and formulas. Format: docs/modules.md.
+
+id: org.abbon.showcase
+version: 0.1.0
+date: 2026-11-23
+title:
+  en: "Abbon showcase: every question type"
+description:
+  en: "A short tour of Abbon in 14 questions of science and general knowledge: single and multiple choice, typed answers, numbers with units, fill-in-the-gaps, flashcards, formulas typed with the maths keyboard, chemical equations."
+level: all levels
+license: CC-BY-NC-SA-4.0
+authors: [Abbon]
+homepage: https://github.com/fhoudebert/Abbon
+languages: [en]
+requires:
+  app: ">=0.2.0"
+defaults:
+  passThreshold: 0.6
+
+categories:
+  - id: every-question-type
+    name: { en: "Every question type" }
