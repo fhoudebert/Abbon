@@ -1,0 +1,25 @@
+# Module « French for English speakers: classic traps » — false friends and grammar traps that English speakers
+# fall into when learning French. Written in English. Format: docs/modules.md.
+
+id: org.abbon.french-traps
+version: 0.1.0
+date: 2026-11-23
+title:
+  en: "French for English speakers: classic traps"
+description:
+  en: "False friends (actuellement, librairie, éventuellement, assister…) and the grammar traps English speakers fall into: avoir faim, depuis, en France / au Japon, c'est or il est, être or avoir. 24 questions with revision sheets."
+level: beginner–intermediate
+license: CC-BY-NC-SA-4.0
+authors: [Abbon]
+homepage: https://github.com/fhoudebert/Abbon
+languages: [en]
+requires:
+  app: ">=0.2.0"
+defaults:
+  passThreshold: 0.6
+
+categories:
+  - id: false-friends
+    name: { en: "False friends" }
+  - id: grammar-traps
+    name: { en: "Grammar traps" }

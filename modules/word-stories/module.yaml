@@ -1,0 +1,25 @@
+# Module « Word stories: playful English etymology » — surprising origins of everyday English words, people's
+# names that became words, and the French legacy of 1066. Written in English. Format: docs/modules.md.
+
+id: org.abbon.word-stories
+version: 0.1.0
+date: 2026-11-23
+title:
+  en: "Word stories: playful English etymology"
+description:
+  en: "Why a muscle is a little mouse, a nice person was once ignorant, and a deadline could get you shot; how Lord Sandwich, Captain Boycott and the Normans left their mark on English. 24 questions with revision sheets."
+level: general knowledge
+license: CC-BY-NC-SA-4.0
+authors: [Abbon]
+homepage: https://github.com/fhoudebert/Abbon
+languages: [en]
+requires:
+  app: ">=0.2.0"
+defaults:
+  passThreshold: 0.6
+
+categories:
+  - id: everyday-words
+    name: { en: "Everyday words, surprising stories" }
+  - id: names-and-history
+    name: { en: "Names, history and the Norman legacy" }

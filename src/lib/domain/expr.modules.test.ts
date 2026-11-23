@@ -40,6 +40,11 @@ const cases: [string, boolean, string[], string[]][] = [
   ['5\\left(1 - e^{-\\frac{t}{2}}\\right)', false, ['5-5e^{-t/2}', '5-5\\exp(-0{,}5t)'], ['5e^{-\\frac{t}{2}}', '5(1-e^{-2t})', '5(1-e^{\\frac{t}{2}})']],
   ['0{,}5e^{-0{,}1t}', false, ['\\frac{1}{2}e^{-\\frac{t}{10}}', '0.5\\exp(-0.1t)'], ['0{,}5e^{0{,}1t}', '0{,}5e^{-t}', '0{,}5-0{,}1t']],
   ['200 - 180e^{-\\frac{t}{15}}', false, ['200+(20-200)e^{-t/15}', 'T(t)=200-180\\exp(-\\frac{t}{15})'], ['20+180e^{-\\frac{t}{15}}', '200-180e^{-15t}', '200e^{-\\frac{t}{15}}']],
+  // Abbon showcase (English)
+  ['3x^2 - 2', false, ['-2+3x^2', "f'(x)=3x^2-2", '3\\cdot x^2-2'], ['3x^2', 'x^2-2', '3x-2']],
+  ['x^2 + 2x + 1', false, ['(x+1)^2', '1+2x+x^2'], ['x^2+1', 'x^2+x+1']],
+  ['\\pi r^2', false, ['r^2\\pi', 'A=\\pi r^2', '\\pi\\cdot r\\cdot r'], ['2\\pi r', '\\pi r', 'r^2']],
+  ['x^2 + C', true, ['x^2', 'x^2+5', 'x^2+C'], ['2x', '\\frac{x^2}{2}']],
 ];
 it.each(cases)('%s', (expected, constant, ok, ko) => {
   const opts = { constant };
