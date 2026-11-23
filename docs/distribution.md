@@ -83,6 +83,15 @@ Noms des binaires : l'exécutable s'appelle `Abbon` (`/usr/bin/Abbon`, `Abbon.ex
 d'[AppImageHub](https://github.com/AppImage/appimage.github.io) : `Abbon-X.Y.Z-x86_64.AppImage` et
 `Abbon-X.Y.Z-aarch64.AppImage` (nom et casse du dépôt, version, architecture).
 
+Information de mise à jour de l'AppImage : en plus de la mise à jour intégrée (Tauri, ci-dessus), l'AppImage
+porte l'adresse de sa prochaine version, pour AppImageUpdate et les gestionnaires d'AppImage (Gear Lever,
+AppImageLauncher…), comme le demande AppImageHub :
+`gh-releases-zsync|fhoudebert|Abbon|latest|Abbon-*-x86_64.AppImage.zsync` (`aarch64` pour ARM64). Elle est
+inscrite par le greffon AppImage de linuxdeploy (variable `LDAI_UPDATE_INFORMATION`), vérifiée après la
+construction (`objcopy --only-section=.upd_info`), et le fichier `.zsync` (`zsyncmake`) est publié dans la release
+GitHub à côté de l'AppImage. « latest » : la dernière release publiée, pas les brouillons. Pour lire l'information
+d'une AppImage : `./Abbon-X.Y.Z-x86_64.AppImage --appimage-updateinfo`.
+
 ### Hébergement
 
 - HTTPS obligatoire (Let's Encrypt est proposé par la plupart des hébergeurs).
