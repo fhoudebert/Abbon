@@ -21,6 +21,7 @@
     "module:site": "node scripts/modules/cli.mjs site",
     "module:catalogue": "node scripts/modules/catalogue.ts",
     "build:site": "vite build --mode site && node scripts/site/pack.ts",
+    "atelier": "vite build --config tools/atelier/vite.config.ts && node tools/atelier/pack.ts",
     "android:apk": "bash scripts/android/build-apk.sh"
   },
   "license": "MIT",
