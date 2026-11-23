@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { categoryTree, withDescendants } from './categories';
+import { categoryTree, homeFilters, matchesFilter, withDescendants } from './categories';
 import type { Category } from './types';
 
 const cat = (id: string, parentId: string | null = null, position = 0): Category => ({ id, parentId, name: { fr: id }, position });
@@ -38,5 +38,55 @@ describe('arbre des catégories', () => {
 
   it('un parent inconnu ramène la catégorie au premier niveau', () => {
     expect(categoryTree([cat('orpheline', 'disparue')], new Set(['orpheline']))).toEqual([{ category: cat('orpheline', 'disparue'), depth: 0 }]);
+  });
+});
+
+describe('filtre de l’accueil', () => {
+  const cat = (id: string, moduleId: string | null, parentId: string | null = null, position = 0) =>
+    ({ id, parentId, name: { fr: id }, position, moduleId }) as Category;
+  const categories = [
+    cat('perso', null),
+    cat('vide', null, null, 1),
+    cat('ety-a', 'org.ety'),
+    cat('ety-b', 'org.ety', null, 1),
+    cat('physique', 'org.pc'),
+    cat('meca', 'org.pc', 'physique'),
+    cat('seule', 'org.seul'),
+  ];
+  const modules = [
+    { id: 'org.pc', title: { fr: 'Physique-chimie' } },
+    { id: 'org.ety', title: { fr: 'Étymologie' } },
+    { id: 'org.seul', title: { fr: 'Anglais' } },
+    { id: 'org.vide', title: { fr: 'Sans QCM' } },
+  ];
+  const quizzes = [
+    { categoryId: 'perso', moduleId: null },
+    { categoryId: 'ety-a', moduleId: 'org.ety' },
+    { categoryId: 'ety-b', moduleId: 'org.ety' },
+    { categoryId: 'meca', moduleId: 'org.pc' },
+    { categoryId: 'seule', moduleId: 'org.seul' },
+  ];
+  const fr = (t: Record<string, string>) => t.fr;
+
+  it('catégories personnelles, puis chaque module (par titre) avec ses catégories en retrait', () => {
+    const f = homeFilters(categories, modules, quizzes, fr);
+    expect(f.map((n) => `${'-'.repeat(n.depth)}${n.value}`)).toEqual([
+      'perso',
+      'module:org.seul', // une seule catégorie : pas de détail
+      'module:org.ety',
+      '-ety-a',
+      '-ety-b',
+      'module:org.pc', // sous-catégories en arbre
+      '-physique',
+      '--meca',
+    ]);
+  });
+
+  it('module entier, catégorie et descendantes', () => {
+    expect(matchesFilter(quizzes[1], 'module:org.ety', categories)).toBe(true);
+    expect(matchesFilter(quizzes[3], 'module:org.ety', categories)).toBe(false);
+    expect(matchesFilter(quizzes[3], 'physique', categories)).toBe(true);
+    expect(matchesFilter(quizzes[0], '', categories)).toBe(true);
+    expect(matchesFilter({ categoryId: null }, 'perso', categories)).toBe(false);
   });
 });

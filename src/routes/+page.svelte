@@ -1,7 +1,12 @@
+<script module lang="ts">
+  /** Recherche et filtre gardés pendant la session : on les retrouve en revenant d'un QCM. */
+  const kept = { search: '', categoryId: '' };
+</script>
+
 <script lang="ts">
   import { to } from '$lib/site';
   import { app, type QuizEntry } from '$lib/app.svelte';
-  import { categoryTree, withDescendants } from '$lib/domain/categories';
+  import { homeFilters, matchesFilter } from '$lib/domain/categories';
   import QuizCard from '$lib/components/QuizCard.svelte';
   import RankCard from '$lib/components/RankCard.svelte';
   import { POINTS } from '$lib/domain/rewards';
@@ -10,23 +15,39 @@
   import { i18n, t } from '$lib/i18n/index.svelte';
   import type { MessageKey } from '$lib/i18n/fr';
 
-  let search = $state('');
-  let categoryId = $state('');
+  let search = $state(kept.search);
+  let categoryId = $state(kept.categoryId);
+  $effect(() => {
+    kept.search = search;
+    kept.categoryId = categoryId;
+  });
 
   const normalize = (s: string) =>
     s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
 
-  /** Filtre : la catégorie choisie et ses descendantes (« Physique » montre tous les QCM de physique). */
-  const allowed = $derived(categoryId ? withDescendants(categoryId, app.categories) : null);
-  /** Catégories proposées : en arbre, seulement celles qui contiennent des QCM. */
-  const tree = $derived(
-    categoryTree(app.categories, new Set(app.entries.map((e) => e.quiz.categoryId).filter((id): id is string => !!id))),
+  /**
+   * Filtre : un module entier (« Étymologie », « Maths spécialité »…) ou une catégorie et ses descendantes
+   * (« Physique » montre tous les QCM de physique). Seules les catégories qui contiennent des QCM sont proposées.
+   */
+  const filters = $derived(
+    homeFilters(
+      app.categories,
+      app.modules.map((m) => ({ id: m.manifest.id, title: m.manifest.title })),
+      app.entries.map((e) => e.quiz),
+      (title) => localize(title, i18n.lang),
+    ),
   );
   const indent = (depth: number) => '\u00a0\u00a0\u00a0'.repeat(depth);
+  const labelOf = (n: (typeof filters)[number]) =>
+    n.module ? localize(n.module.title, i18n.lang) || n.module.id : localize(n.category!.name, i18n.lang);
+  // Un filtre qui n'existe plus (module désinstallé…) revient à « Toutes les catégories ».
+  $effect(() => {
+    if (app.ready && categoryId && !filters.some((n) => n.value === categoryId)) categoryId = '';
+  });
 
   const visible = $derived(
     app.entries.filter((e) => {
-      if (allowed && !(e.quiz.categoryId && allowed.has(e.quiz.categoryId))) return false;
+      if (!matchesFilter(e.quiz, categoryId, app.categories)) return false;
       if (!search.trim()) return true;
       const hay = normalize(
         [...Object.values(e.quiz.title), ...Object.values(e.quiz.description ?? {}), ...e.quiz.tags].join(' '),
@@ -82,8 +103,8 @@
       <span class="visually-hidden">{t('home.allCategories')}</span>
       <select bind:value={categoryId}>
         <option value="">{t('home.allCategories')}</option>
-        {#each tree as n (n.category.id)}
-          <option value={n.category.id}>{indent(n.depth)}{localize(n.category.name, i18n.lang)}</option>
+        {#each filters as n (n.value)}
+          <option value={n.value} class:module={!!n.module}>{indent(n.depth)}{labelOf(n)}</option>
         {/each}
       </select>
     </label>
@@ -118,6 +139,12 @@
   }
   .filters input {
     inline-size: 100%;
+  }
+  .filters select {
+    max-inline-size: 100%;
+  }
+  option.module {
+    font-weight: 700;
   }
   section {
     margin-block-end: 2rem;
