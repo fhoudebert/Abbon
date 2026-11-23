@@ -648,9 +648,9 @@ export const fr = {
   'atelier.error': 'Formule incorrecte',
   'atelier.copy': 'Copier',
   'atelier.copyWord': 'Pour Word',
-  'atelier.copyWordHelp': 'Coller dans Word (Microsoft 365, 2016 ou plus récent) : la formule devient une équation modifiable.',
+  'atelier.copyWordHelp': 'Coller dans Word (Microsoft 365, 2016 ou plus récent) : la formule devient une équation modifiable. WordCraft : Collage spécial → format HTML.',
   'atelier.copyLibre': 'Pour LibreOffice',
-  'atelier.copyLibreHelp': 'Dans Writer : Insertion → Objet → Formule, puis Outils → Importer MathML depuis le presse-papiers.',
+  'atelier.copyLibreHelp': 'Dans Writer : Insertion → Objet → Formule, puis Outils → Importer MathML depuis le presse-papiers (sous Linux, installer le paquet libreoffice-math).',
   'atelier.copyLatex': 'LaTeX',
   'atelier.copyLatexHelp': 'Pour LaTeX, Pandoc, Markdown, Overleaf, Wikipédia…',
   'atelier.copyImage': 'Image',
@@ -679,6 +679,8 @@ export const fr = {
   'atelier.untitled': 'Sans titre',
   'atelier.fileName': 'formule',
   'atelier.notebookFile': 'carnet-de-formules',
+  'atelier.guide': 'Mode d’emploi : coller dans Word, LibreOffice, WordCraft, LaTeX…',
+  'atelier.guideUrl': 'https://github.com/fhoudebert/Abbon/blob/main/docs/atelier.md',
   'atelier.footer': 'Fait avec Abbon (MathLive, KaTeX, mhchem) — logiciel libre, licence MIT.',
 } as const;
 

@@ -28,7 +28,8 @@ Linux, Windows, macOS et Android ; aucune inscription, aucune donnée envoyée.
   corrigé.
 - **Atelier de formules** (menu Outils, ou [page web](https://fhoudebert.github.io/abbon/atelier/), utilisable aussi hors
   ligne) pour écrire une formule de maths ou de chimie et la coller dans Word (équation modifiable), LibreOffice,
-  en LaTeX ou en image ; les formules se gardent dans un carnet en Markdown.
+  en LaTeX ou en image ; les formules se gardent dans un carnet en Markdown
+  ([mode d'emploi](docs/atelier.md)).
 - **Accessible** (WCAG 2.1 AA, clair et sombre, taille du texte réglable), en français et en anglais,
   utilisable sur téléphone.
 

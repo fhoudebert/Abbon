@@ -27,7 +27,8 @@ Linux, Windows, macOS and Android; no account, no data sent anywhere.
   draw of questions, submissions, statistics and answers published by the teacher.
 - **Formula workshop** (Tools menu, or a [single web page](https://fhoudebert.github.io/abbon/atelier/), also usable offline),
   to write a maths or chemistry formula and paste it into Word (as an editable equation), LibreOffice, LaTeX or
-  as an image; formulas can be kept in a Markdown notebook.
+  as an image; formulas can be kept in a Markdown notebook
+  ([how to](docs/formula-workshop.md)).
 - **Accessible** (WCAG 2.1 AA, light and dark, adjustable text size), in English and French, usable on a phone.
 
 ## Download

@@ -56,6 +56,7 @@
 </main>
 
 <footer>
+  <p><a href={t('atelier.guideUrl')}>{t('atelier.guide')}</a></p>
   <p class="muted">{t('atelier.footer')} <a href={REPO_URL}>{REPO_URL.replace('https://', '')}</a></p>
 </footer>
 

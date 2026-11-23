@@ -14,12 +14,19 @@
 
 <FormulaWorkshop />
 
-<p class="muted standalone">
-  {t('atelier.standalone')}
-  <a href={ATELIER_URL} target="_blank" rel="noopener noreferrer" onclick={(e) => openExternal(e, ATELIER_URL)}>
-    {ATELIER_URL.replace('https://', '').replace(/\/$/, '')}
-  </a>
-</p>
+<div class="muted standalone">
+  <p>
+    <a href={t('atelier.guideUrl')} target="_blank" rel="noopener noreferrer" onclick={(e) => openExternal(e, t('atelier.guideUrl'))}>
+      {t('atelier.guide')}
+    </a>
+  </p>
+  <p>
+    {t('atelier.standalone')}
+    <a href={ATELIER_URL} target="_blank" rel="noopener noreferrer" onclick={(e) => openExternal(e, ATELIER_URL)}>
+      {ATELIER_URL.replace('https://', '').replace(/\/$/, '')}
+    </a>
+  </p>
+</div>
 
 <style>
   .standalone {
