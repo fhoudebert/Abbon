@@ -22,6 +22,7 @@ Les noms de lieux gardent des langues disparues (gaulois, latin, francique, scan
 - **Normandie scandinave** : **-tot, -tuit** (*topt*, terrain, ferme : Yvetot, Criquetot), **-bec** (*bekkr*, ruisseau : Caudebec, Houlbec), **-beuf** (abri : Elbeuf).
 - **-ville** (*villa*) : domaine ; en Normandie, souvent avec un nom scandinave (Trouville).
 - **Noms de peuples gaulois** : Paris (Parisii), Reims (Rèmes), Amiens (Ambiens), Rennes (Riedones), Bourges (Bituriges).
+- **Frontières gauloises** : gaulois ***equoranda***, « limite » → Ingrandes, Ingrannes, Aigurande, Eygurande, Iguerande, Ygrande (Ingrandes, Vienne : Pictons et Turons ; Iguerande : Éduens et Ségusiaves) ; traduit en latin ***fines*** → Fins, Feins, Feings. La table de Peutinger (copie médiévale d'une carte des routes romaines) nomme *Fines* des étapes aujourd'hui appelées Ingrannes (Loiret), entre Orléans et Sens, limite des Carnutes et des Sénons, et Ingrandes (Indre), entre Poitiers et Argenton. Faux amis : Mirande (occitan, belvédère), Fénétrange (germanique, *Finstingen*), Finistère (*finis terrae*, bout de la terre).
 - **Bretagne** : Plou- (paroisse), Ker- (village), Lan- (lieu consacré), Tré- (trève).
 - **Alsace** : -heim (demeure), -bach (ruisseau).
 
