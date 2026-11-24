@@ -1,7 +1,7 @@
 ---
 id: toponymie-01
 title: { fr: "Noms de lieux : hauteurs, enclos et forteresses" }
-description: { fr: "Plessis, Essarts, Ferté, Mesnil, villes franches et châteaux neufs, les domaines gallo-romains en -acum, puy et puech, morne des Antilles, Basse-Terre, Paris et Lyon, Plou- et Ker- en Bretagne, -heim en Alsace, calanque" }
+description: { fr: "Plessis, Essarts, Ferté, Mesnil, villes franches et châteaux neufs, les domaines gallo-romains en -acum, puy et puech, morne des Antilles, Basse-Terre, Paris et Lyon, frontières gauloises (Ingrandes, Ingrannes, Aigurande, Fins), Plou- et Ker- en Bretagne, -heim en Alsace, calanque" }
 level: bases
 tags: [étymologie, toponymie, culture générale, français]
 ---
@@ -125,6 +125,27 @@ Lyon (*Lugdunum*), Verdun, Laon, Châteaudun, Issoudun : que désigne le gaulois
 - [ ] Un temple
 
 > Pour Lyon, le premier élément est discuté : le dieu Lug, ou un mot signifiant « lumineux ». Un mot germanique de la même famille a donné l'anglais *town*, la ville.
+
+## equoranda · multiple
+Les peuples gaulois marquaient leurs frontières : le mot gaulois *equoranda*, « limite », traduit en latin *fines*, « les limites », a laissé des noms de lieux. Lesquels en viennent ?
+
+- [x] Ingrandes
+- [x] Aigurande
+- [x] Fins (Somme)
+- [ ] Mirande
+- [ ] Fénétrange
+
+> *Equoranda* a donné Ingrandes, Ingrannes, Aigurande, Eygurande, Iguerande, Ygrande, Yvrande… : Ingrandes (Vienne) entre Pictons et Turons, Iguerande entre Éduens et Ségusiaves. Sa traduction latine, *fines*, a donné Fins, Feins, Feings. Les cités gauloises étant devenues des diocèses, ces noms tombent souvent sur d'anciennes limites de diocèse ou de province. Pièges : Mirande vient de l'occitan *miranda*, le belvédère (de *mirar*, regarder) ; Fénétrange, en allemand *Finstingen*, est un nom germanique en -ingen.
+
+## fines-peutinger · single
+La table de Peutinger, copie médiévale d'une carte des routes romaines, place une étape *Fines* sur la route d'Orléans (*Cenabum*) à Sens (*Agedincum*). Quel lieu porte aujourd'hui ce nom, sous sa forme gauloise ?
+
+- [x] Ingrannes, dans le Loiret, à la lisière est de la forêt d'Orléans, limite des Carnutes et des Sénons
+- [ ] Fins, dans la Somme
+- [ ] Le Finistère
+- [ ] Pithiviers
+
+> Les Romains écrivaient *Fines* sur leurs cartes, mais les habitants ont gardé le nom gaulois, *equoranda*, devenu Ingrannes : l'historien Jacques Soyer y a placé cette étape, au prix d'une correction de distance de la Table. De même, l'étape *Fines* entre Poitiers et Argenton est aujourd'hui Ingrandes (Indre). Le Finistère, lui, est le *finis terrae*, le « bout de la terre », et non une frontière entre peuples.
 
 ## bretagne · multiple
 En Bretagne, quels éléments de noms de lieux sont correctement expliqués ?
