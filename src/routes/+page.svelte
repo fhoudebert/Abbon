@@ -4,7 +4,7 @@
 </script>
 
 <script lang="ts">
-  import { to } from '$lib/site';
+  import { examOnly, to } from '$lib/site';
   import { app, type QuizEntry } from '$lib/app.svelte';
   import { homeFilters, matchesFilter } from '$lib/domain/categories';
   import QuizCard from '$lib/components/QuizCard.svelte';
@@ -74,9 +74,11 @@
 {:else if !app.ready}
   <p aria-busy="true">{t('home.loading')}</p>
 {:else}
-  {#if app.cards.length || app.showRewards}
+  <!-- Site en mode examen seulement : ni boîte de révision ni ceintures. -->
+  {@const cards = examOnly() ? 0 : app.cards.length}
+  {#if cards || app.showRewards}
     <div class="today">
-      {#if app.cards.length}
+      {#if cards}
         <section class="panel due" aria-labelledby="h-today">
           <h2 id="h-today" class="visually-hidden">{t('leitner.title')}</h2>
           {#if due}
