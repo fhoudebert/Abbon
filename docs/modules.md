@@ -46,6 +46,7 @@ abbon/questionnaires/
   fr/sciences/      Abbon-maths-specialite-…qcm, Abbon-maths-expertes-…qcm, Abbon-physique-chimie-…qcm,
                     Abbon-enseignement-scientifique-…qcm, Abbon-svt-…qcm
   fr/technologie/   Abbon-informatique-…qcm, Abbon-sciences-ingenieur-…qcm
+  fr/culture-generale/  Abbon-culture-generale-…qcm
   en/languages/     Abbon-french-traps-…qcm, Abbon-word-stories-…qcm   (modules en anglais)
   en/demo/          Abbon-showcase-…qcm
 ```
