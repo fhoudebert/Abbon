@@ -1,0 +1,94 @@
+Portail Abbon __VERSION__ — héberger les QCM de plusieurs enseignants
+====================================================================
+
+Le portail permet à plusieurs enseignants, chacun avec son compte et son mot de passe, de mettre en ligne les
+sites exportés par Abbon (entraînement, ou examen corrigé par le serveur) sur un hébergement mutualisé, depuis
+un navigateur : sans FTP, sauf pour l'installation.
+
+  https://exemple.fr/questionnaires/                                     le portail (connexion, dépôt, suppression)
+  https://exemple.fr/questionnaires/interro-math-decembre/               un site déposé
+  https://exemple.fr/questionnaires/interro-math-decembre/examen/enseignant.php   son espace enseignant
+
+
+Prérequis
+---------
+
+Hébergement avec PHP 7.4 ou plus récent et les extensions zip et mbstring (le cas de la plupart des hébergements
+mutualisés), en https de préférence. Ni base de données ni tâche planifiée.
+
+
+Installation (une seule fois, par FTP)
+--------------------------------------
+
+1. Déposer le dossier questionnaires/ de cette archive à la racine du site (ou ailleurs : le portail fonctionne
+   dans n'importe quel dossier), y compris les fichiers cachés .htaccess.
+2. Le serveur doit pouvoir écrire dans questionnaires/ et questionnaires/_portail/ (droits 755 ou 775 avec le
+   client FTP ; c'est le cas par défaut chez la plupart des hébergeurs).
+3. Ouvrir https://exemple.fr/questionnaires/ dans un navigateur. Le portail crée le fichier
+   questionnaires/_portail/donnees/installation.php : le télécharger par FTP et y lire le code d'installation
+   (la ligne "code"). Le saisir dans le formulaire, avec l'identifiant et le mot de passe de l'administrateur.
+4. Administration › Créer un compte, pour chaque enseignant : le mot de passe créé s'affiche une seule fois, à
+   transmettre à l'enseignant, qui peut le changer (Mon compte).
+
+
+Utilisation
+-----------
+
+Dans Abbon : Administration › Exporter, choisir les QCM, puis « Site web ». Dans le portail : « Déposer un
+site », choisir l'archive .zip (sans la décompresser) et le nom du dossier (interro-math-decembre). La liste
+« Mes sites » donne l'adresse du site à transmettre aux élèves et, pour un examen corrigé par le serveur,
+l'adresse et le mot de passe de l'espace enseignant.
+
+- Réglages (modes, corrigé, copies, seuil, tirage) : dans « Mes sites », sans redéposer le site.
+- Nouvelle version d'un site : « Remplacer par une nouvelle version » ; les réglages, les copies des élèves, le
+  mot de passe de l'espace enseignant et l'état de l'examen sont gardés.
+- Suppression : le dossier du site et toutes ses copies (télécharger d'abord les copies en CSV dans l'espace
+  enseignant).
+
+Chaque enseignant ne voit et ne supprime que ses sites ; un administrateur voit tous les sites et gère les comptes.
+Supprimer un compte rattache ses sites à l'administrateur qui le supprime.
+
+Taille des archives : limitée par l'hébergeur (upload_max_filesize et post_max_size de PHP, souvent de 8 à 64 Mo),
+affichée dans le formulaire de dépôt. Les images des QCM sont dans l'archive.
+
+
+Sécurité
+--------
+
+- Le portail n'installe aucun programme venu d'une archive déposée. Il n'en lit que les données (donnees.js,
+  reglages.js, examen/solutions.php, examen/config.php), les vérifie et les réécrit lui-même ; le lecteur
+  (index.html, _app/) et le correcteur (examen/corriger.php, examen/enseignant.php) sont les siens. Un compte
+  enseignant ne peut donc déposer ni PHP, ni script, ni page de son choix.
+- Mots de passe des comptes chiffrés (password_hash) ; connexion bloquée 15 minutes après 5 échecs ; session de
+  30 minutes d'inactivité, cookie HttpOnly, SameSite=Strict (et Secure en https) ; formulaires protégés (jeton).
+- Le mot de passe du compte est redemandé pour supprimer ou remplacer un site et pour toute action
+  d'administration.
+- Données du portail (comptes, liste des sites) : questionnaires/_portail/donnees/, interdit au web par .htaccess
+  et, sans .htaccess (serveur nginx), illisible quand même (chaque fichier commence par <?php exit; ?>).
+- Les sites restent publics à leur adresse, comme un site déposé par FTP : choisir des noms de dossiers peu
+  devinables pour des examens.
+
+
+Mise à jour
+-----------
+
+Le portail installe dans chaque site son propre lecteur et son propre correcteur : il doit être au moins aussi
+récent que la version d'Abbon des enseignants (un site exporté par une version plus récente peut être refusé ou
+mal affiché). Pour le mettre à jour :
+Administration › Mise à jour, déposer le paquet Abbon-portail-X.Y.Z.zip de la nouvelle version, puis « Mettre à
+jour tous les sites » (leurs données, réglages, copies et mots de passe ne changent pas). Sans accès au portail,
+la mise à jour se fait aussi par FTP : remplacer index.php, _portail/portail.php et _portail/abbon/.
+
+
+Fichiers
+--------
+
+  questionnaires/index.php              interface du portail
+  questionnaires/_portail/portail.php   bibliothèque du portail
+  questionnaires/_portail/abbon/        lecteur et correcteur d'Abbon, copiés dans chaque site
+  questionnaires/_portail/donnees/      comptes, liste des sites (créé à la première visite)
+  questionnaires/<nom>/                 sites déposés
+
+Code d'installation perdu, ou plus aucun administrateur : par FTP, supprimer _portail/donnees/comptes.php (les
+sites restent en place, sans propriétaire visible jusqu'à ce qu'un administrateur les reprenne), puis ouvrir le
+portail : il redemande l'installation.

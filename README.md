@@ -24,7 +24,9 @@ Linux, Windows, macOS and Android; no account, no data sent anywhere.
   import and export, full backup.
 - **Website export** of a quiz or a module, for shared hosting: practice as static pages, or an **exam graded by
   the server** (PHP) with no answers in the site, opened by the invigilator, with access code, class list, random
-  draw of questions, submissions, statistics and answers published by the teacher.
+  draw of questions, submissions, statistics and answers published by the teacher. A **hosting portal**
+  (`npm run portail`, [LISEZMOI](src/lib/exam/portail/LISEZMOI.txt), in French) lets several teachers, each with
+  their own account, upload and delete exported sites from a browser after a single FTP install.
 - **Quick quizzes with an AI assistant**: a [ready-made prompt](docs/prompt-qcm-abbon.md) (in French) turns a few
   lines of notes into a `.qcm` file to import, for an end-of-lesson check, a quick test or revision; a
   [second prompt](docs/prompt-module-abbon.md) bundles `.qcm` files into a module, with categories and revision
