@@ -1,6 +1,6 @@
 [package]
 name = "abbon"
-version = "0.4.2"
+version = "0.4.3"
 description = "Abbon — application de QCM multiplateforme"
 authors = ["Contributeurs Abbon"]
 license = "MIT"
