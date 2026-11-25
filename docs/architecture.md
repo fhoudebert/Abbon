@@ -325,7 +325,9 @@ hébergements mutualisés ; ni base de données ni fichier écrit).
 
 ### Portail d'hébergement (`exam/portail/`)
 
-`npm run portail` (après `build:site`, `scripts/portail/pack.ts`) produit `dist/portail/Abbon-portail-X.Y.Z.zip` :
+`npm run portail` (`build:site`, puis `scripts/portail/pack.ts`) produit `dist/portail/Abbon-portail-X.Y.Z.zip`,
+publié par le job `release` de `build.yml` (release GitHub, `releases/` du site de téléchargement, qui l'affiche,
+et SHA256SUMS.txt) sans entrer dans `version.json` :
 `questionnaires/index.php` (interface), `questionnaires/_portail/portail.php` (bibliothèque) et
 `questionnaires/_portail/abbon/` (lecteur `build-site/` et `corriger.php`, `enseignant.php`), installé une fois par
 FTP. Données dans `_portail/donnees/` (`comptes.php`, `sites.php`, `essais.php`), JSON après `<?php exit; ?>`,

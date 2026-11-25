@@ -39,6 +39,9 @@ $texts = [
         'aarch64' => 'ARM64',
         'armLinux' => 'ARM64 : Raspberry Pi 4 ou 5 avec un système 64 bits, ordinateurs et serveurs ARM.',
         'armWindows' => 'ARM64 : PC à processeur Snapdragon X, Surface Pro… (pas de MSI, seulement l’installateur .exe).',
+        'portal' => 'Portail d’hébergement de QCM',
+        'portalZip' => 'Paquet du portail (.zip, PHP)',
+        'portalHelp' => 'Pour un établissement ou une équipe : sur un hébergement PHP, chaque enseignant, avec son compte, met en ligne et retire depuis son navigateur les QCM exportés par Abbon. Installation unique par FTP ; mode d’emploi dans l’archive (LISEZMOI.txt).',
         'checksums' => 'Empreintes SHA-256',
         'license' => 'Logiciel libre sous licence MIT.',
         'other' => 'English',
@@ -68,6 +71,9 @@ $texts = [
         'aarch64' => 'ARM64',
         'armLinux' => 'ARM64: Raspberry Pi 4 or 5 running a 64-bit system, ARM computers and servers.',
         'armWindows' => 'ARM64: PCs with Snapdragon X processors, Surface Pro… (no MSI, only the .exe installer).',
+        'portal' => 'Quiz hosting portal',
+        'portalZip' => 'Portal package (.zip, PHP)',
+        'portalHelp' => 'For a school or a team: on PHP hosting, each teacher, with their own account, publishes and removes the quizzes exported by Abbon from a browser. One-time FTP install; instructions (in French) in the archive (LISEZMOI.txt).',
         'checksums' => 'SHA-256 checksums',
         'license' => 'Free software under the MIT licence.',
         'other' => 'Français',
@@ -125,6 +131,14 @@ if ($release) {
     }
 }
 $order = ['linux', 'android', 'windows', 'macos'];
+// Portail d'hébergement de QCM (hors version.json) : releases/Abbon-portail-<version>.zip, s'il est publié.
+$portal = null;
+if ($release) {
+    $name = 'Abbon-portail-' . $release['version'] . '.zip';
+    if (is_file(__DIR__ . '/releases/' . $name)) {
+        $portal = ['name' => $name, 'size' => (int) filesize(__DIR__ . '/releases/' . $name), 'sha256' => (string) hash_file('sha256', __DIR__ . '/releases/' . $name)];
+    }
+}
 // Processeur affiché seulement quand un système en a plusieurs (x86-64 et ARM64).
 $multiArch = [];
 foreach ($groups as $platform => $files) {
@@ -200,6 +214,19 @@ $date = $release ? substr((string) ($release['date'] ?? ''), 0, 10) : '';
   </section>
   <?php endforeach; ?>
 
+  <?php if ($portal): ?>
+  <section>
+    <h2><?= h($t['portal']) ?></h2>
+    <ul>
+      <li>
+        <a class="dl" href="releases/<?= h(rawurlencode($portal['name'])) ?>" download><?= h($t['portalZip']) ?></a>
+        <span class="muted"><?= h($portal['name']) ?> · <?= h(size($portal['size'], $lang)) ?></span>
+      </li>
+    </ul>
+    <p class="muted"><?= h($t['portalHelp']) ?></p>
+  </section>
+  <?php endif; ?>
+
   <?php if ($notes !== ''): ?>
   <section>
     <h2><?= h($t['notes']) ?></h2>
@@ -213,6 +240,7 @@ $date = $release ? substr((string) ($release['date'] ?? ''), 0, 10) : '';
     <?php foreach ($order as $platform): foreach ($groups[$platform] ?? [] as $f): ?>
       <li><span><?= h($f['name']) ?></span> <code><?= h($f['sha256']) ?></code></li>
     <?php endforeach; endforeach; ?>
+    <?php if ($portal): ?><li><span><?= h($portal['name']) ?></span> <code><?= h($portal['sha256']) ?></code></li><?php endif; ?>
     </ul>
     <p class="muted"><a href="releases/SHA256SUMS.txt">SHA256SUMS.txt</a></p>
   </details>

@@ -75,7 +75,8 @@ Mise à jour
 Le portail installe dans chaque site son propre lecteur et son propre correcteur : il doit être au moins aussi
 récent que la version d'Abbon des enseignants (un site exporté par une version plus récente peut être refusé ou
 mal affiché). Pour le mettre à jour :
-Administration › Mise à jour, déposer le paquet Abbon-portail-X.Y.Z.zip de la nouvelle version, puis « Mettre à
+Administration › Mise à jour, déposer le paquet Abbon-portail-X.Y.Z.zip de la nouvelle version (publié avec
+chaque version d'Abbon, sur la page de téléchargement et dans la release GitHub), puis « Mettre à
 jour tous les sites » (leurs données, réglages, copies et mots de passe ne changent pas). Sans accès au portail,
 la mise à jour se fait aussi par FTP : remplacer index.php, _portail/portail.php et _portail/abbon/.
 
