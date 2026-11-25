@@ -1,4 +1,4 @@
-import { SITE } from '$lib/site';
+import { SITE, examOnly, siteExamPoints } from '$lib/site';
 import { getRepository, type Repository } from '$lib/data';
 import { clearContent, releaseModuleCopies } from '$lib/data/repair';
 import { seedDemo, tidyDemo } from '$lib/data/seed';
@@ -17,6 +17,7 @@ import { quizOf, startAttempt } from '$lib/domain/session';
 import { adoptedCard, dueCards, isOrphan, newCard, refreshedCards, restoreCard, reviewCard, type LeitnerCard } from '$lib/domain/leitner';
 import {
   attemptRewards,
+  examRewards,
   collectRewards,
   localDay,
   promotion,
@@ -56,8 +57,12 @@ class AppState {
   points = $state(0);
   /** Dernier jour (AAAA-MM-JJ) où le bonus « journée à jour » a été gagné. */
   lastDayDone = $state<string | null>(null);
-  /** Afficher les ceintures et les points ? */
-  showRewards = $state(true);
+  /** Réglage « ceintures et points » (Paramètres). */
+  rewardsSetting = $state(true);
+  /** Afficher les ceintures et les points ? Jamais dans un site en mode examen seulement. */
+  get showRewards() {
+    return this.rewardsSetting && !examOnly();
+  }
   /** Points gagnés par la dernière tentative terminée (affichés sur son résultat). */
   attemptPoints = $state<{ attemptId: string; points: number } | null>(null);
   /** Nouveau rang à annoncer (passage de ceinture ou de dan), jusqu'à ce qu'il soit lu. */
@@ -92,7 +97,7 @@ class AppState {
       if (lang) setLang(lang);
       else setLang(i18n.lang);
       this.pinSet = !!(await repo.getSetting(PIN_KEY));
-      this.showRewards = (await repo.getSetting(REWARDS_KEY)) !== 'off';
+      this.rewardsSetting = (await repo.getSetting(REWARDS_KEY)) !== 'off';
       if (!SITE) {
         await seedDemo(repo);
         await tidyDemo(repo);
@@ -215,8 +220,11 @@ class AppState {
     this.lastDayDone = rewards.filter((r) => r.kind === 'day').reduce<string | null>((m, r) => (!m || r.ref > m ? r.ref : m), null);
   }
 
-  /** Enregistre des récompenses (les déjà acquises sont ignorées) ; renvoie les points gagnés. */
-  async #grant(rewards: Reward[]): Promise<number> {
+  /**
+   * Enregistre des récompenses (les déjà acquises sont ignorées) ; renvoie les points gagnés. `quiet` : sans annonce
+   * de nouvelle ceinture (fin d'un examen : rien de la gamification ne s'affiche).
+   */
+  async #grant(rewards: Reward[], quiet = false): Promise<number> {
     if (!rewards.length) return 0;
     const fresh = await (await this.repo()).addRewards(rewards);
     const gained = totalPoints(fresh);
@@ -225,7 +233,7 @@ class AppState {
     this.points += gained;
     for (const r of fresh) if (r.kind === 'day' && (!this.lastDayDone || r.ref > this.lastDayDone)) this.lastDayDone = r.ref;
     const rank = promotion(before, this.points);
-    if (rank && this.showRewards) this.promotion = rank;
+    if (rank && this.showRewards && !quiet) this.promotion = rank;
     return gained;
   }
 
@@ -235,12 +243,16 @@ class AppState {
   }
 
   async setShowRewards(on: boolean) {
-    this.showRewards = on;
+    this.rewardsSetting = on;
     if (!on) this.promotion = null;
     await (await this.repo()).setSetting(REWARDS_KEY, on ? 'on' : 'off');
   }
 
-  /** Récompenses d'une tentative qui vient de se terminer (QCM réussi, module terminé). */
+  /**
+   * Récompenses d'une tentative qui vient de se terminer (QCM réussi, module terminé). En mode examen, les points
+   * ne s'affichent pas (ni sur le résultat, ni en annonce de ceinture) ; sur un site, le réglage `points` de
+   * reglages.js les fixe (« 0 » pour un examen corrigé par le serveur : aucun point).
+   */
   async rewardAttempt(quiz: Pick<Quiz, 'id' | 'moduleId' | 'questions'>, attempt: Attempt, passed: boolean): Promise<number> {
     const complete = attempt.questionOrder.length >= quiz.questions.length;
     if (!passed || !complete) return 0;
@@ -249,8 +261,11 @@ class AppState {
     const moduleQuizIds = moduleId
       ? this.quizzes.filter((q) => q.moduleId === moduleId && q.status === 'published').map((q) => q.id)
       : [];
-    const points = await this.#grant(attemptRewards({ id: quiz.id, moduleId }, passed, complete, moduleQuizIds, passedIds));
-    if (points) this.attemptPoints = { attemptId: attempt.id, points };
+    const exam = attempt.mode === 'exam';
+    let rewards = attemptRewards({ id: quiz.id, moduleId }, passed, complete, moduleQuizIds, passedIds);
+    if (exam) rewards = examRewards(rewards, siteExamPoints());
+    const points = await this.#grant(rewards, exam);
+    if (points && !exam) this.attemptPoints = { attemptId: attempt.id, points };
     return points;
   }
 
@@ -592,7 +607,7 @@ class AppState {
     });
     const lang = await repo.getSetting('lang');
     if (lang) setLang(lang);
-    this.showRewards = (await repo.getSetting(REWARDS_KEY)) !== 'off';
+    this.rewardsSetting = (await repo.getSetting(REWARDS_KEY)) !== 'off';
     await this.reload();
   }
 

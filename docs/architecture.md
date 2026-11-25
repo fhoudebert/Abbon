@@ -316,6 +316,11 @@ hébergements mutualisés ; ni base de données ni fichier écrit).
   question sur les copies qui l'ont reçue.
 - **Seuil** : `seuil: "50"` dans `reglages.js` (`resolveThreshold`) remplace le seuil de chaque QCM du site, au
   chargement et, avec la correction par le serveur, dans `corriger.php` (`abbon_seuil`).
+- **Points d'un examen** : `points: "0"` dans `reglages.js` (`resolveExamPoints`, `examRewards`) fixe les points
+  (ceintures) d'un QCM réussi en mode examen : `"0"`, aucun (ni QCM ni bonus de module), écrit par l'export
+  corrigé par le serveur et par le portail ; un nombre, ces points pour le QCM ; `""` (export statique), comme à
+  l'entraînement. En mode examen, les points gagnés ne s'affichent jamais (résultat, annonce de ceinture), et un
+  site en examen seulement n'affiche ni ceinture ni boîte de révision (`app.showRewards`).
 - **Parité** : `exam/exam.test.ts` note les mêmes réponses (justes, fausses, approchées) avec l'application et avec
   `php` (si installé), question par question.
 - **Limites** : un élève peut se déclarer sous un autre nom ou, en vidant son navigateur, commencer une seconde

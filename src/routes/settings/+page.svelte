@@ -112,7 +112,7 @@
     </select>
   </label>
   <label class="check">
-    <input type="checkbox" checked={app.showRewards} onchange={(e) => app.setShowRewards(e.currentTarget.checked)} />
+    <input type="checkbox" checked={app.rewardsSetting} onchange={(e) => app.setShowRewards(e.currentTarget.checked)} />
     <span>{t('settings.rewards')} <span class="muted small">— {t('settings.rewardsHint')}</span></span>
   </label>
 </section>
