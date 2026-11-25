@@ -2,7 +2,7 @@
 
 *À copier en entier au début d'une nouvelle conversation, puis remplir la partie « Ma demande » en bas.*
 *Le script est maintenu dans [`scripts/qcm/abbon_qcm.py`](../scripts/qcm/abbon_qcm.py) ; format produit :
-[format-qcm](format-qcm/README.md).*
+[format-qcm](format-qcm/README.md). Pour rassembler plusieurs QCM en module : [prompt-module-abbon.md](prompt-module-abbon.md).*
 
 ---
 

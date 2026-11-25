@@ -7,7 +7,10 @@ décrit dans [format-qcm/README.md](format-qcm/README.md#modules).
 
 Pour un QCM ponctuel (fin de cours, interrogation), un module n'est pas nécessaire : le
 [prompt de QCM express](prompt-qcm-abbon.md) et son script [`scripts/qcm/abbon_qcm.py`](../scripts/qcm/abbon_qcm.py)
-produisent directement un fichier `.qcm` à importer.
+produisent directement un fichier `.qcm` à importer. Pour un module sans les sources du dépôt, à partir de
+fichiers `.qcm` : le [prompt de module](prompt-module-abbon.md) et [`scripts/qcm/abbon_module.py`](../scripts/qcm/abbon_module.py)
+(catégories, fiches en Markdown, versions et identifiants stables pour les mises à jour). Les modules publiés
+dans le catalogue d'Abbon gardent leurs sources dans `modules/`.
 
 ```sh
 npm run module:check                    # vérifie tous les modules (ou : npm run module:check anglais-verbes)
