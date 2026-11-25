@@ -26,6 +26,8 @@ Linux, Windows, macOS et Android ; aucune inscription, aucune donnée envoyée.
   statiques, ou **examen corrigé par le serveur** (PHP) sans les réponses dans le site, avec ouverture par le
   surveillant, code d'accès, liste de classe, tirage des questions, copies, statistiques et publication du
   corrigé.
+- **QCM express avec un assistant IA** : un [prompt prêt à l'emploi](docs/prompt-qcm-abbon.md) transforme quelques
+  lignes de notes en fichier `.qcm` à importer, pour une fin de cours, une interrogation rapide ou une révision.
 - **Atelier de formules** (menu Outils, ou [page web](https://fhoudebert.github.io/abbon/atelier/), utilisable aussi hors
   ligne) pour écrire une formule de maths ou de chimie et la coller dans Word (équation modifiable), LibreOffice,
   en LaTeX ou en image ; les formules se gardent dans un carnet en Markdown

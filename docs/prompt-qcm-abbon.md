@@ -1,6 +1,8 @@
 # Prompt : QCM Abbon express
 
 *À copier en entier au début d'une nouvelle conversation, puis remplir la partie « Ma demande » en bas.*
+*Le script est maintenu dans [`scripts/qcm/abbon_qcm.py`](../scripts/qcm/abbon_qcm.py) ; format produit :
+[format-qcm](format-qcm/README.md).*
 
 ---
 
@@ -59,6 +61,9 @@ pour un sondage de *connaissances*, prends la ligne « début de séquence ».
 
 ```python
 """abbon_qcm.py — fabrique un fichier .qcm importable dans Abbon (Administration › Importer), sans dépendance.
+
+Utilisé par le prompt docs/prompt-qcm-abbon.md, qui en contient une copie exacte (vérifiée par abbon_qcm.test.ts).
+Format produit : docs/format-qcm/README.md.
 
     from abbon_qcm import Qcm
     q = Qcm("Fin de cours : la photosynthèse", lang="fr", description="Cinq minutes en fin de séance")

@@ -25,6 +25,8 @@ Linux, Windows, macOS and Android; no account, no data sent anywhere.
 - **Website export** of a quiz or a module, for shared hosting: practice as static pages, or an **exam graded by
   the server** (PHP) with no answers in the site, opened by the invigilator, with access code, class list, random
   draw of questions, submissions, statistics and answers published by the teacher.
+- **Quick quizzes with an AI assistant**: a [ready-made prompt](docs/prompt-qcm-abbon.md) (in French) turns a few
+  lines of notes into a `.qcm` file to import, for an end-of-lesson check, a quick test or revision.
 - **Formula workshop** (Tools menu, or a [single web page](https://fhoudebert.github.io/abbon/atelier/), also usable offline),
   to write a maths or chemistry formula and paste it into Word (as an editable equation), LibreOffice, LaTeX or
   as an image; formulas can be kept in a Markdown notebook

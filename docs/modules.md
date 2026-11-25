@@ -5,6 +5,10 @@ un seul fichier `.qcm`, versionné, mis à jour et retiré d'un bloc. Ses source
 [`modules/`](../modules), compilés et vérifiés par les commandes ci-dessous. Le format du fichier produit est
 décrit dans [format-qcm/README.md](format-qcm/README.md#modules).
 
+Pour un QCM ponctuel (fin de cours, interrogation), un module n'est pas nécessaire : le
+[prompt de QCM express](prompt-qcm-abbon.md) et son script [`scripts/qcm/abbon_qcm.py`](../scripts/qcm/abbon_qcm.py)
+produisent directement un fichier `.qcm` à importer.
+
 ```sh
 npm run module:check                    # vérifie tous les modules (ou : npm run module:check anglais-verbes)
 npm run module:build                    # vérifie puis écrit dist/modules/Abbon-<nom>-<version>.qcm
