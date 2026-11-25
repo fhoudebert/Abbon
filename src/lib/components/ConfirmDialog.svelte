@@ -10,6 +10,7 @@
     danger = false,
     onconfirm,
     extra,
+    children,
   }: {
     title: string;
     body?: string;
@@ -17,6 +18,8 @@
     danger?: boolean;
     onconfirm: () => void | Promise<void>;
     extra?: Snippet<[() => void]>;
+    /** Contenu entre le texte et les boutons (cases à cocher…). */
+    children?: Snippet;
   } = $props();
 
   let dialog: HTMLDialogElement;
@@ -30,6 +33,7 @@
 <dialog bind:this={dialog} aria-labelledby="cd-title">
   <h2 id="cd-title">{title}</h2>
   {#if body}<p>{body}</p>{/if}
+  {@render children?.()}
   <div class="actions">
     <button class="secondary" onclick={close}>{t('common.cancel')}</button>
     {@render extra?.(close)}

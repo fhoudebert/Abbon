@@ -5,7 +5,7 @@ import { seedDemo, tidyDemo } from '$lib/data/seed';
 import { progressOf, type ProgressInfo } from '$lib/domain/progress';
 import { createPin, verifyPin, type PinRecord } from '$lib/domain/pin';
 import { b64ToBytes, bytesToB64 } from '$lib/data/bytes';
-import { cloneQuiz, newQuiz } from '$lib/domain/factory';
+import { cloneQuestion, cloneQuiz, newQuiz } from '$lib/domain/factory';
 import { localize } from '$lib/domain/text';
 import { fileSafe, writeAutoBackup } from '$lib/files';
 import { quizToGift } from '$lib/interchange/gift';
@@ -14,7 +14,7 @@ import type { ModulePlan } from '$lib/interchange/module';
 import { buildPackage, cardMedia, quizMedia, sheetMedia, type ContentBundle, type MediaFile, type ParsedPackage } from '$lib/interchange/qcmPackage';
 import { siteContent, siteDataOf, siteMediaHashes, zipSite, type SiteOptions } from '$lib/interchange/siteExport';
 import { quizOf, startAttempt } from '$lib/domain/session';
-import { dueCards, newCard, restoreCard, reviewCard, type LeitnerCard } from '$lib/domain/leitner';
+import { adoptedCard, dueCards, isOrphan, newCard, refreshedCards, restoreCard, reviewCard, type LeitnerCard } from '$lib/domain/leitner';
 import {
   attemptRewards,
   collectRewards,
@@ -175,6 +175,7 @@ class AppState {
 
   async saveQuiz(quiz: Quiz) {
     await (await this.repo()).saveQuiz(quiz);
+    await this.syncCards([quiz]);
     await this.reload();
   }
 
@@ -188,8 +189,12 @@ class AppState {
     return copy.id;
   }
 
+  /** Supprime un QCM ; les cartes de ses questions restent dans la boîte, avec leur dernière version. */
   async deleteQuiz(id: string) {
-    await (await this.repo()).deleteQuiz(id);
+    const repo = await this.repo();
+    const quiz = await repo.getQuiz(id);
+    if (quiz) await this.syncCards([quiz]);
+    await repo.deleteQuiz(id);
     await this.reload();
   }
 
@@ -312,6 +317,77 @@ class AppState {
     await this.addCards(next, [q], false);
   }
 
+  async #allQuizzes(repo: Repository): Promise<Quiz[]> {
+    const all = await Promise.all((await repo.listQuizzes()).map((s) => repo.getQuiz(s.id)));
+    return all.filter((q): q is Quiz => !!q);
+  }
+
+  /** Met à jour la copie des cartes dont la question figure dans ces QCM (voir `refreshedCards`). */
+  async syncCards(quizzes: readonly Quiz[]) {
+    if (!this.cards.length || !quizzes.length) return;
+    const repo = await this.repo();
+    let cards = await repo.listCards();
+    for (const quiz of quizzes) {
+      const changed = refreshedCards(cards, quiz);
+      for (const c of changed) await repo.saveCard(c);
+      if (changed.length) cards = cards.map((c) => changed.find((x) => x.questionId === c.questionId) ?? c);
+    }
+    this.cards = cards;
+  }
+
+  /** Cartes dont la question n'existe plus (QCM supprimé, désinstallé, ou question retirée du QCM). */
+  async orphanCards(): Promise<Set<string>> {
+    const repo = await this.repo();
+    const quizzes = new Map<string, Quiz | null>();
+    for (const id of new Set(this.cards.map((c) => c.quizId))) quizzes.set(id, await repo.getQuiz(id));
+    return new Set(this.cards.filter((c) => isOrphan(c, quizzes.get(c.quizId))).map((c) => c.questionId));
+  }
+
+  /**
+   * Garde des cartes dans « Mes cartes de révision » : leur question y est copiée (nouveaux identifiants,
+   * donc modifiable dans l'éditeur), et chaque carte y est rattachée sans perdre son compartiment ni ses dates.
+   */
+  async keepInMyCards(questionIds: readonly string[]): Promise<number> {
+    const picked = this.cards.filter((c) => questionIds.includes(c.questionId));
+    if (!picked.length) return 0;
+    const repo = await this.repo();
+    const lang = i18n.lang as Lang;
+    const existing = await repo.getQuiz(MY_CARDS_ID);
+    const quiz: Quiz = existing ?? {
+      ...newQuiz(lang),
+      id: MY_CARDS_ID,
+      title: { [lang]: t('custom.quizTitle') },
+      description: { [lang]: t('custom.quizDescription') },
+      shuffle: false,
+      passThreshold: 0.5,
+    };
+    const questions = [...quiz.questions];
+    const languages = new Set(quiz.languages);
+    const moved: [LeitnerCard, Question][] = [];
+    for (const card of picked) {
+      const q = cloneQuestion($state.snapshot(card.snapshot.question) as Question, questions.length);
+      questions.push(q);
+      for (const l of card.snapshot.languages) languages.add(l);
+      moved.push([$state.snapshot(card) as LeitnerCard, q]);
+    }
+    const next: Quiz = { ...quiz, languages: [...languages], questions, updatedAt: new Date().toISOString() };
+    await repo.saveQuiz(next);
+    for (const [card, q] of moved) {
+      await repo.deleteCard(card.questionId);
+      await repo.saveCard(adoptedCard(card, next, q));
+    }
+    this.cards = await repo.listCards();
+    await this.reload();
+    return moved.length;
+  }
+
+  /** Retire plusieurs cartes de la boîte. */
+  async removeCards(questionIds: readonly string[]) {
+    const repo = await this.repo();
+    for (const id of questionIds) await repo.deleteCard(id);
+    this.cards = this.cards.filter((c) => !questionIds.includes(c.questionId));
+  }
+
   /** Remet une carte acquise dans le planning, au premier compartiment. */
   async restoreCard(questionId: string) {
     const card = this.cards.find((c) => c.questionId === questionId);
@@ -359,12 +435,15 @@ class AppState {
       const m = media.get(h);
       if (m) await repo.saveMedia({ hash: h, mime: m.mime, sizeBytes: m.bytes.length, data: bytesToB64(m.bytes) });
     }
+    // QCM retirés par la mise à jour : leurs cartes gardent la dernière version installée.
+    await this.syncCards((await Promise.all(plan.removedQuizIds.map((id) => repo.getQuiz(id)))).filter((q): q is Quiz => !!q));
     await repo.installModule({
       manifest: plan.manifest,
       quizzes: plan.quizzes,
       categories: plan.categories,
       removedQuizIds: plan.removedQuizIds,
     });
+    await this.syncCards(plan.quizzes);
     await this.reload();
   }
 
@@ -374,13 +453,18 @@ class AppState {
    * catégories, images, tentatives (et historique mis de côté), boîte de révision. Les réglages et le code PIN
    * sont gardés (les QCM de démonstration ne reviennent pas) ; les points et la ceinture aussi, sauf `dropRewards`.
    */
-  async clearAllQuizzes(dropRewards = false) {
-    await clearContent(await this.repo(), dropRewards);
+  async clearAllQuizzes(dropRewards = false, keepCards = false) {
+    const repo = await this.repo();
+    if (keepCards) await this.syncCards(await this.#allQuizzes(repo));
+    await clearContent(repo, dropRewards, keepCards);
     await this.reload();
   }
 
+  /** Désinstalle un module ; les cartes de ses questions restent dans la boîte, avec leur dernière version. */
   async uninstallModule(id: string, keepHistory: boolean) {
-    await (await this.repo()).uninstallModule(id, keepHistory);
+    const repo = await this.repo();
+    await this.syncCards((await this.#allQuizzes(repo)).filter((q) => q.moduleId === id));
+    await repo.uninstallModule(id, keepHistory);
     await this.cleanMedia();
     await this.reload();
   }
@@ -487,6 +571,7 @@ class AppState {
         failed.push({ id: q.id, error: e instanceof Error ? e.message : String(e) });
       }
     }
+    await this.syncCards(resolved.quizzes);
     await this.reload();
     return { failed };
   }

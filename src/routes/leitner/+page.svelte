@@ -93,6 +93,28 @@
     toRemove = c;
     queueMicrotask(() => confirm.open());
   }
+
+  // ---- Cartes dont le QCM a disparu -----------------------------------------
+  /** Questions de la boîte qui n'existent plus dans aucun QCM : révisables par leur copie, plus modifiables. */
+  let orphans = $state.raw(new Set<string>());
+  let orphanStatus = $state('');
+  let removeOrphans: ConfirmDialog;
+  let orphanRun = 0;
+  $effect(() => {
+    // Recalculé quand la boîte ou la liste des QCM change ; seul le dernier calcul compte.
+    void app.cards;
+    void app.quizzes;
+    if (!app.ready) return;
+    const run = ++orphanRun;
+    void app.orphanCards().then((s) => {
+      if (run === orphanRun) orphans = s;
+    });
+  });
+  const orphanIds = $derived(app.cards.filter((c) => orphans.has(c.questionId)).map((c) => c.questionId));
+  async function keep(ids: string[]) {
+    const n = await app.keepInMyCards(ids);
+    orphanStatus = t('leitner.kept', { n });
+  }
 </script>
 
 <svelte:head><title>{t('leitner.title')} — Abbon</title></svelte:head>
@@ -167,6 +189,17 @@
       {/if}
     </div>
 
+    {#if orphanIds.length}
+      <section class="panel orphans" aria-labelledby="h-orphans">
+        <p id="h-orphans">{t('leitner.orphans', { n: orphanIds.length })}</p>
+        <p class="actions">
+          {#if !SITE}<button class="secondary" onclick={() => keep(orphanIds)}>{t('leitner.keepAll', { n: orphanIds.length })}</button>{/if}
+          <button class="ghost danger" onclick={() => removeOrphans.open()}>{t('leitner.removeAll', { n: orphanIds.length })}</button>
+        </p>
+      </section>
+    {/if}
+    <p class="status" role="status">{orphanStatus}</p>
+
     <h2>{t('leitner.list', { n: planned.length })}</h2>
     <ul class="cards">
       {#each [...planned].sort((a, b) => a.dueAt.localeCompare(b.dueAt)) as c (c.questionId)}
@@ -174,10 +207,11 @@
           <div class="info">
             <span class="q">{promptOf(c)}</span>
             <span class="muted small">
-              {localize(c.snapshot.quizTitle, lang, c.snapshot.languages[0])} · {t('leitner.box', { n: c.box })} ·
+              {localize(c.snapshot.quizTitle, lang, c.snapshot.languages[0])}{#if orphans.has(c.questionId)}{' '}<span class="orphan">({t('leitner.orphan')})</span>{/if} · {t('leitner.box', { n: c.box })} ·
               {isDue(c) ? t('leitner.dueNow') : t('leitner.dueOn', { date: fmtDate(c.dueAt) })}
             </span>
           </div>
+          {#if orphans.has(c.questionId) && !SITE}<button class="ghost" onclick={() => keep([c.questionId])}>{t('leitner.keep')}</button>{/if}
           <button class="ghost danger" onclick={() => askRemove(c)}>{t('leitner.remove')}</button>
         </li>
       {/each}
@@ -192,9 +226,10 @@
             <div class="info">
               <span class="q">{promptOf(c)}</span>
               <span class="muted small">
-                {localize(c.snapshot.quizTitle, lang, c.snapshot.languages[0])} · {t('leitner.acquiredOn', { date: fmtDate(c.acquiredAt ?? c.dueAt) })}
+                {localize(c.snapshot.quizTitle, lang, c.snapshot.languages[0])}{#if orphans.has(c.questionId)}{' '}<span class="orphan">({t('leitner.orphan')})</span>{/if} · {t('leitner.acquiredOn', { date: fmtDate(c.acquiredAt ?? c.dueAt) })}
               </span>
             </div>
+            {#if orphans.has(c.questionId) && !SITE}<button class="ghost" onclick={() => keep([c.questionId])}>{t('leitner.keep')}</button>{/if}
             <button class="ghost" onclick={() => app.restoreCard(c.questionId)}>{t('leitner.restore')}</button>
             <button class="ghost danger" onclick={() => askRemove(c)}>{t('leitner.remove')}</button>
           </li>
@@ -230,7 +265,32 @@
   }}
 />
 
+<ConfirmDialog
+  bind:this={removeOrphans}
+  title={t('leitner.removeAll.title', { n: orphanIds.length })}
+  body={t('leitner.removeAll.body')}
+  confirmLabel={t('leitner.removeAll', { n: orphanIds.length })}
+  danger
+  onconfirm={() => app.removeCards(orphanIds)}
+/>
+
 <style>
+  .orphans {
+    margin-block-start: 1rem;
+    border-inline-start: 4px solid var(--warn, var(--accent));
+  }
+  .orphans p:first-child {
+    margin-block-start: 0;
+  }
+  .orphans .actions {
+    margin-block-end: 0;
+  }
+  .orphan {
+    font-style: italic;
+  }
+  .status:empty {
+    margin: 0;
+  }
   h1 {
     font-size: 1.5rem;
   }

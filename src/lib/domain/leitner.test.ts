@@ -6,6 +6,7 @@ import { SqliteRepository } from '$lib/data/sqlite';
 import { nodeDriver } from '$lib/data/sqlite.testing';
 import { buildPackage, cardMedia, parsePackage } from '$lib/interchange/qcmPackage';
 import {
+  adoptedCard,
   boxCounts,
   cardQuestion,
   dueAfter,
@@ -13,9 +14,11 @@ import {
   isCorrect,
   isAcquired,
   isDue,
+  isOrphan,
   LEITNER_BOXES,
   LEITNER_INTERVALS,
   newCard,
+  refreshedCards,
   restoreCard,
   reviewCard,
 } from './leitner';
@@ -160,5 +163,36 @@ describe('boîte de révision dans la sauvegarde complète', () => {
     expect(p.problems).toEqual([]);
     expect(p.cards).toEqual(cards);
     expect(cardMedia(cards)).toEqual([]);
+  });
+});
+
+describe('cartes dont le QCM change ou disparaît', () => {
+  const card = { ...newCard(quiz, q1, now), box: 3, reviews: 4 };
+
+  it('met à jour la copie quand la question ou le titre du QCM changent, pas sinon', () => {
+    expect(refreshedCards([card], quiz)).toEqual([]);
+    const corrected = { ...quiz, title: { fr: 'Nouveau titre' }, questions: [{ ...q1, prompt: { fr: 'Énoncé corrigé' } }, q2] };
+    const [next] = refreshedCards([card], corrected);
+    expect(next.snapshot.question.prompt).toEqual({ fr: 'Énoncé corrigé' });
+    expect(next.snapshot.quizTitle).toEqual({ fr: 'Nouveau titre' });
+    // Compartiment, dates et compteurs inchangés.
+    expect({ ...next, snapshot: card.snapshot }).toEqual(card);
+    // Une question absente du QCM n'est pas touchée.
+    expect(refreshedCards([card], { ...quiz, questions: [q2] })).toEqual([]);
+  });
+
+  it('repère les cartes dont la question n’existe plus', () => {
+    expect(isOrphan(card, quiz)).toBe(false);
+    expect(isOrphan(card, null)).toBe(true);
+    expect(isOrphan(card, { questions: [q2] })).toBe(true);
+  });
+
+  it('rattache une carte à une copie de sa question sans perdre sa progression', () => {
+    const mine = { id: 'mes-cartes', title: { fr: 'Mes cartes de révision' }, languages: ['fr'] as const };
+    const copy = { ...structuredClone(q1), id: 'nouvelle' };
+    const next = adoptedCard(card, { ...mine, languages: [...mine.languages] }, copy);
+    expect(next).toMatchObject({ questionId: 'nouvelle', quizId: 'mes-cartes', box: 3, reviews: 4, dueAt: card.dueAt, addedAt: card.addedAt });
+    expect(next.snapshot.question.id).toBe('nouvelle');
+    expect(next.snapshot.quizTitle).toEqual({ fr: 'Mes cartes de révision' });
   });
 });
