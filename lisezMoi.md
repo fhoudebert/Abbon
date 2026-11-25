@@ -25,7 +25,9 @@ Linux, Windows, macOS et Android ; aucune inscription, aucune donnée envoyée.
 - **Export en site web** d'un QCM ou d'un module, pour un hébergement mutualisé : entraînement en pages
   statiques, ou **examen corrigé par le serveur** (PHP) sans les réponses dans le site, avec ouverture par le
   surveillant, code d'accès, liste de classe, tirage des questions, copies, statistiques et publication du
-  corrigé.
+  corrigé. Un **portail d'hébergement** (`npm run portail`, [mode d'emploi](src/lib/exam/portail/LISEZMOI.txt))
+  permet à plusieurs enseignants, chacun avec son compte, de déposer et de retirer ces sites depuis un navigateur,
+  après une seule installation par FTP.
 - **QCM express avec un assistant IA** : un [prompt prêt à l'emploi](docs/prompt-qcm-abbon.md) transforme quelques
   lignes de notes en fichier `.qcm` à importer, pour une fin de cours, une interrogation rapide ou une révision ;
   un [second prompt](docs/prompt-module-abbon.md) rassemble des fichiers `.qcm` en module, avec catégories et

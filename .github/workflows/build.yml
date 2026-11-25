@@ -534,7 +534,7 @@ jobs:
         with:
           ref: ${{ env.BUILD_REF }}
       - uses: actions/setup-node@v7
-        with: { node-version: 26 }
+        with: { node-version: 26, cache: npm }
       - uses: actions/download-artifact@v8
         with: { path: dist, merge-multiple: true }
       - name: Paquets à plat dans dist/ (Linux et Windows arrivent dans des sous-dossiers)
@@ -560,6 +560,17 @@ jobs:
             --dist dist --out site --version "$VERSION" --base-url "$SITE_URL" \
             --github-release "https://github.com/${{ github.repository }}/releases/download/v$VERSION" --github-out gh
           cp site/releases/SHA256SUMS.txt gh/*.json dist/
+      - name: Portail d'hébergement de QCM (Abbon-portail-X.Y.Z.zip, hors version.json)
+        # Lecteur du site (vite build --mode site) et correcteur PHP de cette version : release GitHub, site de
+        # téléchargement (releases/, lien sur la page) et empreinte ajoutée aux deux SHA256SUMS.txt.
+        run: |
+          npm ci
+          npm run portail
+          zip="Abbon-portail-$VERSION.zip"
+          test -f "dist/portail/$zip" || { echo "::error::dist/portail/$zip absent (version de package.json ?)"; exit 1; }
+          mv "dist/portail/$zip" dist/ && rmdir dist/portail
+          cp "dist/$zip" site/releases/
+          (cd dist && sha256sum "$zip") | tee -a dist/SHA256SUMS.txt >> site/releases/SHA256SUMS.txt
       - uses: actions/upload-artifact@v7
         with:
           name: abbon-site-${{ needs.prepare.outputs.version }}

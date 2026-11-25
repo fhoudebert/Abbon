@@ -323,6 +323,30 @@ hébergements mutualisés ; ni base de données ni fichier écrit).
   corrigé reçu. Les noms sont des
   données personnelles : `LISEZMOI.txt` invite à ne garder les copies que le temps nécessaire.
 
+### Portail d'hébergement (`exam/portail/`)
+
+`npm run portail` (`build:site`, puis `scripts/portail/pack.ts`) produit `dist/portail/Abbon-portail-X.Y.Z.zip`,
+publié par le job `release` de `build.yml` (release GitHub, `releases/` du site de téléchargement, qui l'affiche,
+et SHA256SUMS.txt) sans entrer dans `version.json` :
+`questionnaires/index.php` (interface), `questionnaires/_portail/portail.php` (bibliothèque) et
+`questionnaires/_portail/abbon/` (lecteur `build-site/` et `corriger.php`, `enseignant.php`), installé une fois par
+FTP. Données dans `_portail/donnees/` (`comptes.php`, `sites.php`, `essais.php`), JSON après `<?php exit; ?>`,
+écrites par renommage. Première visite : compte administrateur, avec le code d'`installation.php` (lu par FTP).
+Comptes : `password_hash`, 5 échecs en 15 min par adresse bloquent la connexion, session (cookie HttpOnly,
+SameSite=Strict, 30 min), jeton dans chaque formulaire, mot de passe redemandé pour supprimer, remplacer et
+administrer.
+
+Dépôt (`portail_installer_site`) : de l'archive exportée, seuls `donnees.js`, `reglages.js`,
+`examen/solutions.php` et `examen/config.php` sont lus — comme des données : JSON `abbon-site` (version ≤ 1) réécrit
+par `portail_donnees_js`, réglages aux valeurs admises réécrits par `portail_reglages_js`, corrigé base64 décodé et
+réécrit, mot de passe `[A-Za-z0-9]{6,64}` (sinon tiré au hasard). Le lecteur, le correcteur et les `.htaccess` sont
+ceux du portail : aucun PHP, script ou page HTML d'un compte enseignant n'arrive sur le serveur, ce qui protège aussi
+la session du portail, servie sur la même origine que les sites. Le site est préparé dans `_portail/donnees/depot-…`
+puis basculé par `rename`. Remplacer garde `reglages.js`, `examen/config.php` et `examen/copies/*.php`. Les
+réglages se changent dans le portail (`portail_changer_reglages`). Mise à jour : paquet du portail déposé par un
+administrateur (`_portail/abbon/` basculé, puis `portail.php` et `index.php`), puis `portail_mettre_a_jour_sites`
+recopie lecteur et correcteur dans chaque site. Tests : `exam/portail/portail.test.ts` (avec `php`).
+
 ## Limites connues
 
 - Modules : l'historique mis de côté à la désinstallation n'est pas inclus dans la sauvegarde complète ; une
