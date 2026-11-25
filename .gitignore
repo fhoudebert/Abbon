@@ -27,3 +27,4 @@ commandes.txt
 local.properties
 /dist
 /site
+__pycache__/

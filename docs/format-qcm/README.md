@@ -18,6 +18,11 @@ révision : compartiment, dates, date d'acquisition et copie de chaque question)
 d'événement, référence, points, date). Elle se restaure depuis *Paramètres › Sauvegarde* et remplace tout
 le contenu de l'appareil (le code PIN de l'appareil est conservé).
 
+Pour produire un tel fichier sans l'application : [`scripts/qcm/abbon_qcm.py`](../../scripts/qcm/abbon_qcm.py)
+(Python seul, un QCM par fichier, tous les types de questions), utilisé par le
+[prompt de QCM express](../prompt-qcm-abbon.md). Pour un module (plusieurs QCM, catégories, fiches) :
+[`scripts/qcm/abbon_module.py`](../../scripts/qcm/abbon_module.py), avec le [prompt de module](../prompt-module-abbon.md).
+
 ## Règles
 
 - **Identifiants** : lettres, chiffres, `_` et `-` (UUID recommandé). À l'import, un QCM dont l'identifiant existe
