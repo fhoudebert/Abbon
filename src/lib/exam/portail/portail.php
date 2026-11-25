@@ -268,7 +268,8 @@ function portail_reglages_admis() {
 /** Réglages lus dans un reglages.js (valeurs reconnues seulement ; les autres prennent la valeur par défaut). */
 function portail_lire_reglages($texte, $examen) {
   $js = preg_replace('~^\s*//.*$~m', '', (string) $texte);
-  $r = array('modes' => $examen ? 'examen' : 'les-deux', 'corrige' => $examen ? 'enseignant' : 'fin', 'copies' => 'oui', 'seuil' => '', 'tirage' => '');
+  // points : réglage absent (export d'avant ce réglage) → "0" pour un examen corrigé par le serveur, comme l'export.
+  $r = array('modes' => $examen ? 'examen' : 'les-deux', 'corrige' => $examen ? 'enseignant' : 'fin', 'copies' => 'oui', 'seuil' => '', 'tirage' => '', 'points' => $examen ? '0' : '');
   $alias = array('both' => 'les-deux', 'training' => 'entrainement', 'exam' => 'examen', 'end' => 'fin', 'never' => 'jamais', 'teacher' => 'enseignant');
   foreach (array_keys($r) as $k) {
     if (!preg_match('/\b' . $k . '\s*:\s*["\']\s*([^"\']*?)\s*["\']/u', $js, $m)) continue;
@@ -292,6 +293,8 @@ function portail_regler($r, $k, $v) {
     if ($v === '' || (preg_match('/^\d{1,3}(\.\d{1,2})?$/', $v) && (float) $v >= 1 && (float) $v <= 100)) $r[$k] = $v;
   } elseif ($k === 'tirage') {
     if ($v === '' || (preg_match('/^\d{1,4}$/', $v) && (int) $v >= 1)) $r[$k] = $v === '' ? '' : (string) (int) $v;
+  } elseif ($k === 'points') {
+    if ($v === '' || preg_match('/^\d{1,4}$/', $v)) $r[$k] = $v === '' ? '' : (string) (int) $v;
   }
   return $r;
 }
@@ -315,7 +318,9 @@ function portail_reglages_js($r, $examen) {
     . "  // Seuil de réussite, en % ; \"\" : celui de chaque QCM.\n"
     . "  seuil: \"{$r['seuil']}\",\n"
     . "  // Nombre de questions tirées au hasard par examen ; \"\" : toutes.\n"
-    . "  tirage: \"{$r['tirage']}\",\n};\n";
+    . "  tirage: \"{$r['tirage']}\",\n"
+    . "  // Points (ceintures) d'un QCM réussi en mode examen : \"0\" (aucun) ou un nombre ; \"\" : comme à l'entraînement.\n"
+    . "  points: \"{$r['points']}\",\n};\n";
 }
 
 /** Corrigé d'un solutions.php exporté par Abbon, relu comme une donnée (jamais exécuté). */

@@ -111,7 +111,7 @@ describe.skipIf(!hasPhp)('portail d\'hébergement (PHP)', () => {
     const js = readFileSync(join(dir, 'donnees.js'), 'utf8');
     expect(js.startsWith('window.ABBON_SITE = ')).toBe(true);
     expect(JSON.parse(js.slice('window.ABBON_SITE = '.length, -2))).toEqual(JSON.parse(JSON.stringify(data)));
-    expect(readFileSync(join(dir, 'reglages.js'), 'utf8')).toMatch(/modes: "les-deux",[\s\S]*corrige: "fin"/);
+    expect(readFileSync(join(dir, 'reglages.js'), 'utf8')).toMatch(/modes: "les-deux",[\s\S]*corrige: "fin"[\s\S]*points: ""/);
     expect(error(`portail_installer_site(${JSON.stringify(path)}, 'revision-histoire', 'm.martin')`)).toMatch(/existe déjà/);
     expect(error(`portail_installer_site(${JSON.stringify(path)}, 'autre', 'm.martin', '', true)`)).toMatch(/Aucun site/);
     mkdirSync(join(root, 'hors-portail'));
@@ -141,7 +141,7 @@ describe.skipIf(!hasPhp)('portail d\'hébergement (PHP)', () => {
     expect(readFileSync(join(ex, 'corriger.php'), 'utf8')).toBe(CORRIGER_PHP);
     expect(readFileSync(join(ex, '.htaccess'), 'utf8')).toContain('(solutions|config)');
     expect(readFileSync(join(ex, 'copies/.htaccess'), 'utf8')).toContain('denied');
-    expect(readFileSync(join(root, 'interro-math-decembre/reglages.js'), 'utf8')).toMatch(/modes: "examen",[\s\S]*copies: "oui",[\s\S]*corrige: "enseignant"/);
+    expect(readFileSync(join(root, 'interro-math-decembre/reglages.js'), 'utf8')).toMatch(/modes: "examen",[\s\S]*copies: "oui",[\s\S]*corrige: "enseignant"[\s\S]*points: "0"/);
     expect(php(`echo json_encode([portail_mot_de_passe_site('interro-math-decembre'), portail_sites()['interro-math-decembre']['titre']]);`)).toEqual(['MotDePasse23', 'Interro de maths']);
     // Le corrigé réécrit est lu par le correcteur comme celui d'Abbon.
     const sol = (f: string) => {
@@ -166,8 +166,11 @@ describe.skipIf(!hasPhp)('portail d\'hébergement (PHP)', () => {
     const path = file('interro', await examZip());
     php(`portail_installer_site(${JSON.stringify(path)}, 'interro', 'm.martin'); echo 'null';`);
     expect(php(`echo json_encode(portail_changer_reglages('interro', ['corrige' => 'fin', 'copies' => 'non', 'seuil' => '50', 'tirage' => '10', 'modes' => 'les-deux']));`)).toEqual({
-      modes: 'examen', corrige: 'fin', copies: 'non', seuil: '50', tirage: '10',
+      modes: 'examen', corrige: 'fin', copies: 'non', seuil: '50', tirage: '10', points: '0',
     });
+    expect(php(`echo json_encode(portail_changer_reglages('interro', ['points' => '5']));`)).toMatchObject({ points: '5' });
+    expect(php(`echo json_encode(portail_changer_reglages('interro', ['points' => 'x']));`)).toMatchObject({ points: '5' });
+    expect(readFileSync(join(root, 'interro/reglages.js'), 'utf8')).toContain('points: "5"');
     expect(php(`echo json_encode(portail_changer_reglages('interro', ['corrige' => 'alert(1)', 'seuil' => '"; x', 'tirage' => '0']));`)).toMatchObject({ corrige: 'fin', seuil: '50', tirage: '10' });
     const ex = join(root, 'interro/examen');
     writeFileSync(join(ex, 'copies/copies.php'), '<?php exit; ?>\n{"copie":1}\n');

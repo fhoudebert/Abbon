@@ -110,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       if ($sites[$nom]['proprietaire'] !== $moi && !$admin) throw new InvalidArgumentException('Ce site appartient à un autre compte.');
       if ($action === 'reglages') {
         $valeurs = array();
-        foreach (array('modes', 'corrige', 'copies', 'seuil', 'tirage') as $k) if (isset($_POST[$k])) $valeurs[$k] = p($k);
+        foreach (array('modes', 'corrige', 'copies', 'seuil', 'tirage', 'points') as $k) if (isset($_POST[$k])) $valeurs[$k] = p($k);
         portail_changer_reglages($nom, $valeurs);
         $message = "Réglages de « $nom » enregistrés.";
       } else {
@@ -389,6 +389,8 @@ summary { cursor: pointer; color: var(--accent); }
         <input type="text" inputmode="decimal" id="seuil-<?= h($nom) ?>" name="seuil" value="<?= h($r['seuil']) ?>" class="court">
         <label for="tirage-<?= h($nom) ?>">Questions tirées au hasard par examen (vide : toutes)</label>
         <input type="text" inputmode="numeric" id="tirage-<?= h($nom) ?>" name="tirage" value="<?= h($r['tirage']) ?>" class="court">
+        <label for="points-<?= h($nom) ?>">Points (ceintures) d'un QCM réussi en mode examen : 0 pour aucun (vide : comme à l'entraînement)</label>
+        <input type="text" inputmode="numeric" id="points-<?= h($nom) ?>" name="points" value="<?= h($r['points']) ?>" class="court">
         <p><button>Enregistrer les réglages</button></p>
       </form>
     </details>

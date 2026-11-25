@@ -105,9 +105,9 @@ ce site convient à l'entraînement et aux examens blancs, pas à un examen surv
 réponses ne figurent pas dans les fichiers, exporter en « Examen seulement » avec « Correction par le serveur
 (PHP) ».
 
-Modes proposés (entraînement, examen ou les deux), corrigé de l'examen, seuil de réussite et tirage au sort
-des questions de l'examen : fichier reglages.js, à modifier avec un éditeur de texte puis à redéposer ; les
-explications sont dans le fichier.
+Modes proposés (entraînement, examen ou les deux), corrigé de l'examen, seuil de réussite, tirage au sort
+des questions de l'examen et points (ceintures) d'un examen réussi : fichier reglages.js, à modifier avec un
+éditeur de texte puis à redéposer ; les explications sont dans le fichier.
 
 Pour mettre le site à jour, exporter de nouveau depuis Abbon avec le même titre et remplacer les fichiers :
 la progression des visiteurs est conservée. Garder son reglages.js si on l'a modifié.
@@ -169,6 +169,8 @@ Réglages (fichier reglages.js, relu par le serveur à chaque correction) :
 - seuil : seuil de réussite en % pour tous les QCM (par exemple "50") ; "" : celui de chaque QCM ;
 - tirage : nombre de questions par examen, tirées au hasard par le serveur pour chaque élève parmi celles du QCM
   (par exemple "10") ; "" (par défaut) : toutes les questions. Seules les questions tirées sont notées.
+- points : points (ceintures) d'un QCM réussi, "0" par défaut : un examen ne rapporte aucun point ; un nombre (par
+  exemple "10") pour en donner ; "" : comme à l'entraînement.
 
 Limites : un élève peut indiquer un autre nom que le sien, ou, en vidant les données de son navigateur, commencer
 une seconde copie tant que l'examen est ouvert (signalée si le nom est le même) ; une fois le corrigé publié (ou

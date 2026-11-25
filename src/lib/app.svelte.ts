@@ -1,4 +1,4 @@
-import { SITE, examOnly } from '$lib/site';
+import { SITE, examOnly, siteExamPoints } from '$lib/site';
 import { getRepository, type Repository } from '$lib/data';
 import { clearContent, releaseModuleCopies } from '$lib/data/repair';
 import { seedDemo, tidyDemo } from '$lib/data/seed';
@@ -17,6 +17,7 @@ import { quizOf, startAttempt } from '$lib/domain/session';
 import { adoptedCard, dueCards, isOrphan, newCard, refreshedCards, restoreCard, reviewCard, type LeitnerCard } from '$lib/domain/leitner';
 import {
   attemptRewards,
+  examRewards,
   collectRewards,
   localDay,
   promotion,
@@ -249,7 +250,8 @@ class AppState {
 
   /**
    * Récompenses d'une tentative qui vient de se terminer (QCM réussi, module terminé). En mode examen, les points
-   * comptent mais ne s'affichent pas (ni sur le résultat, ni en annonce de ceinture).
+   * ne s'affichent pas (ni sur le résultat, ni en annonce de ceinture) ; sur un site, le réglage `points` de
+   * reglages.js les fixe (« 0 » pour un examen corrigé par le serveur : aucun point).
    */
   async rewardAttempt(quiz: Pick<Quiz, 'id' | 'moduleId' | 'questions'>, attempt: Attempt, passed: boolean): Promise<number> {
     const complete = attempt.questionOrder.length >= quiz.questions.length;
@@ -260,7 +262,9 @@ class AppState {
       ? this.quizzes.filter((q) => q.moduleId === moduleId && q.status === 'published').map((q) => q.id)
       : [];
     const exam = attempt.mode === 'exam';
-    const points = await this.#grant(attemptRewards({ id: quiz.id, moduleId }, passed, complete, moduleQuizIds, passedIds), exam);
+    let rewards = attemptRewards({ id: quiz.id, moduleId }, passed, complete, moduleQuizIds, passedIds);
+    if (exam) rewards = examRewards(rewards, siteExamPoints());
+    const points = await this.#grant(rewards, exam);
     if (points && !exam) this.attemptPoints = { attemptId: attempt.id, points };
     return points;
   }

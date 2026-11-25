@@ -18,7 +18,7 @@ import { drawQuestionIds, resultOf, startAttempt } from '$lib/domain/session';
 import type { Answer, Attempt, InstalledModule, Question, Quiz } from '$lib/domain/types';
 import { parsePackage } from '$lib/interchange/qcmPackage';
 import { siteContent, siteDataOf, zipSite } from '$lib/interchange/siteExport';
-import { parseCandidate, resolveCollect, resolveDraw, resolveSettings, resolveThreshold, settingsScript } from '$lib/site';
+import { parseCandidate, resolveCollect, resolveDraw, resolveExamPoints, resolveSettings, resolveThreshold, settingsScript } from '$lib/site';
 import { detailLocked, examState, finishWithGrade, gradeOnServer, gradeRequest, isGradeResponse, startOnServer, withDetail, withSolutions } from './client';
 import { displayOf, plainMath, publicQuiz, serverSolutions, solutionsPhp } from './publish';
 import { CORRIGER_PHP, ENSEIGNANT_PHP, examFiles, newPassword } from './server';
@@ -724,6 +724,10 @@ describe('tirage de N questions parmi M', () => {
     for (const v of ['', '0', 'dix', '-3', null]) expect(resolveDraw({ tirage: v })).toBeNull();
     expect(resolveDraw(null)).toBeNull();
     expect(settingsScript({ modes: 'exam', solutions: 'end' })).toContain('tirage: ""');
+    // Points d'un QCM réussi en examen : aucun pour l'examen corrigé par le serveur, comme à l'entraînement sinon.
+    expect(settingsScript({ modes: 'exam', solutions: 'end' }, true)).toContain('points: "0"');
+    expect(settingsScript({ modes: 'both', solutions: 'end' })).toContain('points: ""');
+    expect([resolveExamPoints({ points: '0' }), resolveExamPoints({ points: ' 5 ' }), resolveExamPoints({ points: 2 }), resolveExamPoints({ points: '' }), resolveExamPoints({ points: '-1' }), resolveExamPoints(null)]).toEqual([0, 5, 2, null, null, null]);
   });
 
   it('questions tirées : nombre demandé, ordre du QCM, au hasard selon la tentative', () => {

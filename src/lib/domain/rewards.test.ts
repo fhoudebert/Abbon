@@ -11,6 +11,7 @@ import {
   BELTS,
   collectRewards,
   DAN_STEP,
+  examRewards,
   localDay,
   POINTS,
   promotion,
@@ -187,5 +188,17 @@ describe('récompenses dans la sauvegarde complète', () => {
     expect(p.problems).toEqual([]);
     expect(p.rewards).toEqual(rewards);
     expect(p.cards).toEqual(cards);
+  });
+});
+
+describe('points en mode examen (réglage « points » d\'un site)', () => {
+  const rewards = attemptRewards({ id: 'q1', moduleId: 'm' }, true, true, ['q1', 'q2'], new Set(['q2']), new Date('2026-01-01'));
+  it('null : comme à l\'entraînement ; 0 : aucun point ; n : n points pour le QCM, bonus de module gardé', () => {
+    expect(examRewards(rewards, null)).toEqual(rewards);
+    expect(examRewards(rewards, 0)).toEqual([]);
+    expect(examRewards(rewards, 3).map((r) => [r.kind, r.points])).toEqual([
+      ['quiz', 3],
+      ['module', POINTS.module],
+    ]);
   });
 });

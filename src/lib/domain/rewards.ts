@@ -128,3 +128,14 @@ export function attemptRewards(
 
 /** Clé d'unicité d'une récompense. */
 export const rewardKey = (r: Pick<Reward, 'kind' | 'ref'>) => `${r.kind}:${r.ref}`;
+
+/**
+ * Récompenses d'une tentative en mode examen, selon le réglage `points` d'un site (`resolveExamPoints`) :
+ * null, comme à l'entraînement ; 0, aucune (ni QCM ni module : un examen ne fait pas avancer les ceintures) ;
+ * n, n points pour le QCM réussi (bonus de module inchangé).
+ */
+export function examRewards(rewards: readonly Reward[], examPoints: number | null): Reward[] {
+  if (examPoints === null) return [...rewards];
+  if (examPoints === 0) return [];
+  return rewards.map((r) => (r.kind === 'quiz' ? { ...r, points: examPoints } : r));
+}

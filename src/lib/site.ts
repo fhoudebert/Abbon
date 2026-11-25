@@ -166,6 +166,8 @@ ${
   // Tirage au sort : nombre de questions par examen, tirées au hasard pour chaque élève parmi celles du QCM
   // (par exemple "10") ; "" : toutes les questions.${server ? ' Le tirage est fait par le serveur.' : ''}
   tirage: "",
+  // Points (ceintures) d'un QCM réussi en mode examen : "0" (aucun) ou un nombre ; "" : comme à l'entraînement.
+  points: "${server ? '0' : ''}",
 };
 `;
 
@@ -190,6 +192,18 @@ export function resolveThreshold(override?: unknown): number | null {
 }
 export const siteThreshold = () =>
   resolveThreshold(typeof window === 'undefined' ? null : (window as { ABBON_SITE_SETTINGS?: unknown }).ABBON_SITE_SETTINGS);
+
+/**
+ * Points (ceintures) d'un QCM réussi en mode examen, d'après `reglages.js` (`points: "0"`) ; null : comme à
+ * l'entraînement. L'export « examen corrigé par le serveur » écrit "0" : un examen ne rapporte aucun point.
+ */
+export function resolveExamPoints(override?: unknown): number | null {
+  const v = (override as { points?: unknown } | null)?.points;
+  const text = typeof v === 'number' ? String(v) : typeof v === 'string' ? v.trim() : '';
+  return /^\d{1,4}$/.test(text) ? Number(text) : null;
+}
+export const siteExamPoints = () =>
+  SITE ? resolveExamPoints(typeof window === 'undefined' ? null : (window as { ABBON_SITE_SETTINGS?: unknown }).ABBON_SITE_SETTINGS) : null;
 
 /** Texte de `donnees.js`. Le JSON est échappé pour ne jamais fermer la balise script. */
 export const siteScript = (data: SiteData) =>

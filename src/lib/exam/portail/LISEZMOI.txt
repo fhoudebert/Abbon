@@ -39,7 +39,7 @@ site », choisir l'archive .zip (sans la décompresser) et le nom du dossier (in
 « Mes sites » donne l'adresse du site à transmettre aux élèves et, pour un examen corrigé par le serveur,
 l'adresse et le mot de passe de l'espace enseignant.
 
-- Réglages (modes, corrigé, copies, seuil, tirage) : dans « Mes sites », sans redéposer le site.
+- Réglages (modes, corrigé, copies, seuil, tirage, points d'un examen réussi) : dans « Mes sites », sans redéposer le site.
 - Nouvelle version d'un site : « Remplacer par une nouvelle version » ; les réglages, les copies des élèves, le
   mot de passe de l'espace enseignant et l'état de l'examen sont gardés.
 - Suppression : le dossier du site et toutes ses copies (télécharger d'abord les copies en CSV dans l'espace
