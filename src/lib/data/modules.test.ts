@@ -118,6 +118,34 @@ describe.each<[string, () => Repository]>([
     }
   });
 
+  it('repartir de zéro en gardant la boîte : cartes et leurs images gardées, le reste retiré', async () => {
+    const repo = make();
+    await install(repo, '1.0.0', ['m_a']);
+    const q = (await repo.getQuiz('m_a'))!;
+    const img = 'a'.repeat(64);
+    const other = 'b'.repeat(64);
+    for (const hash of [img, other]) await repo.saveMedia({ hash, mime: 'image/png', sizeBytes: 3, data: 'AAAA' });
+    const question = { ...q.questions[0], prompt: { fr: { type: 'doc' as const, content: [{ type: 'image', attrs: { hash: img, alt: 'x' } }] } } };
+    const card = {
+      questionId: question.id,
+      quizId: q.id,
+      box: 3,
+      dueAt: '2026-01-01T00:00:00Z',
+      addedAt: '2026-01-01T00:00:00Z',
+      lastAt: null,
+      reviews: 2,
+      lapses: 0,
+      acquiredAt: null,
+      snapshot: { question, quizTitle: q.title, languages: q.languages },
+    };
+    await repo.saveCard(card);
+    await clearContent(repo, false, true);
+    expect(await repo.listQuizzes()).toEqual([]);
+    expect(await repo.listModules()).toEqual([]);
+    expect(await repo.listCards()).toEqual([card]);
+    expect(await repo.listMediaHashes()).toEqual([img]);
+  });
+
   it('installe un module : QCM et catégories marqués, fiche conservée', async () => {
     const repo = make();
     const plan = await install(repo, '1.0.0', ['m_a', 'm_b']);

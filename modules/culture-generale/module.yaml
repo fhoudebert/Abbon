@@ -1,0 +1,40 @@
+# Module « Culture générale » — refonte (2.0.0) du module fr.culture-generale.quiz 1.1.0 (trois QCM), complété
+# à partir des dossiers pédagogiques de science-ecole.fr (Alain Robert, Jeannette Jarlan, Raymond Piolat, licence
+# CC BY-NC-SA 2.0 FR) : histoire de l'atome, éléments chimiques, volcans, aimants et boussoles, bêtes de la
+# litière ; et d'une fiche d'exercices sur les capitales déplacées. Questions reformulées, faits vérifiés.
+# Les identifiants des trois QCM et catégories de la 1.1.0 sont gardés : la mise à jour les remplace.
+# Format des sources : docs/modules.md. Vérifier : npm run module:check ; construire : npm run module:build
+
+id: fr.culture-generale.quiz
+version: 2.0.0
+date: 2026-11-25
+title:
+  fr: "Culture générale"
+description:
+  fr: "Histoire et géographie (capitales qui ont déménagé : Abuja, Astana, Brasília, Nusantara…), sciences du ciel et du corps humain, histoire de l'atome et des éléments chimiques, volcans et roches, aimants et boussoles, animaux étonnants et petites bêtes de la litière, et vie quotidienne (propane ou butane, induction, safran…). Avec des fiches de révision. D'après des dossiers de science-ecole.fr (Alain Robert, Jeannette Jarlan, Raymond Piolat)."
+level: culture générale
+license: CC-BY-NC-SA-4.0
+authors: [Abbon]
+homepage: https://github.com/fhoudebert/Abbon
+languages: [fr]
+requires:
+  app: ">=0.2.0"
+defaults:
+  passThreshold: 0.6
+
+categories:
+  - id: histoire-geographie
+    name: { fr: "Histoire et géographie" }
+  - id: sciences-nature
+    name: { fr: "Sciences et nature" }
+  - id: matiere
+    parent: sciences-nature
+    name: { fr: "Atomes et éléments chimiques" }
+  - id: terre
+    parent: sciences-nature
+    name: { fr: "La Terre : volcans et magnétisme" }
+  - id: vivant
+    parent: sciences-nature
+    name: { fr: "Le monde vivant" }
+  - id: culture-quotidienne
+    name: { fr: "Vie quotidienne" }

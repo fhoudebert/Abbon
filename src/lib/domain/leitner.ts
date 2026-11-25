@@ -122,3 +122,38 @@ export function cardQuestion(card: LeitnerCard, current: Quiz | null | undefined
   const live = current?.questions.find((q) => q.id === card.questionId);
   return live && current ? { question: live, languages: current.languages, quizTitle: current.title } : card.snapshot;
 }
+
+/**
+ * Cartes dont la copie doit être remise à jour d'après `quiz` : la question existe dans le QCM et diffère de la
+ * copie (énoncé corrigé, module mis à jour, titre du QCM changé). Appelé avant qu'un QCM disparaisse et à chaque
+ * enregistrement : une carte dont le QCM est supprimé garde ainsi la dernière version, pas celle de l'ajout.
+ */
+export function refreshedCards(cards: readonly LeitnerCard[], quiz: Quiz): LeitnerCard[] {
+  const byId = new Map(quiz.questions.map((q) => [q.id, q]));
+  const out: LeitnerCard[] = [];
+  for (const card of cards) {
+    const question = byId.get(card.questionId);
+    if (!question) continue;
+    const snapshot = { question: structuredClone(question), quizTitle: { ...quiz.title }, languages: [...quiz.languages] };
+    if (card.quizId === quiz.id && JSON.stringify(snapshot) === JSON.stringify(card.snapshot)) continue;
+    out.push({ ...card, quizId: quiz.id, snapshot });
+  }
+  return out;
+}
+
+/** La question de la carte n'existe plus : son QCM a été supprimé ou désinstallé, ou elle en a été retirée. */
+export const isOrphan = (card: Pick<LeitnerCard, 'questionId'>, quiz: Pick<Quiz, 'questions'> | null | undefined) =>
+  !quiz?.questions.some((q) => q.id === card.questionId);
+
+/**
+ * Carte rattachée à une nouvelle question (copie de la sienne, dans « Mes cartes de révision ») : compartiment,
+ * dates et compteurs gardés.
+ */
+export function adoptedCard(card: LeitnerCard, quiz: Pick<Quiz, 'id' | 'title' | 'languages'>, question: Question): LeitnerCard {
+  return {
+    ...card,
+    questionId: question.id,
+    quizId: quiz.id,
+    snapshot: { question: structuredClone(question), quizTitle: { ...quiz.title }, languages: [...quiz.languages] },
+  };
+}

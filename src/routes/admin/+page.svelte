@@ -16,7 +16,10 @@
   let clearer: ConfirmDialog;
   let cleared = $state<string | null>(null);
 
-  async function clearAll(dropRewards: boolean) {
+  let keepPoints = $state(true);
+  let keepCards = $state(true);
+
+  async function clearAll(dropRewards: boolean, keepBox: boolean) {
     const n = app.quizzes.length;
     // Sauvegarde automatique d'abord (application installée) : sans elle, rien n'est retiré.
     let backup: string | null;
@@ -26,7 +29,7 @@
       cleared = t('common.error', { error: e instanceof Error ? e.message : String(e) });
       return;
     }
-    await app.clearAllQuizzes(dropRewards);
+    await app.clearAllQuizzes(dropRewards, keepBox);
     cleared = [t('admin.clearAll.done', { n }), backup ? t('import.backupDone', { name: backup }) : ''].filter(Boolean).join(' ');
   }
 
@@ -184,22 +187,34 @@
   bind:this={clearer}
   title={t('admin.clearAll.title', { n: app.quizzes.length })}
   body={t('admin.clearAll.body')}
-  confirmLabel={t('admin.clearAll.keepPoints')}
+  confirmLabel={t('admin.clearAll.confirm')}
   danger
-  onconfirm={() => clearAll(false)}
+  onconfirm={() => clearAll(!keepPoints, keepCards && app.cards.length > 0)}
 >
-  {#snippet extra(close)}
-    <button
-      class="danger-button"
-      onclick={async () => {
-        close();
-        await clearAll(true);
-      }}>{t('admin.clearAll.dropPoints')}</button
-    >
-  {/snippet}
+  <fieldset class="keep">
+    <label><input type="checkbox" bind:checked={keepPoints} /> {t('admin.clearAll.keepPoints')}</label>
+    {#if app.cards.length}
+      <label><input type="checkbox" bind:checked={keepCards} /> {t('admin.clearAll.keepCards', { n: app.cards.length })}</label>
+    {/if}
+  </fieldset>
 </ConfirmDialog>
 
 <style>
+  .keep {
+    border: none;
+    padding: 0;
+    margin: 0 0 1rem;
+    display: grid;
+    gap: 0.5rem;
+  }
+  .keep label {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+  .keep input {
+    margin-block-start: 0.3rem;
+  }
   .danger-zone {
     margin-block-start: 2.5rem;
     padding-block-start: 1rem;

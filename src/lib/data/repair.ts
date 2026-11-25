@@ -1,7 +1,8 @@
 /**
  * Entretien des données : réparations au démarrage (application installée), remise à zéro des questionnaires.
  */
-import type { Repository } from './repository';
+import { cardMedia } from '$lib/interchange/qcmPackage';
+import type { Media, Repository } from './repository';
 
 /**
  * Copies « Dupliquer pour modifier » faites avant la correction de `cloneQuiz` : elles gardaient le module du QCM
@@ -25,11 +26,13 @@ export async function releaseModuleCopies(repo: Repository): Promise<number> {
 
 /**
  * Retire tous les questionnaires : QCM personnels et modules, catégories, images, tentatives (et historique mis de
- * côté), boîte de révision. Réglages et code PIN gardés (les QCM de démonstration ne reviennent pas) ; points et
- * ceinture aussi, sauf `dropRewards`.
+ * côté). Réglages et code PIN gardés (les QCM de démonstration ne reviennent pas) ; points et ceinture aussi, sauf
+ * `dropRewards` ; boîte de révision avec `keepCards`, avec les images de ses cartes.
  */
-export async function clearContent(repo: Repository, dropRewards = false): Promise<void> {
+export async function clearContent(repo: Repository, dropRewards = false, keepCards = false): Promise<void> {
   const settings = await repo.listSettings();
   const rewards = dropRewards ? [] : await repo.listRewards();
-  await repo.replaceAll({ categories: [], quizzes: [], attempts: [], answers: [], settings, media: [], modules: [], cards: [], rewards });
+  const cards = keepCards ? await repo.listCards() : [];
+  const media = (await Promise.all(cardMedia(cards).map((h) => repo.getMedia(h)))).filter((m): m is Media => !!m);
+  await repo.replaceAll({ categories: [], quizzes: [], attempts: [], answers: [], settings, media, modules: [], cards, rewards });
 }
