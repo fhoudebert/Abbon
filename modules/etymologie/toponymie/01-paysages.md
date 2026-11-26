@@ -117,25 +117,25 @@ D'où vient le nom de Paris ?
 > À la fin de l'Empire romain, beaucoup de villes ont pris le nom du peuple dont elles étaient le chef-lieu : Reims (Rèmes), Amiens (Ambiens), Bourges (Bituriges), Poitiers (Pictons), Chartres (Carnutes). La légende troyenne de Paris a bien circulé au Moyen Âge, mais elle est inventée.
 
 ## lyon · single
-Lyon (*Lugdunum*), Verdun, Laon, Châteaudun, Issoudun : que désigne le gaulois *dunum* ?
+Lyon, Laon et Loudun (trois anciens *Lugdunum*), Verdun (*Virodunum*), Châteaudun, Issoudun : que désigne le gaulois *dunum* ?
 
 - [x] Une forteresse, une place forte, souvent sur une hauteur
 - [ ] Une rivière
 - [ ] Un marché
 - [ ] Un temple
 
-> Pour Lyon, le premier élément est discuté : le dieu Lug, ou un mot signifiant « lumineux ». Un mot germanique de la même famille a donné l'anglais *town*, la ville.
+> Pour les *Lugdunum*, le premier élément est discuté : le dieu Lug, ou un mot signifiant « lumineux ». Verdun serait la forteresse « puissante » ou « vraie », selon le sens donné à *viro-*. Meung-sur-Loire et Mehun-sur-Yèvre (*Magdunum*) associent le marché (*magos*) et la forteresse. Un mot germanique de la même famille a donné l'anglais *town*, la ville.
 
 ## equoranda · multiple
-Les peuples gaulois marquaient leurs frontières : le mot gaulois *equoranda*, « limite », traduit en latin *fines*, « les limites », a laissé des noms de lieux. Lesquels en viennent ?
+Les peuples gaulois marquaient leurs frontières : le mot gaulois *equoranda*, « limite », traduit en latin *fines*, « les limites », a laissé des noms de lieux. Lesquels en sont issus ?
 
 - [x] Ingrandes
 - [x] Aigurande
 - [x] Fins (Somme)
-- [ ] Mirande
+- [ ] Guérande
 - [ ] Fénétrange
 
-> *Equoranda* a donné Ingrandes, Ingrannes, Aigurande, Eygurande, Iguerande, Ygrande, Yvrande… : Ingrandes (Vienne) entre Pictons et Turons, Iguerande entre Éduens et Ségusiaves. Sa traduction latine, *fines*, a donné Fins, Feins, Feings. Les cités gauloises étant devenues des diocèses, ces noms tombent souvent sur d'anciennes limites de diocèse ou de province. Pièges : Mirande vient de l'occitan *miranda*, le belvédère (de *mirar*, regarder) ; Fénétrange, en allemand *Finstingen*, est un nom germanique en -ingen.
+> *Equoranda* a donné Ingrandes, Ingrannes, Aigurande, Eygurande, Iguerande, Ygrande, Yvrande… : Ingrandes (Vienne) entre Pictons et Turons, Iguerande entre Éduens et Ségusiaves. Sa traduction latine, *fines*, a donné Fins, Feins, Feings. Les cités gauloises étant devenues des diocèses, ces noms tombent souvent sur d'anciennes limites de diocèse ou de province. Pièges : Guérande, souvent citée, est attestée au IXe siècle sous la forme bretonne *Uuenran* (*gwenn*, blanc ou sacré, et *rann*, parcelle), et les toponymistes écartent *equoranda* ; Mirande vient de l'occitan *miranda*, le belvédère (de *mirar*, regarder) ; Fénétrange, en allemand *Finstingen*, est un nom germanique en -ingen.
 
 ## fines-peutinger · single
 La table de Peutinger, copie médiévale d'une carte des routes romaines, place une étape *Fines* sur la route d'Orléans (*Cenabum*) à Sens (*Agedincum*). Quel lieu porte aujourd'hui ce nom, sous sa forme gauloise ?

@@ -70,5 +70,5 @@ Attention aux homophones : dans « Quant li dus de Lemborc ot son conte finé »
 ## Noms de lieux
 
 - **Aître** (*atrium*) : cimetière autour d'une église (aître Saint-Maclou, Rouen).
-- **Ouche** : terre fertile près de la maison ; **breuil** : bois clos ; **plessis** : enclos de branches ; **essart** : terre défrichée ; **ferté** : forteresse.
+- **Ouche** : terre fertile près de la maison ; **breuil** : petit bois ; **plessis** : enclos de branches ; **essart** : terre défrichée ; **ferté** : forteresse.
 - **Bief** : canal qui amène l'eau au moulin ; **escabelle** (escabeau), **châlit** (cadre du lit) : meubles d'autrefois.

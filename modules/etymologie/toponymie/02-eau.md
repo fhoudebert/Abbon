@@ -118,14 +118,14 @@ Brive-la-Gaillarde, Briare, Brioude, et Amiens, qui s'appelait *Samarobriva* : q
 > Briare viendrait de *Brivodurum*, « la forteresse du pont ». Ces noms montrent que les Gaulois franchissaient les rivières sur des ponts bien avant la conquête romaine. Amiens, comme Paris, a ensuite pris le nom de son peuple, les Ambiens.
 
 ## gue · single
-Chambord (*Camboritum*) et Niort (*Novioritum*) cachent le même mot gaulois, *ritu*. Que signifie-t-il ?
+Chambord (*Camboritum*), Niort (*Novioritum*) et peut-être Rueil (*Rotoialum*) cachent le même mot gaulois, *ritu*. Que signifie-t-il ?
 
 - [x] Un gué, un passage à pied dans une rivière ; Chambord serait « le gué du méandre », Niort « le nouveau gué »
 - [ ] Une forteresse
 - [ ] Un rite, une cérémonie religieuse
 - [ ] Une rive
 
-> Le gaulois *ritu* et l'anglais *ford*, le gué d'Oxford (« le gué des bœufs »), remontent à la même racine indo-européenne. Attention : Chartres ne contient pas ce mot, la ville tient son nom des Carnutes.
+> Pour Chambord, *cambo-* est la courbe, comme celle du Cosson ; Rueil serait la « clairière du gué » (*ialo-*, clairière), à moins que le premier élément ne soit un ruisseau, un « rû ». Le gaulois *ritu* est de la même famille que l'anglais *ford*, le gué d'Oxford (« le gué des bœufs ») et le latin *portus*, le passage, puis le port.
 
 ## condate · single
 Avant de s'appeler Rennes, la ville se nommait *Condate*. Que désignait ce mot gaulois ?
