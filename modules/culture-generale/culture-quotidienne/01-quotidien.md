@@ -1,7 +1,7 @@
 ---
 id: culture-quotidienne
 title: { fr: "Sciences de la vie quotidienne" }
-description: { fr: "Propane ou butane, induction, calorie, couleurs primaires, safran, chocolat, thé, pizza Margherita, marathon" }
+description: { fr: "Propane ou butane, induction, calorie, couleurs primaires, safran, chocolat, thé, pizza Margherita, marathon, cépages résistants (PIWI)" }
 level: bases
 tags: [culture générale, vie quotidienne, sciences]
 ---
@@ -102,3 +102,23 @@ Quelle est la distance officielle d'un marathon, en kilomètres ?
 = 42,195 ± 0,005 km
 
 > Elle a été fixée d'après le parcours des Jeux olympiques de Londres, en 1908, et officialisée en 1921. Le nom rappelle la légende du messager grec qui aurait couru de Marathon à Athènes pour annoncer la victoire de 490 avant notre ère.
+
+## cepages-resistants · single
+Cabernet blanc, sauvignac, souvignier gris, muscaris : quel est le point commun de ces cépages aux noms familiers ?
+
+- [x] Ce sont des cépages récents, nés de croisements avec des vignes sauvages résistantes au mildiou et à l'oïdium : on peut les cultiver avec très peu de fongicides
+- [ ] Ce sont d'anciens cépages français oubliés, retrouvés dans des vignes abandonnées
+- [ ] Ce sont des mutations naturelles du cabernet sauvignon et du sauvignon blanc
+- [ ] Ce sont des vignes génétiquement modifiées en laboratoire
+
+> Leurs noms rappellent les cépages classiques dont ils descendent en partie, mais ce sont des hybrides : le souvignier gris (Fribourg, 1983) vient du cabernet sauvignon et du bronner, le cabernet blanc (1991) et le sauvignac sont des obtentions du Suisse Valentin Blattner, le muscaris un croisement du muscat. Leur résistance vient de vignes sauvages d'Amérique du Nord et d'Asie, introduites par des croisements répétés : c'est de la sélection classique, pas de la modification génétique. Le mildiou (arrivé d'Amérique en 1878) et l'oïdium (1845) sont les deux maladies cryptogamiques qui justifient la plupart des traitements de la vigne.
+
+## piwi · single
+En Allemagne, en Suisse et en Alsace, on appelle ces cépages résistants des « PIWI ». Que veut dire ce sigle ?
+
+- [x] *Pilzwiderstandsfähig* : « résistant aux champignons », en allemand
+- [ ] « Pinot de Wissembourg », du nom de leur ville d'origine
+- [ ] « Produit issu de vigne irriguée »
+- [ ] Le nom d'un oiseau qui, dit-on, ne touche pas à leurs raisins
+
+> Les fongicides représentent plus de 80 % des traitements phytosanitaires de la vigne, contre le mildiou et l'oïdium surtout. Avec ces cépages, on peut ne faire qu'un à trois traitements préventifs par an, conseillés pour que les champignons ne contournent pas les résistances. En France, plusieurs sont inscrits au catalogue officiel, mais beaucoup d'appellations ne les admettent pas encore : leur vin est alors souvent vendu sans indication géographique.

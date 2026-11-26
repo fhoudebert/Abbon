@@ -82,7 +82,10 @@ cléopâtre VII , accepter : cléopatre vii?
 ----
 
 4/Complèter le formulaire de culture générale :
-   État : à faire.
+   État (26/11/2026) : FAIT — culture générale 2.1.0 : deux questions dans « Sciences de la vie quotidienne »
+   (cabernet blanc, sauvignac, souvignier gris, muscaris : hybrides résistants au mildiou et à l'oïdium ;
+   sigle PIWI) et fiche. Obtenteurs vérifiés : souvignier gris (Fribourg, 1983, cabernet sauvignon × bronner),
+   cabernet blanc (1991) et sauvignac (Valentin Blattner, Suisse).
 quel est le point point commun entre le cabernet blanc, le Sauvignac et le souvignier gris?
 Les noms évoquent des cépages traditionnels mais il s’agit d’hybride de Vitis vinifera avec des variétés résistants aux maladies cryptogammiques venant du continent américain.
 Ce croisement plus ou ou moins récents permettent de faire du vin avec un usage trés réduit de fongicides.
