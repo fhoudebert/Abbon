@@ -51,16 +51,18 @@ Les noms de lieux gardent des langues disparues (gaulois, latin, francique, scan
 | magos + dunum | marché fortifié | Meung-sur-Loire, Mehun-sur-Yèvre (*Magdunum*) |
 | medio- + lano- | milieu de la plaine, lieu central | Milan, Châteaumeillant, Saintes, Évreux (*Mediolanum*) |
 | duron (-durum) | porte, enclos, forum, bourg | Nanterre, Auxerre, Briare, Issoire, Bayeux (*Augustodurum*) |
-| nemeton | sanctuaire, bois sacré | Nanterre (*Nemetodurum*), Nonant |
+| nemeton | sanctuaire, bois sacré | Nanterre (*Nemetodurum*), Nonant, Vernantes (*Vernemetis*, « grand sanctuaire » selon Venance Fortunat) |
 | ialo- (-euil) | clairière, lieu défriché | Nanteuil, Mareuil, Verneuil, Vineuil, Rueil |
 | nanto- | vallée | Nantua, Nanteuil (≠ Nantes, des Namnètes) |
 | eburos | if | Embrun, Yverdon (*Eburodunum*), York (*Eboracum*) |
+| dervos, verno- | chêne, aulne (verne) | Darvoy ; Verneuil, Vernay, Vernet |
 | are- | devant | Arles (devant le marais), Armorique (devant la mer) |
 | aballo- | pomme, pommier | Avallon, l'île d'Avalon |
 | luto- | marais, boue | Lutèce, Lodève |
 | belsa | plaine | la Beauce |
 
 - **Divinités** : Segeta, déesse des eaux guérisseuses (*Aquis Segeste*, Sceaux-du-Gâtinais) ; Belenos (Beaune) ; Belisama (Bellême).
+- **Esprit critique** : le sens d'un mot gaulois peut être sûr (comparaison avec le breton, le gallois, l'irlandais, ou traduction ancienne comme pour Vernantes) sans que tel nom de lieu en vienne : formes anciennes et géographie doivent concorder.
 - **À ne pas confondre** : *duron* (enclos, forum), *dunum* (forteresse de hauteur), *dubron* (l'eau).
 
 ## Pièges

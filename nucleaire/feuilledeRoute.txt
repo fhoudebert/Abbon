@@ -42,8 +42,11 @@ utiliser le fichier qcm pour cadrer le sujet mais ne pas hésiter à reformuler 
    (14 questions : novio-, magos, Magdunum, Mediolanum, -durum, nemeton, -euil, nanto-, if, are-, Avallon,
    Lutèce, Beauce, Segeta) ; questions ouche, breuil, dunum, equoranda et gué revues selon nucleaire/toponymie-gauloise.
    Non retenus faute de source sûre : Guérande comme issu d'equoranda (mis en piège, nom breton Uuenran),
-   Redon et Ambert (ritu), Corbeil, Briou, Calais, Clamecy, Lisieux, Breteuil, Vernantes, Artenay ; « duron »
+   Redon et Ambert (ritu), Corbeil, Briou, Calais, Clamecy, Lisieux, Breteuil, Artenay ; « duron »
    n'est pas l'eau (c'est dubron) : expliqué dans la question -durum.
+   0.5.0 : Vernantes (Vernemetis, « grand sanctuaire » selon Venance Fortunat) et une question sur les arbres
+   (Darvoy, Verneuil, Embrun). Sources fournies (carte uMap « toponymie gauloise », sitegalloromain.canalblog.com,
+   vousvoyezletopo) : non consultables depuis l'outil (accès bloqué) ; recoupées avec d'autres sources.
 essayer de valoriser le fichier toponymie-gauloise.txt pour enrichir le questionnaire de toponymie, sur les noms de lieux très présents mais méconnus en france
 envisager un questionnaire de toponymie antique ou gaulois ?
 

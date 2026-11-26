@@ -1,7 +1,7 @@
 ---
 id: toponymie-03
 title: { fr: "Noms de lieux gaulois, partout et méconnus" }
-description: { fr: "novio- (Noyon, Nogent, Niort), magos, dunum et Meung, Mediolanum, -durum (Nanterre, Auxerre, Briare), nemeton, les clairières en -euil, nanto-, l'if (Embrun, York), Arles et l'Armorique, Avallon, la Beauce, Lutèce et Lodève, la déesse Segeta" }
+description: { fr: "novio- (Noyon, Nogent, Niort), magos, dunum et Meung, Mediolanum, -durum (Nanterre, Auxerre, Briare), nemeton (Nanterre, Vernantes), les clairières en -euil, nanto-, les arbres (if, chêne, aulne), Arles et l'Armorique, Avallon, la Beauce, Lutèce et Lodève, la déesse Segeta" }
 level: approfondissement
 tags: [étymologie, toponymie, gaulois, culture générale, français]
 ---
@@ -57,14 +57,14 @@ Nanterre (*Nemetodurum*), Auxerre, Briare (*Brivodurum*), Issoire, Jouarre : que
 > Le mot est de la même famille que l'anglais *door* et le breton *dor*, la porte. Bayeux s'appelait *Augustodurum*, « le forum d'Auguste ». Il a donné -erre et -eure au nord (Auxerre, Tonnerre, Yzeure), -oire au sud (Issoire). Ne pas le confondre avec le gaulois *dubron*, l'eau, ni avec *dunum*, la forteresse de hauteur.
 
 ## nemeton · single
-Nanterre s'appelait *Nemetodurum*, et Nonant (Calvados) *Novionemetum*. Que désignait le gaulois *nemeton* ?
+Nanterre s'appelait *Nemetodurum*, Nonant (Calvados) *Novionemetum* et Vernantes (Maine-et-Loire) *Vernemetis*. Que désignait le gaulois *nemeton* ?
 
 - [x] Un sanctuaire, un bois sacré
 - [ ] Un village de pêcheurs
 - [ ] Une nécropole
 - [ ] Un camp militaire
 
-> Nanterre serait donc le « bourg du sanctuaire », Nonant le « nouveau sanctuaire ». Le mot vit encore en breton, *neved*, le lieu sacré, dans la forêt de Névet près de Locronan. Les fouilles de Nanterre ont révélé une ville gauloise (vers 150-30 av. J.-C.), peut-être la capitale des Parisii avant Lutèce.
+> Nanterre serait donc le « bourg du sanctuaire », Nonant le « nouveau sanctuaire ». Pour Vernantes, c'est un auteur du VIe siècle, le poète Venance Fortunat, qui donne la traduction : *Vernemetis* veut dire, écrit-il, « grand sanctuaire » en langue gauloise (*uer-*, très, grand). C'est l'un des rares mots gaulois dont on a le sens par un témoin ancien. Le mot vit encore en breton, *neved*, le lieu sacré, dans la forêt de Névet près de Locronan. Les fouilles de Nanterre ont révélé une ville gauloise (vers 150-30 av. J.-C.), peut-être la capitale des Parisii avant Lutèce.
 
 ## ialo · single
 Nanteuil, Mareuil, Vineuil, Bonneuil, Argenteuil, Rueil : que cache la terminaison -euil, -ueil, si fréquente au nord de la Loire ?
@@ -95,6 +95,17 @@ Embrun (*Eburodunum*), Yverdon en Suisse (*Eburodunum*) et même York, en Anglet
 - [ ] Le hêtre
 
 > L'if, toxique, toujours vert et très long à vivre, avait un statut particulier chez les Celtes. Embrun et Yverdon sont des « forteresses de l'if ». Le peuple des Éburovices a laissé son nom à Évreux.
+
+## arbres · multiple
+Les Gaulois nommaient souvent un lieu d'après ses arbres. Quels rapprochements sont exacts ?
+
+- [x] Darvoy (Loiret) : *dervos*, le chêne
+- [x] Verneuil : *verno-*, l'aulne (la « verne »), et *ialo-*, la clairière
+- [x] Embrun : *eburos*, l'if
+- [ ] Avallon : *aballo-*, le hêtre
+- [ ] Nanteuil : *nanto-*, le noyer
+
+> *Aballo-* est la pomme (Avallon, l'île d'Avalon) et *nanto-* la vallée (Nanteuil, la « clairière du val »). Le gaulois *verno-* survit dans « verne » ou « vergne », noms régionaux de l'aulne, et dans les Vernay, Vernet, Vergne ; *dervos* est apparenté au grec *drus* et à l'anglais *tree*. Ces explications reposent sur des comparaisons entre langues celtiques : elles sont solides pour les mots, plus discutables pour tel ou tel lieu, dont le nom peut venir d'ailleurs.
 
 ## arles · single
 Arles (*Arelate*) et l'Armorique (*Aremorica*) ont en commun le préfixe gaulois *are-*. Que signifie-t-il ?
