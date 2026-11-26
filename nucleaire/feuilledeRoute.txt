@@ -1,5 +1,11 @@
-Sur la branch nucleaire , ajouter dans la feuille de route 
+Feuille de route — branche nucleaire
+(alimentée par nucleaire/prompt.txt ; état de chaque point en tête de point)
+
 1/S’appuyer sur les ressources du dossier nucleaire pour faire un questionnaire sur le sujet de l’énergie nucléaire (les fichiers peuvent être supprimés après usage)
+   État (26/11/2026) : FAIT — module modules/energie-nucleaire (org.abbon.energie-nucleaire 0.1.0) : 5 QCM,
+   61 questions, 5 fiches (atome et radioactivité ; fission et réacteurs : Superphénix, ASTRID, Natrium ;
+   thorium « l'atome vert », arguments et limites ; réacteurs à sels fondus : MSRE, LFTR, TMSR-LF1 de Wuwei,
+   Petten ; fusion : ITER, EAST, BEST). Le livre et le QCM de cadrage ont été supprimés du dossier après usage.
 
 S’appuyer en particulier sur le livre l’atome vert pour illustrer la science de l’atome et l’intérêt :
 pourquoi appelle t'on le thorium l’atome vert :
@@ -32,15 +38,15 @@ utiliser le fichier qcm pour cadrer le sujet mais ne pas hésiter à reformuler 
 
 ----------------------
 2/Améliorations du questionnaire de toponymie : 
+   État : à faire (source : nucleaire/toponymie-gauloise).
 essayer de valoriser le fichier toponymie-gauloise.txt pour enrichir le questionnaire de toponymie, sur les noms de lieux très présents mais méconnus en france
 envisager un questionnaire de toponymie antique ou gaulois ?
 
 
 3/Améliorations du questionnaire de étymologie
+   État : à faire.
 Que peut-on dire des mots « jean » et « denim » ?
 Il me semble que la toile qui servait à faire des jeans était du serge de nîmes teinté au bleu de gênes (colorant)
-
-
 
 
 
@@ -57,6 +63,7 @@ cléopâtre VII , accepter : cléopatre vii?
 ----
 
 4/Complèter le formulaire de culture générale :
+   État : à faire.
 quel est le point point commun entre le cabernet blanc, le Sauvignac et le souvignier gris?
 Les noms évoquent des cépages traditionnels mais il s’agit d’hybride de Vitis vinifera avec des variétés résistants aux maladies cryptogammiques venant du continent américain.
 Ce croisement plus ou ou moins récents permettent de faire du vin avec un usage trés réduit de fongicides.
@@ -64,11 +71,19 @@ Ce croisement plus ou ou moins récents permettent de faire du vin avec un usage
 
 ----
 5/paramètres : rendre l’affichge de la gamification optionnelle (défaut activé)
+   État : déjà disponible — Paramètres › « Ceintures et points », activé par défaut ; masqué en mode examen avec les patchs 0072-0073 (main).
 6/après l’import d’un module, mettre à jour les liste déroulante des catégories de l’onglet accueil
+   État : à vérifier (dans l'application web, la liste se met à jour après l'import sans recharger la page).
+7/dans l’atelier de formules ajouter un bouton enregistrer dans un fichier permettant de coller le contenu dans un editeur bureautique type wordcraft en tant que html
+   État : à faire.
 
 ---
 
-7/Faire un qcm astronomie soit Culture générale ou sciences/astronomie-bases
+
+
+
+8/Faire un qcm astronomie soit Culture générale ou sciences/astronomie-bases
+   État : à faire.
 
 
 Question sur la lune

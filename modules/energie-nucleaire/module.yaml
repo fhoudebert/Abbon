@@ -1,0 +1,36 @@
+# Module « Énergie nucléaire : de l'atome à la fusion » — point 1 de la feuille de route (nucleaire/feuilledeRoute.txt).
+# Rédigé à neuf à partir de : Jean-Christophe de Mestral, « L'atome vert. Le thorium, un nucléaire pour le
+# développement durable » (Favre, 2011) pour la physique du noyau, le cycle du thorium et les réacteurs à sels
+# fondus ; d'un QCM préparatoire (nucleaire_avance_fusion.qcm) pour le cadrage ; et de sources vérifiées en
+# novembre 2026 pour l'actualité (TMSR-LF1 de Wuwei, ASTRID, Natrium, ITER, EAST, BEST). Les arguments du livre,
+# favorable au thorium, sont présentés comme tels, avec leurs limites.
+# Format des sources : docs/modules.md. Vérifier : npm run module:check ; construire : npm run module:build
+
+id: org.abbon.energie-nucleaire
+version: 0.1.0
+date: 2026-11-26
+title:
+  fr: "Énergie nucléaire : de l'atome à la fusion"
+description:
+  fr: "Comprendre l'énergie nucléaire : le noyau et la radioactivité ; la fission, les réacteurs d'aujourd'hui et les neutrons rapides (Superphénix, ASTRID, Natrium) ; le thorium, « l'atome vert », ses promesses et ses limites ; les réacteurs à sels fondus, de l'expérience d'Oak Ridge au réacteur chinois de Wuwei ; la fusion (ITER, EAST, BEST). Avec une fiche de révision par thème."
+level: lycée
+license: CC-BY-NC-SA-4.0
+authors: [Abbon]
+homepage: https://github.com/fhoudebert/Abbon
+languages: [fr]
+requires:
+  app: ">=0.2.0"
+defaults:
+  passThreshold: 0.6
+
+categories:
+  - id: atome
+    name: { fr: "L'atome et la radioactivité" }
+  - id: fission
+    name: { fr: "Fission et réacteurs" }
+  - id: thorium
+    name: { fr: "Le thorium, « l'atome vert »" }
+  - id: sels-fondus
+    name: { fr: "Réacteurs à sels fondus" }
+  - id: fusion
+    name: { fr: "La fusion nucléaire" }
