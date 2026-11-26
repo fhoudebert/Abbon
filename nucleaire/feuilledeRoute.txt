@@ -47,6 +47,12 @@ utiliser le fichier qcm pour cadrer le sujet mais ne pas hésiter à reformuler 
    0.5.0 : Vernantes (Vernemetis, « grand sanctuaire » selon Venance Fortunat) et une question sur les arbres
    (Darvoy, Verneuil, Embrun). Sources fournies (carte uMap « toponymie gauloise », sitegalloromain.canalblog.com,
    vousvoyezletopo) : non consultables depuis l'outil (accès bloqué) ; recoupées avec d'autres sources.
+   0.5.1 : recoupement avec les données de la carte uMap (25 couches, 3 531 lieux, fournies en zip) :
+   Meung et Mehun (magio-dunon, « grande forteresse », plutôt que « marché fortifié »), Verdun (vero-, très
+   grand), Guérande présentée comme cas débattu (retirée des réponses), Rueil retiré de la question sur le gué
+   (rigo-ialon « clairière du roi » selon la carte, ritu ou rû selon d'autres), Paris « chaudron » (hypothèse).
+   Divergence notée, non suivie : Nogent donné nouio-magus par la carte, Novientum (« nouveau village ») ailleurs.
+   Données de la carte non intégrées au dépôt (licence et fiabilité inégale) ; utiles pour trouver des pistes.
 essayer de valoriser le fichier toponymie-gauloise.txt pour enrichir le questionnaire de toponymie, sur les noms de lieux très présents mais méconnus en france
 envisager un questionnaire de toponymie antique ou gaulois ?
 

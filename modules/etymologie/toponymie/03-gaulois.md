@@ -1,7 +1,7 @@
 ---
 id: toponymie-03
 title: { fr: "Noms de lieux gaulois, partout et méconnus" }
-description: { fr: "novio- (Noyon, Nogent, Niort), magos, dunum et Meung, Mediolanum, -durum (Nanterre, Auxerre, Briare), nemeton (Nanterre, Vernantes), les clairières en -euil, nanto-, les arbres (if, chêne, aulne), Arles et l'Armorique, Avallon, la Beauce, Lutèce et Lodève, la déesse Segeta" }
+description: { fr: "novio- (Noyon, Nogent, Niort), magos, la « grande forteresse » de Meung, Mediolanum, -durum (Nanterre, Auxerre, Briare), nemeton (Nanterre, Vernantes), les clairières en -euil, nanto-, les arbres (if, chêne, aulne), Arles et l'Armorique, Avallon, la Beauce, Lutèce et Lodève, la déesse Segeta" }
 level: approfondissement
 tags: [étymologie, toponymie, gaulois, culture générale, français]
 ---
@@ -27,14 +27,14 @@ Rouen (*Rotomagus*), Beauvais (*Caesaromagus*), Lisieux et Noyon (tous deux *Nov
 > *Magos* est apparenté à l'irlandais *mag*, la plaine. Sous l'Empire, des villes nouvelles ont associé le mot gaulois au nom de l'empereur : *Caesaromagus*, le marché de César, est devenue Beauvais (du peuple des Bellovaques), comme bien des chefs-lieux qui ont pris le nom de leur peuple.
 
 ## meung · single
-Meung-sur-Loire et Mehun-sur-Yèvre s'appelaient tous deux *Magdunum* au Moyen Âge. Comment explique-t-on le plus souvent ce nom ?
+Meung-sur-Loire et Mehun-sur-Yèvre s'appelaient tous deux *Magdunum* au Moyen Âge. Comment les spécialistes du gaulois l'expliquent-ils le plus souvent ?
 
-- [x] *Magos* + *dunum* : un marché protégé par une forteresse
+- [x] *Magio-* + *dunum* : « la grande forteresse »
 - [ ] « Le grand mur », en latin
 - [ ] Le domaine d'un certain Magnus
 - [ ] « La rivière des mages »
 
-> Les formes anciennes de Mehun (*Maidunus* en 820, *Magdunum* en 1102, *Meun* en 1293) montrent comment le nom s'est usé jusqu'à une seule syllabe. Certains y voient plutôt un *magno-dunum*, une « grande forteresse ». Meung est sur un éperon au confluent de la Loire et des Mauves ; Mehun garde les ruines du château de Jean de Berry.
+> Les formes anciennes de Mehun (*Maidunus* en 820, *Magdunum* en 1102, *Meun* en 1293) montrent comment le nom s'est usé jusqu'à une seule syllabe. On lit aussi « le marché fortifié », en rapprochant *magio-* de *magos*, le marché : l'explication circule, mais *magos* se place d'ordinaire en fin de nom (Rotomagus, Noviomagus), alors que *magio-*, « grand », se place en tête, comme *vero-* dans Verdun, la « très grande forteresse ». Meung est sur un éperon au confluent de la Loire et des Mauves ; Mehun garde les ruines du château de Jean de Berry.
 
 ## mediolanum · single
 Milan, Châteaumeillant (Cher), Saintes et Évreux se sont tous appelés *Mediolanum*. Que signifie ce nom gaulois ?
