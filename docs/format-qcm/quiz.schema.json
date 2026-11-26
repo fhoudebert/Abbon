@@ -309,6 +309,9 @@
                   "caseSensitive": {
                     "type": "boolean"
                   },
+                  "ignoreAccents": {
+                    "type": "boolean"
+                  },
                   "value": {
                     "type": "number"
                   },
@@ -359,6 +362,9 @@
                           }
                         },
                         "caseSensitive": {
+                          "type": "boolean"
+                        },
+                        "ignoreAccents": {
                           "type": "boolean"
                         },
                         "options": {

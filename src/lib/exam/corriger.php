@@ -19,9 +19,21 @@ function abbon_space_class() {
   return '[\s\x{00A0}\x{1680}\x{2000}-\x{200A}\x{2028}\x{2029}\x{202F}\x{205F}\x{3000}\x{FEFF}]';
 }
 
+/** Lettres accentuées courantes sans leur accent, si l'extension intl manque. */
+function abbon_sans_accents($t) {
+  if (class_exists('Normalizer')) {
+    $n = Normalizer::normalize($t, Normalizer::FORM_D);
+    if ($n !== false) return preg_replace('/\p{M}/u', '', $n);
+  }
+  $de = array('à','á','â','ã','ä','å','ç','è','é','ê','ë','ì','í','î','ï','ñ','ò','ó','ô','õ','ö','ù','ú','û','ü','ý','ÿ','À','Á','Â','Ã','Ä','Å','Ç','È','É','Ê','Ë','Ì','Í','Î','Ï','Ñ','Ò','Ó','Ô','Õ','Ö','Ù','Ú','Û','Ü','Ý');
+  $vers = array('a','a','a','a','a','a','c','e','e','e','e','i','i','i','i','n','o','o','o','o','o','u','u','u','u','y','y','A','A','A','A','A','A','C','E','E','E','E','I','I','I','I','N','O','O','O','O','O','U','U','U','U','Y');
+  return str_replace($de, $vers, $t);
+}
+
 /** Texte comparable : apostrophes et espaces unifiés, espaces superflus retirés, majuscules ignorées. */
-function abbon_normalize($s, $caseSensitive) {
+function abbon_normalize($s, $caseSensitive, $ignoreAccents = false) {
   $t = (string) $s;
+  if ($ignoreAccents) $t = abbon_sans_accents($t);
   if (class_exists('Normalizer')) {
     $n = Normalizer::normalize($t, Normalizer::FORM_C);
     if ($n !== false) $t = $n;
@@ -46,11 +58,11 @@ function abbon_parse_number($s) {
   return is_finite($n) ? $n : null;
 }
 
-function abbon_text_matches($accepted, $given, $caseSensitive) {
+function abbon_text_matches($accepted, $given, $caseSensitive, $ignoreAccents = false) {
   if (!is_string($given) || trim($given) === '') return false;
-  $g = abbon_normalize($given, $caseSensitive);
+  $g = abbon_normalize($given, $caseSensitive, $ignoreAccents);
   foreach ($accepted as $a) {
-    if (is_string($a) && trim($a) !== '' && abbon_normalize($a, $caseSensitive) === $g) return true;
+    if (is_string($a) && trim($a) !== '' && abbon_normalize($a, $caseSensitive, $ignoreAccents) === $g) return true;
   }
   return false;
 }
@@ -99,7 +111,7 @@ function abbon_score_question($q, $a, $rule) {
       $accepted = isset($g['accepted']) && is_array($g['accepted']) ? $g['accepted'] : array();
       if ($select) $accepted = array_slice($accepted, 0, 1);
       $cs = $select ? true : !empty($g['caseSensitive']);
-      if (abbon_text_matches($accepted, isset($texts[$i]) ? $texts[$i] : null, $cs)) $good++;
+      if (abbon_text_matches($accepted, isset($texts[$i]) ? $texts[$i] : null, $cs, !$select && !empty($g['ignoreAccents']))) $good++;
     }
     $n = count($gaps);
     $all = $n > 0 && $good === $n;
@@ -111,7 +123,7 @@ function abbon_score_question($q, $a, $rule) {
     return array('points' => $ok ? $points : 0, 'correct' => $ok);
   }
   if ($type === 'short') {
-    $ok = abbon_text_matches(isset($e['accepted']) ? $e['accepted'] : array(), $text, !empty($e['caseSensitive']));
+    $ok = abbon_text_matches(isset($e['accepted']) ? $e['accepted'] : array(), $text, !empty($e['caseSensitive']), !empty($e['ignoreAccents']));
     return array('points' => $ok ? $points : 0, 'correct' => $ok);
   }
   if ($type === 'numeric') {

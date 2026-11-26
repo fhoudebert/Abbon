@@ -69,12 +69,13 @@ Pourquoi la bougie porte-t-elle ce nom ?
 ## jean-denim · multiple
 Que peut-on dire des mots « jean » et « denim » ?
 
-- [x] « Jean » vient de Gênes, dont les marins portaient une toile robuste, en anglais *jean*
-- [x] « Denim » viendrait de la « serge de Nîmes »
+- [x] « Jean » vient de Gênes : la futaine de Gênes, toile robuste de coton mêlé, souvent teinte en bleu (le « bleu de Gênes »)
+- [x] « Denim » viendrait de la « serge de Nîmes », abrégée en anglais en *de Nîmes*, puis *denim*
 - [ ] « Jean » vient du prénom de Levi Strauss, Jean Strauss
 - [ ] « Denim » est l'abréviation de *dense material*
+- [ ] Le « bleu de Gênes » est un pigment minéral tiré des carrières de Ligurie
 
-> Deux villes, l'une italienne, l'autre française, ont donné leur nom au tissu le plus porté au monde. Levi Strauss et Jacob Davis brevètent en 1873 en Californie le pantalon renforcé de rivets, pour les mineurs. L'origine nîmoise du denim, la plus courante, est parfois discutée.
+> Deux villes, l'une italienne, l'autre française, ont donné leur nom au tissu le plus porté au monde. La toile de Gênes, exportée par son port vers l'Angleterre, y est devenue *jean* ; on l'appelait aussi « bleu de Gênes », pour sa couleur, qui venait d'un colorant végétal, l'indigo ou le pastel, et non d'un minéral. Les tisserands de Nîmes ont produit une serge robuste, dont le nom a donné *denim*. Le jean d'aujourd'hui est donc taillé dans du denim. L'origine nîmoise est la plus courante, mais discutée : la serge de Nîmes ancienne était souvent de laine et de soie, assez loin du denim de coton. Levi Strauss et Jacob Davis brevètent en 1873 en Californie le pantalon renforcé de rivets, pour les mineurs.
 
 ## sardine · single
 D'où le poisson « sardine » tire-t-il probablement son nom ?

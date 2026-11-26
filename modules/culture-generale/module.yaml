@@ -6,8 +6,8 @@
 # Format des sources : docs/modules.md. Vérifier : npm run module:check ; construire : npm run module:build
 
 id: fr.culture-generale.quiz
-version: 2.0.0
-date: 2026-11-25
+version: 2.0.1
+date: 2026-11-26
 title:
   fr: "Culture générale"
 description:

@@ -109,9 +109,9 @@ class Qcm:
         yes, no = ("Vrai", "Faux") if self.lang == "fr" else ("True", "False")
         return self._add("single", prompt, [(yes, bool(true)), (no, not true)], None, expl, points)
 
-    def short(self, prompt, accepted, case_sensitive=False, expl=None, points=1):
-        """Réponse courte : formes acceptées (majuscules ignorées ; les accents comptent)."""
-        exp = {"accepted": list(accepted)} | ({"caseSensitive": True} if case_sensitive else {})
+    def short(self, prompt, accepted, case_sensitive=False, expl=None, points=1, ignore_accents=False):
+        """Réponse courte : formes acceptées (majuscules ignorées ; les accents comptent, sauf ignore_accents)."""
+        exp = {"accepted": list(accepted)} | ({"caseSensitive": True} if case_sensitive else {}) | ({"ignoreAccents": True} if ignore_accents else {})
         return self._add("short", prompt, (), exp, expl, points)
 
     def numeric(self, prompt, value, tolerance=0, unit=None, expl=None, points=1):

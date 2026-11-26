@@ -157,6 +157,10 @@
           <input type="checkbox" checked={expected.caseSensitive ?? false} onchange={(e) => patchExpected({ caseSensitive: e.currentTarget.checked })} />
           {t('qe.caseSensitive')}
         </label>
+        <label class="check">
+          <input type="checkbox" checked={expected.ignoreAccents ?? false} onchange={(e) => patchExpected({ ignoreAccents: e.currentTarget.checked || undefined })} />
+          {t('qe.ignoreAccents')}
+        </label>
       </div>
     </div>
   {:else if question.type === 'cloze'}
@@ -185,6 +189,7 @@
             {:else}
               <label>{t('qe.gapAccepted')} <input type="text" value={g.accepted.join(' | ')} onchange={(e) => patchGap(i, { accepted: list(e.currentTarget.value) })} /></label>
               <label class="check"><input type="checkbox" checked={g.caseSensitive ?? false} onchange={(e) => patchGap(i, { caseSensitive: e.currentTarget.checked })} /> {t('qe.caseSensitive')}</label>
+              <label class="check"><input type="checkbox" checked={g.ignoreAccents ?? false} onchange={(e) => patchGap(i, { ignoreAccents: e.currentTarget.checked || undefined })} /> {t('qe.ignoreAccents')}</label>
             {/if}
             <button type="button" class="ghost danger" aria-label={t('qe.gapDelete', { n: i + 1 })} title={t('qe.gapDelete', { n: i + 1 })} onclick={() => removeGap(i)}>✕</button>
           </li>

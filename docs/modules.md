@@ -188,7 +188,9 @@ What is the past simple of *to go*?
 
   Plusieurs lignes `=` donnent plusieurs formes acceptées ; celles des autres langues s'y ajoutent (`= Londres`
   en français, `= London` en anglais : les deux sont acceptées partout). `· short · case-sensitive` fait
-  respecter les majuscules. Une réponse numérique s'écrit `= valeur`, `= valeur ± écart`, avec une unité facultative
+  respecter les majuscules ; `· short · accent-insensitive` (ou `· cloze · accent-insensitive`, pour ses trous à
+  saisir) accepte la réponse sans ses accents (« cleopatre vii » pour « Cléopâtre VII ») : à réserver aux questions
+  où l'orthographe n'est pas l'objet de l'exercice. Les deux options se cumulent. Une réponse numérique s'écrit `= valeur`, `= valeur ± écart`, avec une unité facultative
   à la fin.
 - **Textes à trous** : `· cloze`, avec le texte sur une ou plusieurs lignes `=` et les trous entre accolades :
 

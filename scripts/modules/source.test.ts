@@ -197,6 +197,18 @@ Name of the language?
 
 > Capitalised.
 
+## cleo · short · accent-insensitive
+Reine d'Égypte ?
+
+= Cléopâtre
+
+> Cléopâtre VII.
+
+### en
+Queen of Egypt?
+
+> Cleopatra VII.
+
 ## g · numeric
 Valeur de *g* ?
 
@@ -217,7 +229,23 @@ Value of *g*?
       ['short', 0, { accepted: ['went'] }],
       ['short', 0, { accepted: ['Londres', 'London'] }],
       ['short', 0, { accepted: ['Python'], caseSensitive: true }],
+      ['short', 0, { accepted: ['Cléopâtre'], ignoreAccents: true }],
       ['numeric', 0, { value: 9.81, tolerance: 0.01, unit: 'm/s²' }],
+    ]);
+  });
+
+  it('options des questions à saisie : accents ignorés (réponse courte, trous à saisir), option inconnue refusée', () => {
+    const bad = compileModule(files(TYPED.replace('## cleo · short · accent-insensitive', '## cleo · numeric · accent-insensitive')));
+    expect(bad.issues.some((i) => i.level === 'error' && /accent-insensitive/.test(i.message))).toBe(true);
+    const cloze = TYPED.replace(
+      '## cleo · short · accent-insensitive\nReine d\'Égypte ?\n\n= Cléopâtre\n',
+      '## cleo · cloze · accent-insensitive\nReine d\'Égypte ?\n\n= {Cléopâtre} en {Égypte ~Grèce}\n',
+    );
+    const c = compileModule(files(cloze));
+    expect(c.issues.filter((i) => i.level === 'error')).toEqual([]);
+    expect(c.quizzes[0].questions.find((q) => q.type === 'cloze')?.expected?.gaps).toEqual([
+      { kind: 'text', accepted: ['Cléopâtre'], ignoreAccents: true },
+      { kind: 'select', accepted: ['Égypte'], options: ['Grèce'] },
     ]);
   });
 

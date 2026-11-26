@@ -77,7 +77,9 @@ Pour produire un tel fichier sans l'application : [`scripts/qcm/abbon_qcm.py`](.
 ```
 
 - **Réponse courte** : la saisie est comparée à chaque forme acceptée après retrait des espaces superflus et
-  unification des apostrophes ; les majuscules sont ignorées sauf `caseSensitive`. Les accents comptent.
+  unification des apostrophes ; les majuscules sont ignorées sauf `caseSensitive`. Les accents comptent, sauf
+  `ignoreAccents` (« cleopatre » accepté pour « Cléopâtre » ; aussi pour un trou à saisir d'un texte à trous) : à
+  réserver aux questions où l'orthographe n'est pas l'objet de l'exercice.
 - **Réponse numérique** : virgule ou point décimal, signe moins typographique, espaces de milliers et notation
   scientifique (`1,5e3`) sont acceptés. La réponse est juste si |saisie − `value`| ≤ `tolerance`.
 - Ces deux types sont notés en tout ou rien. Dans les réponses d'une sauvegarde, le texte saisi est dans `text`.

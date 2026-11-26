@@ -58,7 +58,12 @@ envisager un questionnaire de toponymie antique ou gaulois ?
 
 
 3/Améliorations du questionnaire de étymologie
-   État : à faire.
+   État (26/11/2026) : FAIT — étymologie 0.5.2 : jean et denim (futaine de Gênes, « bleu de Gênes » teint à
+   l'indigo ou au pastel, serge de Nîmes, filiation discutée) ; tennis (compte du jeu de paume, « à deux » →
+   deuce, « trentain » attesté par l'Académie en 1878 ; « quarantain » non attesté, non repris).
+   Tolérance des accents : nouvelle option « · short · accent-insensitive » (et « · cloze · accent-insensitive »),
+   case « Accepter sans les accents » dans l'éditeur, correction serveur (PHP) identique ; appliquée à
+   « Cléopâtre VII » (culture générale 2.0.1). Les accents restent exigés par défaut (exercices de langue).
 Que peut-on dire des mots « jean » et « denim » ?
 Il me semble que la toile qui servait à faire des jeans était du serge de nîmes teinté au bleu de gênes (colorant)
 

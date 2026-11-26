@@ -47,6 +47,8 @@ export interface ClozeGap {
   accepted: string[];
   /** Saisie : respecter les majuscules. */
   caseSensitive?: boolean;
+  /** Saisie : accepter la réponse sans ses accents, ou avec d'autres (« cleopatre » pour « Cléopâtre »). */
+  ignoreAccents?: boolean;
   /** Liste déroulante : les autres propositions. */
   options?: string[];
 }
@@ -57,6 +59,8 @@ export interface ExpectedAnswer {
   accepted?: string[];
   /** Réponse courte : respecter les majuscules (faux par défaut). */
   caseSensitive?: boolean;
+  /** Réponse courte : ignorer les accents (faux par défaut : « a » et « à » diffèrent). */
+  ignoreAccents?: boolean;
   /** Réponse numérique : valeur exacte attendue. */
   value?: number;
   /** Réponse numérique : écart toléré, en valeur absolue (0 par défaut). */
