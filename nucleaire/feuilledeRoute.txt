@@ -1,0 +1,153 @@
+Sur la branch nucleaire , ajouter dans la feuille de route 
+1/S’appuyer sur les ressources du dossier nucleaire pour faire un questionnaire sur le sujet de l’énergie nucléaire (les fichiers peuvent être supprimés après usage)
+
+S’appuyer en particulier sur le livre l’atome vert pour illustrer la science de l’atome et l’intérêt :
+pourquoi appelle t'on le thorium l’atome vert :
+sécurité. abondance du minerai, durée de vie et quantité des déchets, non prolifération, réduction des déchets, valorisation des déchets
+
+Donner des éléments de compréhension sur les réacteurs à sels fondus en s’appuyant sur superphénix, astrid et les développement récents en chine
+
+Le réacteur nucléaire au thorium à sels fondus offre théoriquement le meilleur des mondes. Celui de la puissance et de l’abondance de l’électricité nucléaire sans avoir de dimension militaire, en offrant une plus grande sécurité, sans consommer d’eau pour le refroidir et sans avoir à gérer ensuite de grandes quantités de déchets radioactifs provenant de la fission des atomes d’uranium ou de plutonium. Le thorium est abondant. Et pour être utilisé dans un réacteur, il n’a pas besoin d’un long processus d’enrichissement. Cette technologie a commencé à être étudiée à la fin des années 1940. Elle a été délaissée faute de financements même si plusieurs expérimentations ont été menées dans les années 1960 et 1970 et même au cours des dernières années, aux Etats-Unis, en Russie, en Asie et en Europe. Aux Pays-Bas, un projet d’évaluation a été lancé en 2017 (voir la photographie ci-dessus). »
+
+chaine de génération de thorium fertile en uranium fissile
+Th232 + neutron -> Th233 -> Pa233 + électon +antineutrino -> U233 + électon +antineutrino
+
+U233 + neutron -> U234 -> Ba140 +Kr91 +neutrons
+
+Prévoir des questions autour de la fusion
+ITER (International Thermonuclear Experimental Reactor, aujourd'hui généralement désigné comme le projet ITER) est un projet scientifique international visant à démontrer la faisabilité de la fusion nucléaire comme source d'énergie à grande échelle.
+
+Il est construit à Saint-Paul-lez-Durance, dans le sud de la France.
+1. Quel est l'objectif d'ITER ?
+ITER cherche à démontrer qu'il est possible de produire une quantité importante d'énergie par fusion nucléaire, en reproduisant certaines conditions physiques similaires à celles qui existent au cœur du Soleil.
+
+Contrairement aux centrales nucléaires actuelles, qui utilisent la fission (division de noyaux atomiques lourds), ITER étudie la fusion (assemblage de noyaux atomiques légers).
+
+\[
+{}^{2}\mathrm{H}+{}^{3}\mathrm{H}
+\rightarrow {}^{4}\mathrm{He}+n+17{,}6\ \mathrm{MeV}
+\]
+
+utiliser le fichier qcm pour cadrer le sujet mais ne pas hésiter à reformuler les questions et les explications pour les rendre plus pertinentes et plus instructives
+
+----------------------
+2/Améliorations du questionnaire de toponymie : 
+essayer de valoriser le fichier toponymie-gauloise.txt pour enrichir le questionnaire de toponymie, sur les noms de lieux très présents mais méconnus en france
+envisager un questionnaire de toponymie antique ou gaulois ?
+
+
+3/Améliorations du questionnaire de étymologie
+Que peut-on dire des mots « jean » et « denim » ?
+Il me semble que la toile qui servait à faire des jeans était du serge de nîmes teinté au bleu de gênes (colorant)
+
+
+
+
+
+Complément sur Que cache le mot anglais tennis ?
+e jeu de paume, très populaire en France, s'est exporté en Angleterre, où l'injonction du serveur est devenue le nom du jeu. Le tennis moderne, codifié en 1874 en Angleterre, est revenu en France avec ce nom. Le « deuce » viendrait aussi du français « à deux » (de jeu).
+envisager d’ajouter que trente à vient de 
+• Trentain : signifie que les deux joueurs ont chacun 30 points (30-30, soit 30 partout au tennis).
+• Quarantain (ou quarentain) : signifie que les deux joueurs ont chacun 40 points (40-40, soit égalité au tennis).
+
+
+Peut on envisager une Tolérance sur les accents pour la réponse ? à 
+Quelle reine d'Égypte fut l'alliée, et la compagne, de Jules César puis de Marc Antoine ?
+cléopâtre VII , accepter : cléopatre vii?
+----
+
+4/Complèter le formulaire de culture générale :
+quel est le point point commun entre le cabernet blanc, le Sauvignac et le souvignier gris?
+Les noms évoquent des cépages traditionnels mais il s’agit d’hybride de Vitis vinifera avec des variétés résistants aux maladies cryptogammiques venant du continent américain.
+Ce croisement plus ou ou moins récents permettent de faire du vin avec un usage trés réduit de fongicides.
+->souvignier gris ou muscaris : cépages modernes obtenus en Allemagne () permettant de faire des vignes Résistants naturallement aux maladie (PIWI)
+
+----
+5/paramètres : rendre l’affichge de la gamification optionnelle (défaut activé)
+6/après l’import d’un module, mettre à jour les liste déroulante des catégories de l’onglet accueil
+
+---
+
+7/Faire un qcm astronomie soit Culture générale ou sciences/astronomie-bases
+
+
+Question sur la lune
+
+La Lune paraît banale, mais quelques-unes de ses particularités comptent parmi les plus étranges du système solaire.
+
+Une distance miraculeuse.
+
+Le Soleil est environ 400 fois plus gros que la Lune… et se trouve aussi environ 400 fois plus loin. Résultat : les deux astres ont presque exactement la même taille apparente dans le ciel. Cette coïncidence cosmique, permet les éclipses totales de Soleil, où le disque lunaire masque parfaitement le Soleil et révèle sa couronne. Quand la Lune est un peu plus éloignée (son orbite est elliptique), l’éclipse devient annulaire.
+
+Le paradoxe de sa masse… et sa masse manquante.
+
+La Lune est anormalement massive pour un satellite (environ 1/81 de la masse terrestre, le rapport le plus élevé du système solaire). Pourtant, le Soleil exerce sur elle une attraction environ deux fois plus forte que celle de la Terre. En théorie, elle devrait donc orbiter le Soleil. Elle reste liée à la Terre parce que les deux corps orbitent ensemble autour du Soleil.
+
+Plus étrange encore : sa densité moyenne n’est que d’environ 3,3 g/cm³, contre 5,5 pour la Terre. Elle est nettement plus légère que prévu pour un corps rocheux de cette taille.
+
+Deux faces radicalement différentes.
+
+Verrouillée par les marées, elle nous montre toujours le même hémisphère. La face visible est dominée par de vastes plaines sombres de lave solidifiée. La face cachée est presque dépourvue de ces « mers », possède une croûte bien plus épaisse et est densément criblée de cratères. Cette dichotomie s’étend à l’intérieur.
+
+Autres bizarreries :
+• Des tourbillons lumineux (comme Reiner Gamma) dessinés par des anomalies magnétiques locales qui protègent le sol du vent solaire, alors que la Lune n’a plus de champ magnétique global depuis des milliards d’années.
+• Des concentrations de masse (mascons) sous les grands bassins d’impact, qui déforment le champ de gravité.
+• Une exosphère ultra-ténue, principalement alimentée par les impacts de micrométéorites.
+• De la glace d’eau piégée dans les cratères polaires en ombre permanente.
+• Des séismes lunaires qui se propagent très loin car l’intérieur est froid et rigide, et une contraction lente qui forme encore des escarpements.
+
+La Lune est à la fois trop grande, trop proche, trop bien placée… et trop légère pour être banale.
+
+
+
+
+Que représente une année-lumière ?
+- A. La durée de vie moyenne d'une étoile
+- B. Une distance parcourue par la lumière en un an
+- C. Le temps nécessaire à la Terre pour tourner autour du Soleil
+- D. La durée d'une nuit sur une planète
+2. Quelle étoile est la plus proche de la Terre ?
+- A. Sirius
+- B. Proxima du Centaure
+- C. Véga
+- D. Le Soleil
+5. Quelle planète est la plus grande du Système solaire ?
+- A. Saturne
+- B. Neptune
+- C. Jupiter
+- D. Uranus
+- E. Pluton
+6. Quelle réaction fournit l'essentiel de l'énergie du Soleil ?
+- A. La combustion de gaz
+- B. La fission nucléaire
+- C. La fusion nucléaire
+- D. La réaction chimique avec l'oxygène
+8. Comment appelle-t-on une planète qui orbite autour d'une autre étoile que le Soleil ?
+- A. Une exoplanète
+- B. Une planète naine
+- C. Une comète
+- D. Un satellite naturel
+9. Qu'est-ce qu'un trou noir ?
+- A. Une étoile qui ne produit plus de lumière
+- B. Une région de l'espace où la gravité est si intense que rien ne peut s'en échapper au-delà de l'horizon
+- C. Une planète sans atmosphère
+- D. Un nuage de poussières interstellaires
+10. Quel phénomène peut marquer la fin de vie de certaines étoiles massives ?
+- A. Une supernova
+- B. Une éclipse totale
+- C. Un transit planétaire
+- D. Une pluie de météorites
+
+Corrigé
+N°	Réponse	Explication
+1	B	Une année-lumière correspond à environ 9 460 milliards de kilomètres.
+2	D	Le Soleil est notre étoile. Proxima du Centaure est la plus proche après lui.
+3	C	Notre Système solaire appartient à la Voie lactée.
+4	B	Le Système solaire compte huit planètes. Pluton est une planète naine.
+5	C	Jupiter est la planète la plus grande et la plus massive.
+6	C	La fusion de l'hydrogène en hélium libère l'énergie du Soleil.
+7	B	Les phases lunaires dépendent de la portion éclairée visible depuis la Terre.
+8	A	Une exoplanète est une planète située en dehors de notre Système solaire.
+9	B	Un trou noir possède un horizon des événements au-delà duquel rien ne peut s'échapper.
+10	A	Certaines étoiles massives terminent leur vie par une explosion de supernova.
+
