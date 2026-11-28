@@ -97,7 +97,10 @@ Ce croisement plus ou ou moins récents permettent de faire du vin avec un usage
 6/après l’import d’un module, mettre à jour les liste déroulante des catégories de l’onglet accueil
    État : à vérifier (dans l'application web, la liste se met à jour après l'import sans recharger la page).
 7/dans l’atelier de formules ajouter un bouton enregistrer dans un fichier permettant de coller le contenu dans un editeur bureautique type wordcraft en tant que html
-   État : à faire.
+   État (28/11/2026) : FAIT — bouton « Enregistrer en HTML » (formule en cours) et « Enregistrer (.html) » (carnet) :
+   page autonome, MathML affiché par le navigateur, à copier-coller dans WordCraft (Collage spécial → format
+   HTML), Word ou LibreOffice ; code LaTeX sous chaque formule. Page autonome et menu Outils ; docs/atelier.md.
+   Au passage : une longue formule n'élargit plus la page sur téléphone.
 
 ---
 
@@ -105,7 +108,12 @@ Ce croisement plus ou ou moins récents permettent de faire du vin avec un usage
 
 
 8/Faire un qcm astronomie soit Culture générale ou sciences/astronomie-bases
-   État : à faire.
+   État (28/11/2026) : FAIT — culture générale 2.2.0, catégorie « Astronomie : la Lune et les étoiles » :
+   « La Lune, un satellite pas si banal » (12 questions : éclipses, Lune qui s'éloigne de 3,8 cm/an, masse,
+   densité et impact géant, face cachée, mascons, Reiner Gamma, glace, séismes) et « Étoiles, planètes et
+   galaxies » (12 questions : les 10 proposées, reformulées, plus étoile polaire, saisons, couleur des étoiles,
+   étoile du Berger, étoiles filantes) ; fiche. Questions déjà présentes ailleurs (8 planètes, Mercure, Voie
+   lactée, phases) non reprises.
 
 
 Question sur la lune
@@ -187,4 +195,47 @@ N°	Réponse	Explication
 8	A	Une exoplanète est une planète située en dehors de notre Système solaire.
 9	B	Un trou noir possède un horizon des événements au-delà duquel rien ne peut s'échapper.
 10	A	Certaines étoiles massives terminent leur vie par une explosion de supernova.
+
+
+==========================================================================================================
+Nouveaux éléments (nucleaire/prompt.txt du 28/11/2026 ; le détail et les textes sources sont dans ce fichier)
+==========================================================================================================
+
+9/Améliorations des questionnaires existants — État : à faire.
+   - Noms de lieux gaulois, Lutèce et Lodève : « De quoi tirent-ils leur nom ? » (cohérent avec les réponses).
+   - Thorium, « Pourquoi la filière uranium-plutonium l'a-t-elle emporté ? » : remplacer le leurre « le thorium
+     n'existe qu'en Inde » par « le commerce du thorium est soumis à des restrictions à l'exportation par les pays
+     producteurs ».
+   - Chaîne thorium → uranium 233 : tolérer bêta, beta, béta (option accent-insensitive) ou proposer une liste
+     (bêta, alpha, gamma, antineutrino).
+   - Nouvelle question sur la surgénération : pourquoi ralentir les neutrons dans un réacteur à eau, alors qu'un
+     réacteur à neutrons rapides s'en passe ; Superphénix : utiliser l'uranium 238 au prix du plutonium ; nouveauté
+     ou non ; échec technique, politique ou économique ?
+   - physique-chimie, satellite-periode : donner la vitesse dans l'énoncé (question indépendante de l'ordre).
+
+10/Module « Jardin et petits élevages » (niveau loisir : rusticité et qualité plutôt que productivité) — État : à faire.
+   - QCM apiculture (nucleaire/apiculture.txt).
+   - QCM verger insolite : fruitiers originaux pour l'amateur (nucleaire/vergerInsolite.txt).
+   - QCM aviculture amateur : produire des œufs (nucleaire/oeufs.txt).
+   - Photosynthèse C3 et C4 (maïs, sorgho, amarante, pourpier ; rubisco, photorespiration ; tableau de prompt.txt).
+   - Y déplacer les questions de culture générale liées (vigne, cépages résistants…).
+
+11/Culture générale (ou autre questionnaire) — État : à faire.
+   - Origine des lettres : alphabet protosinaïtique, hiéroglyphes simplifiés gardant le son (A ← tête de bœuf,
+     B ← maison, M ← eau, O ← œil, N ← serpent) ; sources : Wikipédia, « Alphabet protosinaïtique » et « Histoire
+     de l'alphabet » (à vérifier : M vient plutôt de l'eau, mem).
+   - Fruitiers et rusticité : peut-on planter tel arbre (kaki, abricotier, châtaignier, camerisier, amélanchier,
+     feijoa, asiminier, agrumes…) dans telle région, selon les zones de rusticité 7, 8a, 8b, 9a, 9b ?
+   - Carafe, pichet, cruche, broc, pot à eau : différences et usages régionaux (nucleaire/pichet-carafe-cruche-broc.png).
+
+12/Gamification : bonus de points pour un QCM terminé à 100 %, ou refait jusqu'à 100 % alors qu'il était déjà
+   réussi — État : à faire (à concevoir pour éviter de gagner le bonus plusieurs fois).
+
+13/Module « Transformation » : lactofermentation, fromage, charcuterie — État : à faire.
+   - Fermenté ou pas ? (beurre, cornichons, fromage, olives, saucisson, café, bière, choucroute, hareng saur, vin,
+     sauce Worcestershire, chocolat, vanille, anchois, thé, bifteck rassis, yaourts) ; faisandage et maturation.
+   - Bactéries lactiques (Lactobacillus, Pediococcus, Lactococcus, Streptococcus, Leuconostoc, Oenococcus…) et
+     moisissures (Penicillium, Aspergillus oryzae, Rhizopus) ; sécurité : pH < 3,8 en fin de fermentation.
+   - Pratique : légumes adaptés, 10 g de sel par kg, sel sec ou saumure, 18-25 °C une semaine puis 10-15 °C,
+     bocal à joint caoutchouc. Allégations santé du document source à vérifier avant d'en faire des questions.
 
