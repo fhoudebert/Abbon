@@ -2,12 +2,12 @@
 # Format des sources : docs/modules.md. Vérifier : npm run module:check ; construire : npm run module:build
 
 id: org.abbon.informatique
-version: 0.2.0
-date: 2026-11-21
+version: 0.3.0
+date: 2026-11-28
 title:
   fr: "Informatique"
 description:
-  fr: "Quatorze rubriques, de Python à la cybersécurité et au matériel. Version pilote : un QCM de bases par rubrique, plus HTML5 et CSS sans JavaScript et HTML5 avancé avec JavaScript ; 175 questions."
+  fr: "Quatorze rubriques, de Python à la cybersécurité et au matériel. Version pilote : un QCM de bases par rubrique, plus HTML5 et CSS sans JavaScript, HTML5 avancé avec JavaScript, Svelte 5 et TypeScript ; 190 questions."
 level: terminale+
 license: CC-BY-NC-SA-4.0
 authors: [Abbon]
