@@ -16,6 +16,14 @@
 | Avocatier | quelques degrés sous zéro | groupe mexicain, feuilles anisées |
 | Bananier du Japon | souche très rustique | fruits immangeables ; la banane dessert est tropicale |
 
+## Zones de rusticité (USDA)
+
+- Fondées sur la **moyenne des minimales annuelles** ; zone de 5,6 °C, demi-zones a et b de 2,8 °C.
+- 7a −17,8 à −15 °C · 7b −15 à −12,2 · 8a −12,2 à −9,4 · 8b −9,4 à −6,7 · 9a −6,7 à −3,9 · 9b −3,9 à −1,1.
+- France : de 7 (Est, reliefs) à 9-10 (littoraux breton et méditerranéen).
+- Ce que la zone ne dit pas : gelées de printemps (abricotier), sol (châtaignier), chaleur de l'été (kaki), **besoin en froid** (pommier), humidité de l'hiver (oponce).
+- Microclimats : mur au sud, abri du vent, ville ; trous à gelée au fond des cuvettes.
+
 ## Botanique du verger
 
 - **Figue** : faux fruit (urne tapissée de fleurs). **Blastophage** : porte le pollen du caprifiguier. Figuier **bifère** : figues-fleurs (bois de l'an passé) + figues d'automne (rameaux de l'année).

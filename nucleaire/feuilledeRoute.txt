@@ -234,7 +234,12 @@ Nouveaux éléments (nucleaire/prompt.txt du 28/11/2026 ; le détail et les text
    - Photosynthèse C3 et C4 (maïs, sorgho, amarante, pourpier ; rubisco, photorespiration ; tableau de prompt.txt).
    - Y déplacer les questions de culture générale liées (vigne, cépages résistants…).
 
-11/Culture générale (ou autre questionnaire) — État : à faire.
+11/Culture générale (ou autre questionnaire)
+   État (28/11/2026) : FAIT — Culture générale 2.4.0 : « D'où viennent nos lettres ? » (10 questions,
+   histoire-géographie ; N ← serpent non repris : le signe est lu serpent ou poisson selon les auteurs) ;
+   pichet, carafe, cruche, broc (3 questions, vie quotidienne, d'après la carte de M. Avanzi). Jardin et petits
+   élevages 0.2.0 : « Zones de rusticité » (12 questions, verger), avec les limites de la notion (gelées de
+   printemps, sol, besoin en froid).
    - Origine des lettres : alphabet protosinaïtique, hiéroglyphes simplifiés gardant le son (A ← tête de bœuf,
      B ← maison, M ← eau (mem, plutôt que « mer », validé), O ← œil, N ← serpent) ; sources : Wikipédia,
      « Alphabet protosinaïtique » et « Histoire de l'alphabet ».
@@ -255,4 +260,3 @@ Nouveaux éléments (nucleaire/prompt.txt du 28/11/2026 ; le détail et les text
    - Consigne : objectif culinaire, rester factuel ; pas d'allégations santé du document source. On peut dire,
      si la question s'y prête, que les légumes lactofermentés non pasteurisés apportent des bactéries lactiques
      vivantes qui rejoignent le microbiote intestinal, sans promettre d'effet sur la santé.
-

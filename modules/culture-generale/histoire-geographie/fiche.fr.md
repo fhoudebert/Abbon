@@ -26,3 +26,11 @@
 | Indonésie | Jakarta | Nusantara, à Bornéo (en projet) | Jakarta s'enfonce, inondations, surpopulation, tout concentré à Java |
 
 > Nusantara doit devenir la capitale « politique » de l'Indonésie vers 2028 ; Jakarta reste officiellement la capitale tant qu'un décret n'a pas transféré ce statut.
+
+## D'où viennent nos lettres ?
+
+- **Alphabet protosinaïtique** (Serabit el-Khadim, Sinaï ; Petrie 1905, Gardiner 1916 ; Wadi el-Hol, 19e-18e s. av. n. è.) : des dessins inspirés des hiéroglyphes, lus par **acrophonie** dans une langue sémitique.
+- A ← tête de bœuf (*aleph*) ; B ← maison (*bet*) ; M ← eau (*mem*) ; O ← œil (*ayin*) ; R ← tête (*resh*) ; K ← paume (*kaph*).
+- **Phéniciens** (vers 1000 av. n. è.) : consonnes seulement (**abjad**), de droite à gauche.
+- **Grecs** (8e s.) : les voyelles, à partir de consonnes inutiles en grec ; boustrophédon puis gauche à droite. *Alpha* + *bêta* → « alphabet ».
+- **Étrusques**, puis **Romains** : C issu du gamma ; G créé à partir du C (3e s. av. n. è.) ; Y et Z ajoutés pour le grec. J, U, W : lettres distinctes bien plus tard.

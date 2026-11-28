@@ -7,12 +7,12 @@
 # Format des sources : docs/modules.md. Vérifier : npm run module:check ; construire : npm run module:build
 
 id: org.abbon.jardin-elevages
-version: 0.1.0
+version: 0.2.0
 date: 2026-11-28
 title:
   fr: "Jardin et petits élevages"
 description:
-  fr: "Pour le jardinier et l'éleveur amateur : la vie de la ruche (reine, ouvrières, varroa, frelon asiatique, du nectar au miel) ; un verger insolite (asiminier, camérisier, yuzu, feijoa, figuier et son blastophage, fruits sauvages comestibles) ; poules et canes pondeuses (couvaison, poussins, ponte, parasites) ; la vigne (cépages résistants, phylloxéra) ; la photosynthèse C3 et C4 au potager. Avec une fiche de révision par thème."
+  fr: "Pour le jardinier et l'éleveur amateur : la vie de la ruche (reine, ouvrières, varroa, frelon asiatique, du nectar au miel) ; un verger insolite (asiminier, camérisier, yuzu, feijoa, figuier et son blastophage, fruits sauvages comestibles, zones de rusticité) ; poules et canes pondeuses (couvaison, poussins, ponte, parasites) ; la vigne (cépages résistants, phylloxéra) ; la photosynthèse C3 et C4 au potager. Avec une fiche de révision par thème."
 level: loisir
 license: CC-BY-NC-SA-4.0
 authors: [Abbon]

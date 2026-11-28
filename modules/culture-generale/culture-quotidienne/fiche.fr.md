@@ -22,3 +22,8 @@ Les deux sont plus lourds que l'air et donnent presque la même énergie par kil
 - **Thé vert et thé noir** : même plante (*Camellia sinensis*), le noir est oxydé.
 - **Pizza Margherita** : tomate, mozzarella, basilic.
 - **Marathon** : 42,195 km, distance des Jeux de Londres (1908).
+
+## Pichet, carafe, cruche ou broc ?
+
+- **Carafe** : verre, large base, col étroit, souvent sans anse. **Broc** : grand, anse et bec évasé. **Pichet** : petit broc (terre, grès, métal). **Cruche** : ventrue, anse, col étroit, en terre ou grès.
+- À table, pour l'eau (enquêtes « Français de nos régions », M. Avanzi) : **pichet** dans l'Ouest ; **carafe** dans le Sud-Ouest, en Provence et en Corse ; **cruche** dans le Nord-Est ; **pot d'eau**, **pot à eau** de la Bourgogne aux Alpes et vers le Massif central ; **broc** dans le Bassin parisien et le Centre.

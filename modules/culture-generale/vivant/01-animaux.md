@@ -1,7 +1,7 @@
 ---
 id: animaux
 title: { fr: "Animaux étonnants" }
-description: { fr: "Gestation, mammifère qui pond, records, koala, écrevisse, poulpe, mouche" }
+description: { fr: "Gestation, mammifère qui pond, records, koala, écrevisse, poulpe, mouche, ver de terre" }
 level: bases
 tags: [culture générale, sciences, animaux]
 ---
@@ -95,3 +95,13 @@ Quel est le seul mammifère capable de voler vraiment, en battant des ailes ?
 - [ ] Le poisson volant
 
 > Ses ailes sont une peau tendue entre de très longs doigts. L'écureuil volant et le colugo ne font que planer, et le poisson volant n'est pas un mammifère. La plupart des chauves-souris se repèrent dans le noir par écholocation.
+
+## ver-de-terre · single
+Comment respire et fait circuler son sang un ver de terre ?
+
+- [x] Il respire par la peau, qui doit rester humide, et son sang est poussé par cinq paires d'arcs contractiles, souvent appelés ses « cœurs »
+- [ ] Il a des poumons minuscules, un dans chaque anneau
+- [ ] Il respire par la bouche et n'a pas de sang
+- [ ] Il a des branchies, comme les poissons
+
+> L'oxygène traverse sa peau, couverte de mucus : c'est pourquoi il fuit le soleil et remonte quand le sol est gorgé d'eau. Son sang est rouge, grâce à une hémoglobine dissoute. Darwin a consacré son dernier livre (1881) aux vers de terre et à leur rôle dans la formation du sol.
