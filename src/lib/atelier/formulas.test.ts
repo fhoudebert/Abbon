@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formulaError, fromMarkdown, toLatex, toLibreOfficeMathML, toMarkdown, toMathML } from './formulas';
+import { formulaError, fromMarkdown, toHtmlDocument, toLatex, toLibreOfficeMathML, toMarkdown, toMathML } from './formulas';
 
 describe('atelier de formules', () => {
   it('MathML pour Word : en-tête exacte, sans annotation ni semantics', () => {
@@ -44,5 +44,24 @@ describe('atelier de formules', () => {
     expect(fromMarkdown(md, () => String(++n))).toEqual(entries);
     // Formule en ligne, texte autour, section sans formule ignorée.
     expect(fromMarkdown('intro\n## A\nvoir $x+1$ ici\n## B\nrien\n', () => 'x')).toEqual([{ id: 'x', title: 'A', source: 'x+1', chem: false }]);
+  });
+
+  it('document HTML : titres échappés, MathML affiché en bloc, code LaTeX, formule fausse signalée', () => {
+    const html = toHtmlDocument(
+      [
+        { title: 'Aire <disque>', latex: '\\pi r^2' },
+        { title: 'Eau', latex: toLatex('2H2 + O2 -> 2H2O', true) },
+        { title: 'Fausse', latex: '\\frac{a' },
+      ],
+      'Carnet & formules',
+      'fr',
+    );
+    expect(html.startsWith('<!DOCTYPE html>\n<html lang="fr">')).toBe(true);
+    expect(html).toContain('<title>Carnet &amp; formules</title>');
+    expect(html).toContain('<h2>Aire &lt;disque&gt;</h2>');
+    expect(html.match(/<math display="block" xmlns="http:\/\/www.w3.org\/1998\/Math\/MathML">/g)).toHaveLength(2);
+    expect(html).toContain('<code>\\ce{2H2 + O2 -&gt; 2H2O}</code>');
+    expect(html).toMatch(/<p class="erreur">[^<]+<\/p>/);
+    expect(html).not.toMatch(/<script/);
   });
 });

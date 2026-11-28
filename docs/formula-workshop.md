@@ -20,6 +20,7 @@ An invalid formula is reported under the preview, and the copy buttons are disab
 |---|---|---|
 | Microsoft Word (365, 2016 or later) | **For Word** | Paste (Ctrl+V): the formula becomes an editable equation. |
 | [WordCraft](https://getartcraft.com/apps/wordcraft) (Linux) | **For Word** | Paste Special → HTML format. |
+| Any word processor, later or on another computer | **Save as HTML** | Open the file in a browser, select, copy, then paste (WordCraft: Paste Special → HTML format). The notebook can be saved as HTML too. |
 | LibreOffice Writer | **For LibreOffice** | Insert → Object → Formula, then Tools → Import MathML from Clipboard. On Linux, install the `libreoffice-math` package first. |
 | LaTeX, Overleaf, Pandoc, Markdown, Wikipedia | **LaTeX** | Paste the source (chemistry: `\ce{…}`, `mhchem` package). |
 | Google Docs, slides, e-mail… | **Image** (or **Save image**) | High-resolution PNG, transparent or white background; not editable. |
