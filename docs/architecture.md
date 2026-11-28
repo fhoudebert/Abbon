@@ -165,7 +165,9 @@ Voir [modules.md](modules.md) pour l'usage et le format des sources.
 
 - `domain/rewards.ts` (fonctions pures) : barème (`POINTS`), ceintures et dans (`rankOf`, `promotion`), et les
   récompenses produites par une révision (`reviewRewards`), une collecte (`collectRewards`) ou une tentative
-  terminée (`attemptRewards`). `domain/leitner.ts` fait sortir du planning une carte juste au compartiment 5
+  terminée (`attemptRewards`). Barème d'une tentative complète : QCM réussi (2 points), **sans faute** (100 %,
+  3 points de plus, clé `perfect:<id>` : une fois par QCM, du premier coup ou en refaisant jusqu'à 100 % un QCM
+  déjà réussi), module terminé (10 points). `domain/leitner.ts` fait sortir du planning une carte juste au compartiment 5
   (`acquiredAt`) et l'y remet (`restoreCard`).
 - Table `reward` (migration 8), clé primaire (`kind`, `ref`) : un événement ne compte qu'une fois
   (`addRewards` ignore les doublons et renvoie les nouveaux). Aucune récompense n'est jamais retirée ; une

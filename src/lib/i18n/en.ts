@@ -626,6 +626,7 @@ export const en: Messages = {
   'result.keep.addNone': 'Put in my box',
   'result.keep.done': { one: '{n} question put in your box.', other: '{n} questions put in your box.' },
   'result.quizPoints': { one: 'Quiz passed: +{n} point.', other: 'Quiz passed: +{n} points.' },
+  'result.perfectPoints': { one: 'Perfect score! +{n} point.', other: 'Perfect score! +{n} points.' },
   'settings.rewards': 'Show belts and points',
   'settings.rewardsHint': 'When hidden, points are still counted.',
   'sheet.open': 'Revision sheet',

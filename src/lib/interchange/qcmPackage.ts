@@ -40,7 +40,7 @@ const LeitnerCardSchema = z.object({
 });
 
 const RewardSchema = z.object({
-  kind: z.enum(['review', 'day', 'acquired', 'collect', 'quiz', 'module']),
+  kind: z.enum(['review', 'day', 'acquired', 'collect', 'quiz', 'perfect', 'module']),
   ref: z.string().min(1).max(200),
   points: z.number().int().min(0).max(1000),
   at: z.string().max(40),

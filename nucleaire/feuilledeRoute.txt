@@ -248,7 +248,12 @@ Nouveaux éléments (nucleaire/prompt.txt du 28/11/2026 ; le détail et les text
    - Carafe, pichet, cruche, broc, pot à eau : différences et usages régionaux (nucleaire/pichet-carafe-cruche-broc.png).
 
 12/Gamification : bonus de points pour un QCM terminé à 100 %, ou refait jusqu'à 100 % alors qu'il était déjà
-   réussi — État : à faire (à concevoir pour éviter de gagner le bonus plusieurs fois).
+   réussi.
+   État (28/11/2026) : FAIT — récompense « sans faute » (3 points) pour une tentative complète à 100 %, en plus
+   des 2 points du QCM réussi. Clé perfect:<id du QCM> : comme toutes les récompenses, elle ne compte qu'une fois,
+   ce qui empêche de la gagner plusieurs fois en refaisant le même QCM ; refaire un QCM déjà réussi jusqu'à
+   100 % la rapporte (une fois). « Refaire les erreurs » (tentative partielle) n'y donne pas droit. Résultat :
+   « Sans faute ! +n points ». En mode examen, suit le réglage « points » du site (0 : aucun point).
 
 13/Module « Transformation » : lactofermentation, fromage, charcuterie — État : à faire.
    - Fermenté ou pas ? (beurre, cornichons, fromage, olives, saucisson, café, bière, choucroute, hareng saur, vin,

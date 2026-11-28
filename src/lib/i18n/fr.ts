@@ -629,6 +629,7 @@ export const fr = {
   'result.keep.addNone': 'Ranger dans ma boîte',
   'result.keep.done': { one: '{n} question rangée dans votre boîte.', other: '{n} questions rangées dans votre boîte.' },
   'result.quizPoints': { one: 'QCM réussi : +{n} point.', other: 'QCM réussi : +{n} points.' },
+  'result.perfectPoints': { one: 'Sans faute ! +{n} point.', other: 'Sans faute ! +{n} points.' },
   'settings.rewards': 'Afficher les ceintures et les points',
   'settings.rewardsHint': 'Masqués, les points continuent d’être comptés.',
   'sheet.open': 'Fiche de révision',
