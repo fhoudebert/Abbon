@@ -1,155 +1,220 @@
-Sur la branch nucleaire , ajouter dans la feuille de route 
-1/S’appuyer sur les ressources du dossier nucleaire pour faire un questionnaire sur le sujet de l’énergie nucléaire (les fichiers peuvent être supprimés après usage)
+github à jour, continuer et mettre à jour la feuille de route avec :
+1/améliorations des questionnaires existants
+noms de lieux gaulois, améliorer la question (cohérence avec les réponses): 
+Lutèce (Lutetia), l'ancien nom de Paris, et Lodève (Luteva), dans l'Hérault : quel paysage leur nom évoquerait-il ?
+−>Lutèce (Lutetia), l'ancien nom de Paris, et Lodève (Luteva), dans l'Hérault : De quoi tire t'il leur nom ?
 
-S’appuyer en particulier sur le livre l’atome vert pour illustrer la science de l’atome et l’intérêt :
-pourquoi appelle t'on le thorium l’atome vert :
-sécurité. abondance du minerai, durée de vie et quantité des déchets, non prolifération, réduction des déchets, valorisation des déchets
-
-Donner des éléments de compréhension sur les réacteurs à sels fondus en s’appuyant sur superphénix, astrid et les développement récents en chine
-
-Le réacteur nucléaire au thorium à sels fondus offre théoriquement le meilleur des mondes. Celui de la puissance et de l’abondance de l’électricité nucléaire sans avoir de dimension militaire, en offrant une plus grande sécurité, sans consommer d’eau pour le refroidir et sans avoir à gérer ensuite de grandes quantités de déchets radioactifs provenant de la fission des atomes d’uranium ou de plutonium. Le thorium est abondant. Et pour être utilisé dans un réacteur, il n’a pas besoin d’un long processus d’enrichissement. Cette technologie a commencé à être étudiée à la fin des années 1940. Elle a été délaissée faute de financements même si plusieurs expérimentations ont été menées dans les années 1960 et 1970 et même au cours des dernières années, aux Etats-Unis, en Russie, en Asie et en Europe. Aux Pays-Bas, un projet d’évaluation a été lancé en 2017 (voir la photographie ci-dessus). »
-
-chaine de génération de thorium fertile en uranium fissile
-Th232 + neutron -> Th233 -> Pa233 + électon +antineutrino -> U233 + électon +antineutrino
-
-U233 + neutron -> U234 -> Ba140 +Kr91 +neutrons
-
-Prévoir des questions autour de la fusion
-ITER (International Thermonuclear Experimental Reactor, aujourd'hui généralement désigné comme le projet ITER) est un projet scientifique international visant à démontrer la faisabilité de la fusion nucléaire comme source d'énergie à grande échelle.
-
-Il est construit à Saint-Paul-lez-Durance, dans le sud de la France.
-1. Quel est l'objectif d'ITER ?
-ITER cherche à démontrer qu'il est possible de produire une quantité importante d'énergie par fusion nucléaire, en reproduisant certaines conditions physiques similaires à celles qui existent au cœur du Soleil.
-
-Contrairement aux centrales nucléaires actuelles, qui utilisent la fission (division de noyaux atomiques lourds), ITER étudie la fusion (assemblage de noyaux atomiques légers).
-
-\[
-{}^{2}\mathrm{H}+{}^{3}\mathrm{H}
-\rightarrow {}^{4}\mathrm{He}+n+17{,}6\ \mathrm{MeV}
-\]
-
-utiliser le fichier qcm pour cadrer le sujet mais ne pas hésiter à reformuler les questions et les explications pour les rendre plus pertinentes et plus instructives
-
-----------------------
-2/Améliorations du questionnaire de toponymie : 
-essayer de valoriser le fichier toponymie-gauloise.txt pour enrichir le questionnaire de toponymie, sur les noms de lieux très présents mais méconnus en france
-envisager un questionnaire de toponymie antique ou gaulois ?
+uranium , améliorer les questions :
+Le thorium est étudié depuis la fin des années 1940. Pourquoi la filière uranium-plutonium l'a-t-elle emporté ?
+remplacer :
+parce que le thorium n’exite qu’en Inde
+-> parce que le commerce du thorium est soumis à des restrictions à l’exportation par les pays producteurs 
 
 
-3/Améliorations du questionnaire de étymologie
-Que peut-on dire des mots « jean » et « denim » ?
-Il me semble que la toile qui servait à faire des jeans était du serge de nîmes teinté au bleu de gênes (colorant)
+Complétez la chaîne qui transforme le thorium fertile en uranium fissile
+tolérer dans le champ suivant :
+Celui-ci se désintègre par radioactivité :
+béta, beta ou bêta ou mettre une liste déroulante bêta, alpha. gamme , antineutrino
+
+Ajouter une question permettant de mieux comprendre la surgénération.
+pourquoi dans Réacteur classique, il faut ralentir avec l'eau pour améliorer les réactions alors qu’un Réacteur à neutrons rapides peut garder des neutrons rapides tout en ayant des réactions.
+Y a t’il un processus ou un dispositif différent ou bien dans le premier cas, cherche t’on à éviter de produire du plutonium ou des déchets venant d’une réaction utilisant du plutonium.
+En clair Superphénix permettrait 
+-d’utiliser U238 disponible quitte à manipuler le Pu dangereux
+-S’agit il d‘une invention nouvelle permettant de faire ce qu’on n’arrivait pas à faire avant
+-Superphénix a t’il échoué pour des raisons techniques (on n’a pas réussi à atteindre l’objectif initialement), politiques (changement de stratégie) , Economique (faisable techniquement mais pas rentable)
+
+reformuler pour éviter que la question soit dépendante de l’ordre d’affichage (fournir la vitesse):
+## satellite-periode · numeric
+Avec la vitesse précédente ($r = \pu{6,77e6 m}$), quelle est la période de révolution du satellite, en minutes ?
 
 
+2/faire un questionnaire apiculture qui ira dans un module regroupant les questions de jardinage et petits élevages (jardin, verger, verger, volaille, abeille) de niveau loisir. On ne vise pas productivité mais rusticité, qualité 
+utiliser apiculture.txt pour commencer à produire des questions
+utiliser vergerInsolite.txt pour proposer des questions pour faire connaitre des fruitiers originaux pour un verger insolite (arboriculture amateur)
+utiliser oeufs.txt pour un qcm aviculture amateur de produire des oeufs
 
-Complément sur Que cache le mot anglais tennis ?
-e jeu de paume, très populaire en France, s'est exporté en Angleterre, où l'injonction du serveur est devenue le nom du jeu. Le tennis moderne, codifié en 1874 en Angleterre, est revenu en France avec ce nom. Le « deuce » viendrait aussi du français « à deux » (de jeu).
-envisager d’ajouter que trente à vient de 
-• Trentain : signifie que les deux joueurs ont chacun 30 points (30-30, soit 30 partout au tennis).
-• Quarantain (ou quarentain) : signifie que les deux joueurs ont chacun 40 points (40-40, soit égalité au tennis).
+les questions suivantes iront dans ce module :
+photosynthèse en c4
 
+la photosynthèse est le moteur de la croissance des plantes. Grâce à l’énergie du soleil, elles captent le dioxyde de carbone (CO₂) de l’air pour fabriquer les sucres qui alimentent leur développement. Mais toutes n’utilisent pas exactement la même stratégie. La très grande majorité des espèces végétales – environ 97% – pratiquent la photosynthèse dite «C3».
 
-Peut on envisager une Tolérance sur les accents pour la réponse ? à 
-Quelle reine d'Égypte fut l'alliée, et la compagne, de Jules César puis de Marc Antoine ?
-cléopâtre VII , accepter : cléopatre vii?
-----
+Chez ces plantes, le CO₂ est directement capté par une enzyme appelée rubisco. Par forte chaleur, les stomates se ferment pour limiter les pertes d’eau. Le CO₂ pénètre alors moins facilement dans les feuilles, tandis que l’oxygène y devient plus abondant. La rubisco utilise donc plus souvent l’oxygène, ce qui déclenche la photorespiration, un mécanisme qui consomme de l’énergie et réduit l’efficacité de la photosynthèse.
+Astuce évolutive
 
-4/Complèter le formulaire de culture générale :
-quel est le point point commun entre le cabernet blanc, le Sauvignac et le souvignier gris?
-Les noms évoquent des cépages traditionnels mais il s’agit d’hybride de Vitis vinifera avec des variétés résistants aux maladies cryptogammiques venant du continent américain.
-Ce croisement plus ou ou moins récents permettent de faire du vin avec un usage trés réduit de fongicides.
-->souvignier gris ou muscaris : cépages modernes obtenus en Allemagne () permettant de faire des vignes Résistants naturallement aux maladie (PIWI)
+Les plantes «C4» ont développé une astuce évolutive. Avant que le CO₂ n’atteigne la rubisco, il est capté par une autre enzyme, puis transporté sous forme de molécules à quatre atomes de carbone – d’où leur nom. Ce détour permet de concentrer le CO₂ autour de la rubisco et de limiter fortement la photorespiration. La photosynthèse reste ainsi efficace même sous un soleil intense.
 
-----
-5/paramètres : rendre l’affichge de la gamification optionnelle (défaut activé)
-6/après l’import d’un module, mettre à jour les liste déroulante des catégories de l’onglet accueil
-7/dans l’atelier de formules ajouter un bouton enregistrer dans un fichier permettant de coller le contenu dans un editeur bureautique type wordcraft en tant que html
+Au jardin, plusieurs espèces utilisent cette stratégie, notamment le maïs, le sorgho, le quinoa, l’amarante et le pourpier. Les plantes C4 sont moins performantes lorsque les températures sont fraîches, que la lumière est faible ou que le CO₂ est abondant. Autrement dit, il n’existe pas de système idéal: chaque voie présente ses avantages selon les conditions
 
----
+Critère	Plantes C3	Plantes C4
+Température optimale	15–25 °C environ	30–40 °C environ
+Température maximale (fonctionnement)	Généralement jusqu'à environ 35–40 °C, selon l'espèce	Peuvent fonctionner jusqu'à environ 40–45 °C, selon l'espèce
+Type de climat	Tempéré, frais ou humide	Chaud, ensoleillé et plutôt sec
+Exemples de plantes	Blé, riz, soja, pomme de terre	Maïs, canne à sucre, sorgho
+Premier composé formé	Molécule à 3 carbones (3-PGA)	Molécule à 4 carbones (oxaloacétate)
+Fixation du CO₂	Directement par la Rubisco	D'abord par la PEP-carboxylase
+Photorespiration	Importante lorsque la température augmente	Très faible
+Efficacité en milieu chaud	Moins efficace	Plus efficace
+
+Pourquoi les C4 résistent mieux à la chaleur ?
+- C3 : la Rubisco peut fixer l'oxygène au lieu du CO₂, ce qui provoque la photorespiration et diminue l'efficacité de la photosynthèse, particulièrement à température élevée.
+- C4 : les plantes concentrent le CO₂ autour de la Rubisco, ce qui limite la photorespiration et permet de maintenir une photosynthèse efficace même lorsqu'il fait chaud.
+À retenir pour un contrôle : Les plantes C3 sont davantage adaptées aux climats tempérés, tandis que les plantes C4 sont adaptées aux climats chauds et ensoleillés. Les C4 ont une meilleure efficacité photosynthétique à température élevée, mais les températures maximales ne sont pas fixes et dépendent de l'espèce.
 
 
 
+les questions de culture générale en rapport (vigne , canes ) iront dans ce module
 
-8/Faire un qcm astronomie soit Culture générale ou sciences/astronomie-bases
+3/ajouter au quiz culture générale (ou autre questionnaire):
+1/ l’origine de la forme des lettres de l’alphabet depuis le proto protosinaïtique : tiré de Hiéroglyphes simplifiée et gardant le son 
+A <- tête de boeuf
+B <-maison
+M <- mer
+O <-œil
+N <- serpent
+https://fr.wikipedia.org/wiki/Alphabet_protosina%C3%AFtique
+https://fr.wikipedia.org/wiki/Histoire_de_l'alphabet
+2/poser des questions de couplant rusticité et géographie avec des arbres fruitiers (genre kaki, abricot, chataignier, camerisier, amélanchier, feijoa, asiminier, agrumes …)
+choix d’arbres aux fruits intéressants et de culture facile si on respecte la rusticité
+Du genre : peut on planter tel arbre dans telle région en tenant compte des rusticité? zone :7, 8a, 8b,9a,9b
+
+question sur carafe, pichet, broc, pot d'eau, cruche, pot à eau? même chose mais usage régional (voir pichet-carafe-cruche-broc.png)
+par exemple qu’est ce que distingue une cruche d’une carafe d’un broc ? + explication
+
+4/gamification : donner un bonus de points quand le questionnaire est terminé avec 100 % en score ou refait pour obtenir 100% alors qu’il était déjà réussi.
+
+5/Prévoir un module transformation avec lactofermentation, fromage, charcuterie
+
+FERMENTÉ OU PAS FERMENTÉ ?
+BEURRE
+CORNICHONS
+FROMAGE
+OLIVES
+SAUCISSON
+CAFÉ
+BIÈRE
+CHOUCROUTE
+HARENG SAUR
+VIN
+WORCESTER SAUCE
+CHOCOLAT
+VANILLE
+ANCHOIS
+THÉ
+BIFTECK ACHETÉ CHEZ UN BON BOUCHER
+YAOURTS
+
+LE FAISANDAGE : LE GOÛT ANCESTRAL DU FERMENTÉ
+LA FERMENTATION A PRÉCÉDÉ LA CUISSON
+TOUS LES CHASSEURS-CUEILLEURS CONSOMMAIENT DU GIBIER MATURÉ.
+
+Famille	            Genre	        Substrat	Exemples
+Lactobacillaceae	Lactobacillus	Lait	Laits fermentés, yaourts, kéfirs, la plupart des fromages
+Lactobacillaceae	Lactobacillus	Viande	Saucissons secs, jambons secs
+Lactobacillaceae	Lactobacillus	Poissons	Nuoc mam
+Lactobacillaceae	Lactobacillus	Végétaux	Choucroute, olives, « yaourts » au lait de soja
+Lactobacillaceae	Lactobacillus	Céréales	Pain au levain, bières, Huangjiu
+Lactobacillaceae	Lactobacillus	Végétaux	Choucroute, ensilage
+Lactobacillaceae	Pediococcus	Viande	Saucisses semi-séchées, saucissons secs
+Lactobacillaceae	Pediococcus	Poissons	Nuoc mam
+Lactobacillaceae	Pediococcus	Céréales	Pain au levain, riz fermenté
+Streptococcaceae	Lactococcus	Lait	Fromages blancs, fromages à pâte molle ou pressée non cuite, kéfirs
+Streptococcaceae	Streptococcus	Lait	Yaourts, laits fermentés, fromages à pâte pressée cuite
+Streptococcaceae	Tetragenococcus	Végétaux	Sauce de soja, miso
+Enterococcaceae	Tetragenococcus	Poissons	Saumure d’anchois, sauce de poisson, nuoc mam
+Leuconostocaceae	Leuconostoc	Végétaux	Choucroute, olives, vin, cidre
+Leuconostocaceae	Leuconostoc	Lait	Fromages, kéfirs
+Leuconostocaceae	Oenococcus	Végétaux	Vin
+Bifidobacteriaceae	Bifidobacterium	Lait	Laits fermentés
+
+ATTENTION CAR LES MOISISSURES ONT  BESOIN D’AIR
+Fromage → Penicillium camembertii, 
+Penicillium roquefortii, Geotrichum candidum
+Salaisons → Penicillium nalgiovense 
+Soja → Aspergillus orizae (700 souches 
+différentes existent), Aspergillus Sojae
+Koji pour sauce soja, saké, miso → Aspergillus 
+orizae 
+Tempeh → Rhizopus oligosporus, Rhizopus 
+oryzae, Rhizopus sojae
+Tofu → Actinomucor elegans 
+
+L'ACIDITÉ D'UNE FERMENTATION RÉUSSIE ASSURE LA SÉCURITÉ DE LA PRÉPARATION 
+Le point critique étant le pH en fin de fermentation
+Si le pH est inférieur à 3,8 → LA PRÉPARATION EST SÛRE
+(Le pH d’une fermentation réussie est entre 3 et 3,5)
 
 
-Question sur la lune
-
-La Lune paraît banale, mais quelques-unes de ses particularités comptent parmi les plus étranges du système solaire.
-
-Une distance miraculeuse.
-
-Le Soleil est environ 400 fois plus gros que la Lune… et se trouve aussi environ 400 fois plus loin. Résultat : les deux astres ont presque exactement la même taille apparente dans le ciel. Cette coïncidence cosmique, permet les éclipses totales de Soleil, où le disque lunaire masque parfaitement le Soleil et révèle sa couronne. Quand la Lune est un peu plus éloignée (son orbite est elliptique), l’éclipse devient annulaire.
-
-Le paradoxe de sa masse… et sa masse manquante.
-
-La Lune est anormalement massive pour un satellite (environ 1/81 de la masse terrestre, le rapport le plus élevé du système solaire). Pourtant, le Soleil exerce sur elle une attraction environ deux fois plus forte que celle de la Terre. En théorie, elle devrait donc orbiter le Soleil. Elle reste liée à la Terre parce que les deux corps orbitent ensemble autour du Soleil.
-
-Plus étrange encore : sa densité moyenne n’est que d’environ 3,3 g/cm³, contre 5,5 pour la Terre. Elle est nettement plus légère que prévu pour un corps rocheux de cette taille.
-
-Deux faces radicalement différentes.
-
-Verrouillée par les marées, elle nous montre toujours le même hémisphère. La face visible est dominée par de vastes plaines sombres de lave solidifiée. La face cachée est presque dépourvue de ces « mers », possède une croûte bien plus épaisse et est densément criblée de cratères. Cette dichotomie s’étend à l’intérieur.
-
-Autres bizarreries :
-• Des tourbillons lumineux (comme Reiner Gamma) dessinés par des anomalies magnétiques locales qui protègent le sol du vent solaire, alors que la Lune n’a plus de champ magnétique global depuis des milliards d’années.
-• Des concentrations de masse (mascons) sous les grands bassins d’impact, qui déforment le champ de gravité.
-• Une exosphère ultra-ténue, principalement alimentée par les impacts de micrométéorites.
-• De la glace d’eau piégée dans les cratères polaires en ombre permanente.
-• Des séismes lunaires qui se propagent très loin car l’intérieur est froid et rigide, et une contraction lente qui forme encore des escarpements.
-
-La Lune est à la fois trop grande, trop proche, trop bien placée… et trop légère pour être banale.
+Il faut compter 14 jours pour éliminer complètement les entérobactéries
 
 
 
+DES AVANTAGES PRATIQUES
+• CONSERVE LES ALIMENTS.
+• ANTI-GASPILLAGE
+• NE DÉTRUIT PAS LES NUTRIMENTS, 
+CONTRAIREMENT AU TRAITEMENT THERMIQUE
+• NE NÉCESSITE AUCUNE ÉNERGIE.
+• FOURNIT UN ALIMENT DE HAUTE QUALITÉ NUTRITIVE À MOINDRE COÛT FINANCIER ET ÉCOLOGIQUE. 
+• PRÊT À L’EMPLOI, ORGANISATION SIMPLIFIÉE AU MOMENT DU SERVICE.
 
-Que représente une année-lumière ?
-- A. La durée de vie moyenne d'une étoile
-- B. Une distance parcourue par la lumière en un an
-- C. Le temps nécessaire à la Terre pour tourner autour du Soleil
-- D. La durée d'une nuit sur une planète
-2. Quelle étoile est la plus proche de la Terre ?
-- A. Sirius
-- B. Proxima du Centaure
-- C. Véga
-- D. Le Soleil
-5. Quelle planète est la plus grande du Système solaire ?
-- A. Saturne
-- B. Neptune
-- C. Jupiter
-- D. Uranus
-- E. Pluton
-6. Quelle réaction fournit l'essentiel de l'énergie du Soleil ?
-- A. La combustion de gaz
-- B. La fission nucléaire
-- C. La fusion nucléaire
-- D. La réaction chimique avec l'oxygène
-8. Comment appelle-t-on une planète qui orbite autour d'une autre étoile que le Soleil ?
-- A. Une exoplanète
-- B. Une planète naine
-- C. Une comète
-- D. Un satellite naturel
-9. Qu'est-ce qu'un trou noir ?
-- A. Une étoile qui ne produit plus de lumière
-- B. Une région de l'espace où la gravité est si intense que rien ne peut s'en échapper au-delà de l'horizon
-- C. Une planète sans atmosphère
-- D. Un nuage de poussières interstellaires
-10. Quel phénomène peut marquer la fin de vie de certaines étoiles massives ?
-- A. Une supernova
-- B. Une éclipse totale
-- C. Un transit planétaire
-- D. Une pluie de météorites
+INTÉRÊT GUSTATIF
+POUR UN CUISINIER, LES POSSIBILITÉS GUSTATIVES SONT IMMENSES :
+• ÉTEND LA PALETTE AROMATIQUE DES PLATS
+• EXHAUSTEUR DE GOÛT SANS AVOIR BESOIN DE RAJOUTER D’AROMATISANTS.
+• APPORTE L’ACIDITÉ ÉLÉGANTE DE L’ACIDE LACTIQUE OU LA COMPLEXITÉ AROMATIQUE DU 
+CONDIMENT EMPLOYÉ.
+• LES GOÛTS ÉVOLUENT AU COURS DU TEMPS.
+ON PEUT DIRE QUE LE TEMPS EST AUSSI UN INGRÉDIENT DANS LA FERMENTATION.
 
-Corrigé
-N°	Réponse	Explication
-1	B	Une année-lumière correspond à environ 9 460 milliards de kilomètres.
-2	D	Le Soleil est notre étoile. Proxima du Centaure est la plus proche après lui.
-3	C	Notre Système solaire appartient à la Voie lactée.
-4	B	Le Système solaire compte huit planètes. Pluton est une planète naine.
-5	C	Jupiter est la planète la plus grande et la plus massive.
-6	C	La fusion de l'hydrogène en hélium libère l'énergie du Soleil.
-7	B	Les phases lunaires dépendent de la portion éclairée visible depuis la Terre.
-8	A	Une exoplanète est une planète située en dehors de notre Système solaire.
-9	B	Un trou noir possède un horizon des événements au-delà duquel rien ne peut s'échapper.
-10	A	Certaines étoiles massives terminent leur vie par une explosion de supernova.
+Contribue à l’équilibre du MICROBIOTE INTESTINAL : Probiotique
+APPORT D’UNE GRANDE VARIÉTÉ DE MICRO-ORGANISMES
+• AGIT SUR LE SYSTÈME IMMUNITAIRE
+• EFFET SUR L’HUMEUR
+AIDENT À LA DIGESTION : PRÉDIGESTION DES NUTRIMENTS ET CRÉATION D’ENZYMES 
+• DIMINUTION DU SUCRE
+• CRÉATION DE VITAMINES, ET MEILLEURE ASSIMILATION
+• AUGMENTATION DES PROPRIÉTÉS ANTIOXYDANTES
+• PROPRIÉTÉS ANTI MICROBIENNES
+• PROPRIÉTÉS HYPOTENSEURS
+• AMÉLIORE LA BALANCE SODIUM/POTASSIUM
+
+Les enzymes présentes dans les légumes fermentés aident la digestion
+La vitamine C n'est pas détruite durant la fermentation
+
+
+QUELS LÉGUMES ?
+LÉGUMES RACINES : CAROTTES, NAVET, BETTERAVE, CÉLERI RAVE, RADIS, PANAIS, CHOU-
+RAVE ETC
+BULBES : OIGNONS, ÉCHALOTES, ETC
+LÉGUMES FRUITS : COURGES D’HIVER, POTIMARRON, ETC
+LÉGUMES FEUILLES OU TIGES AYANT SUFFISAMMENT DE CELLULOSE : CHOUX, POIREAUX, 
+CÉLERI BRANCHE, CÔTES DE BLETTES. LES FEUILLES TENDRES : BLETTES, ÉPINARDS, DONNENT 
+DES RÉSULTATS ALÉATOIRES.
+CHOU-FLEUR, BROCOLIS : LES UTILISER EN MÉLANGES (MEILLEUR AU GOÛT)
+LES HARICOTS VERTS : LES BLANCHIR AVANT
+LES CORNICHONS : VERSER LA SAUMURE CHAUDE (70°C) ET RETIRER LA CICATRICE DE LA 
+FLEUR.
+LES PIMENTS : ENTIERS, ÉMINCÉS, EN PURÉE OU EN SAUCE;
+
+Pour un bocal de 1 l, vous aurez besoin d’environ 1 kg de légumes poids net épluchés
+Mesurez 10 g de sel pour 1 kilo de légumes 
+chou, poireau, blette, le céleri branche, l’aillet, oignons nouveaux, carottes, betteraves, panais, navets, radis
+Au sel sec pour petits morceaux : choux en morceaux, carottes rapées …
+en saumure pour légumes en gros morceaux : cornichons, bâtonnets de carottes , petits pois, haricots verts…
+remplissez le bocal d’eau en laissant le moins de vide possible.
+
+
+La température de fermentation optimale se situe entre 18 et 25°C, 
+fermentation durant une semaine à température ambiante. 
+Après cette première période chaude, le stockage se fait idéalement entre 10 et 15 °C
+
+
+LE BOCAL À JOINT DE CAOUTCHOUC EST IDÉAL
+• LE CAOUTCHOUC PERMET AU GAZ DE SORTIR 
+SANS LAISSER ENTRER L’AIR
+
+
+
+
 
