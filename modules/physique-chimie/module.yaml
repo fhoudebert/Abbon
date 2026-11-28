@@ -2,8 +2,8 @@
 # Questions reprises des ébauches (modules/_ebauches/chimie, physique), reformulées et vérifiées.
 
 id: org.abbon.physique-chimie
-version: 0.9.0
-date: 2026-11-21
+version: 0.9.1
+date: 2026-11-28
 title:
   fr: "Physique-chimie, terminale spécialité"
 description:

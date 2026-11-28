@@ -4,8 +4,8 @@
 # Format des sources : docs/modules.md. Vérifier : npm run module:check ; construire : npm run module:build
 
 id: org.abbon.etymologie
-version: 0.5.2
-date: 2026-11-26
+version: 0.5.3
+date: 2026-11-28
 title:
   fr: "Étymologie : curiosités méconnues"
 description:

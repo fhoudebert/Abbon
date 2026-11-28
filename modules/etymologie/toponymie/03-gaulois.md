@@ -128,7 +128,7 @@ Avallon (Yonne) et l'île d'Avalon des légendes arthuriennes partagent un mot g
 > L'Avalon de la légende est l'« île aux pommes », où la fée Morgane emporte le roi Arthur blessé. Le mot est de la même famille que l'anglais *apple* et l'allemand *Apfel*. L'Avallon bourguignon est sans doute un lieu planté de pommiers, ou consacré à un dieu du même nom.
 
 ## lutece · single
-Lutèce (*Lutetia*), l'ancien nom de Paris, et Lodève (*Luteva*), dans l'Hérault : quel paysage leur nom évoquerait-il ?
+Lutèce (*Lutetia*), l'ancien nom de Paris, et Lodève (*Luteva*), dans l'Hérault : de quoi tireraient-ils leur nom ?
 
 - [x] Le marais, la boue (gaulois *luto-*)
 - [ ] La lumière

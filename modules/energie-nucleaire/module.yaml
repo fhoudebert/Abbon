@@ -7,8 +7,8 @@
 # Format des sources : docs/modules.md. Vérifier : npm run module:check ; construire : npm run module:build
 
 id: org.abbon.energie-nucleaire
-version: 0.1.0
-date: 2026-11-26
+version: 0.2.0
+date: 2026-11-28
 title:
   fr: "Énergie nucléaire : de l'atome à la fusion"
 description:

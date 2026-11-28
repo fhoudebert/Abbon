@@ -3,8 +3,8 @@
 # Format des sources : docs/modules.md.
 
 id: org.abbon.sciences-ingenieur
-version: 0.1.0
-date: 2026-11-22
+version: 0.1.1
+date: 2026-11-28
 title:
   fr: "Sciences de l'ingénieur, spécialité terminale"
 description:

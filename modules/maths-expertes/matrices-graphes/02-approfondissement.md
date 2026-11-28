@@ -24,7 +24,7 @@ Quelle est la solution du système $\begin{cases} 2x + y = 5 \\ 5x + 3y = 13 \en
 - [ ] $x = 3$ et $y = -1$
 - [ ] Il n'y en a pas
 
-> Le système s'écrit $A\,X = B$, avec la matrice $A$ inversible de la question précédente : $X = A^{-1}B = \begin{pmatrix} 3 \times 5 - 13 \\ -5 \times 5 + 2 \times 13 \end{pmatrix} = \begin{pmatrix} 2 \\ 1 \end{pmatrix}$. Vérification : $4 + 1 = 5$ et $10 + 3 = 13$.
+> Le système s'écrit $A\,X = B$, avec $A = \begin{pmatrix} 2 & 1 \\ 5 & 3 \end{pmatrix}$, inversible ($\det A = 1$), d'inverse $\begin{pmatrix} 3 & -1 \\ -5 & 2 \end{pmatrix}$ : $X = A^{-1}B = \begin{pmatrix} 3 \times 5 - 13 \\ -5 \times 5 + 2 \times 13 \end{pmatrix} = \begin{pmatrix} 2 \\ 1 \end{pmatrix}$. Vérification : $4 + 1 = 5$ et $10 + 3 = 13$.
 
 ## puissance-matrice · expression
 On pose $T = \begin{pmatrix} 1 & 1 \\ 0 & 1 \end{pmatrix}$. On admet que $T^n = \begin{pmatrix} 1 & a_n \\ 0 & 1 \end{pmatrix}$. Écrivez $a_n$ en fonction de $n$.

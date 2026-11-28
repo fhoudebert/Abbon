@@ -31,13 +31,13 @@ Pourquoi ne peut-on pas faire fonctionner un réacteur avec du thorium seul ?
 Complétez la chaîne qui transforme le thorium fertile en uranium fissile.
 
 = Le thorium 232 capture un {neutron ~proton ~électron} et devient du thorium {233}.
-= Celui-ci se désintègre par radioactivité {bêta|beta|β} en {protactinium ~uranium ~radium} 233, qui donne à son tour de l'uranium 233.
+= Celui-ci se désintègre par radioactivité {bêta ~alpha ~gamma} en {protactinium ~uranium ~radium} 233, qui donne à son tour de l'uranium 233.
 
 > $$\ce{^{232}Th + n -> ^{233}Th ->[\beta^-][\text{22 min}] ^{233}Pa}$$
 >
 > $$\ce{^{233}Pa ->[\beta^-][\text{27 j}] ^{233}U}$$
 >
-> À chaque désintégration bêta, un neutron devient proton : $Z$ passe de 90 (thorium) à 91 (protactinium) puis 92 (uranium), et $A$ reste 233. Il faut attendre : la moitié du protactinium met 27 jours à devenir de l'uranium 233.
+> La radioactivité bêta moins émet un électron et un antineutrino ; l'alpha émettrait un noyau d'hélium (le numéro atomique baisserait de 2) ; le gamma, un simple photon, ne change pas l'élément. À chaque désintégration bêta, un neutron devient proton : $Z$ passe de 90 (thorium) à 91 (protactinium) puis 92 (uranium), et $A$ reste 233. Il faut attendre : la moitié du protactinium met 27 jours à devenir de l'uranium 233.
 
 ## protactinium · numeric
 Le protactinium 233 a une demi-vie d'environ 27 jours. Au bout de combien de jours n'en reste-t-il plus qu'un quart ?
@@ -103,11 +103,11 @@ Quel phénomène rend l'uranium 233 produit à partir du thorium difficile à ma
 Le thorium est étudié depuis la fin des années 1940. Pourquoi la filière uranium-plutonium l'a-t-elle emporté ?
 
 - [x] Elle avait pris de l'avance (propulsion navale, réacteurs à eau) et servait aussi à produire le plutonium des armes, dans le contexte de la guerre froide
-- [ ] Parce que le thorium n'existait qu'en Inde
+- [ ] Parce que les pays producteurs de thorium en limitaient l'exportation
 - [ ] Parce que les réacteurs au thorium ont tous explosé
 - [ ] Parce que l'uranium ne produit pas de déchets
 
-> Les réacteurs à eau pressurisée dérivent de ceux des sous-marins ; l'uranium et le plutonium avaient une infrastructure, militaire puis civile, déjà payée. Le programme américain de réacteurs à sels fondus a été arrêté au début des années 1970 au profit des surgénérateurs au sodium. Les difficultés propres au thorium (retraitement, uranium 232) ont aussi pesé.
+> Les réacteurs à eau pressurisée dérivent de ceux des sous-marins ; l'uranium et le plutonium avaient une infrastructure, militaire puis civile, déjà payée. Le programme américain de réacteurs à sels fondus a été arrêté au début des années 1970 au profit des surgénérateurs au sodium. Les difficultés propres au thorium (retraitement, uranium 232) ont aussi pesé. Le commerce des minerais de thorium est bien surveillé (l'Inde, par exemple, contrôle l'exportation de ses sables à monazite), mais le thorium est répandu sur plusieurs continents : ce n'est pas l'accès à la ressource qui a décidé.
 
 ## shippingport · single
 Qu'a montré le réacteur de Shippingport (États-Unis), chargé de 1977 à 1982 d'un combustible thorium-uranium 233 ?

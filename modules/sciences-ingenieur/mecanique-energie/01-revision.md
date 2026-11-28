@@ -38,7 +38,7 @@ Un réducteur de rapport $1/20$ est entraîné par un moteur tournant à 3 000 t
 > $N_s = N_e \times \dfrac{1}{20} = 150$ tr/min. Pour une même puissance, le couple est multiplié d'autant (aux pertes près) : un réducteur échange de la vitesse contre du couple.
 
 ## reducteur-couple · single
-Le moteur de la question précédente fournit 0,5 N·m. Quel couple obtient-on en sortie du réducteur, si son rendement est de 0,95 ?
+Un moteur fournit un couple de 0,5 N·m à l'entrée d'un réducteur de rapport $1/20$, de rendement 0,95. Quel couple obtient-on en sortie ?
 
 - [x] Environ 9,5 N·m
 - [ ] 0,5 N·m

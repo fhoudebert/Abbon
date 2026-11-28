@@ -14,6 +14,8 @@
 
 - Six filières (Forum international Génération IV, 2002) : neutrons rapides au sodium, au plomb, au gaz ; sels fondus ; très haute température ; eau supercritique.
 - **Surgénération** : un réacteur à neutrons rapides transforme l'uranium 238 en plutonium 239 et peut produire plus de matière fissile qu'il n'en consomme.
+- **Pourquoi ralentir, ou pas ?** Un neutron lent fait fissionner l'uranium 235 des centaines de fois plus facilement : avec 3 à 5 % de matière fissile, il faut un modérateur. Sans modérateur, il faut un combustible riche (15 à 25 % de plutonium), mais les fissions par neutrons rapides libèrent plus de neutrons, de quoi transformer l'uranium 238. Un réacteur à eau produit aussi du plutonium (≈ 1 % du combustible usé).
+- **Superphénix**, ni invention (EBR-I, 1951 ; Phénix, 1973) ni simple échec technique : passage à l'échelle industrielle, incidents et arrêts, uranium bon marché, décision politique de 1997.
 - **Sodium** : excellent caloporteur, liquide jusqu'à ≈ 880 °C sans pression ; mais opaque, brûle à l'air, réagit violemment avec l'eau.
 
 | Réacteur | Repères |

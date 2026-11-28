@@ -201,7 +201,14 @@ N°	Réponse	Explication
 Nouveaux éléments (nucleaire/prompt.txt du 28/11/2026 ; le détail et les textes sources sont dans ce fichier)
 ==========================================================================================================
 
-9/Améliorations des questionnaires existants — État : à faire.
+9/Améliorations des questionnaires existants
+   État (28/11/2026) : FAIT — Lutèce (« de quoi tireraient-ils leur nom ? ») ; leurre « exportation du thorium
+   limitée » (et pourquoi ce n'est pas la raison) ; chaîne du thorium : liste bêta, alpha, gamma (l'antineutrino,
+   émis par la désintégration bêta, est expliqué, pas proposé : ce n'est pas un type de radioactivité) ; deux
+   questions : pourquoi ralentir ou pas les neutrons (surgénération), bilan de Superphénix (énergie nucléaire
+   0.2.0) ; satellite-periode avec la vitesse dans l'énoncé. Autres questions qui dépendaient de l'ordre
+   d'affichage, corrigées : sciences de l'ingénieur (réducteur), maths expertes (système), maths spécialité
+   (au moins un succès ; raisonnement par l'absurde).
    - Noms de lieux gaulois, Lutèce et Lodève : « De quoi tirent-ils leur nom ? » (cohérent avec les réponses).
    - Thorium, « Pourquoi la filière uranium-plutonium l'a-t-elle emporté ? » : remplacer le leurre « le thorium
      n'existe qu'en Inde » par « le commerce du thorium est soumis à des restrictions à l'exportation par les pays
@@ -222,8 +229,8 @@ Nouveaux éléments (nucleaire/prompt.txt du 28/11/2026 ; le détail et les text
 
 11/Culture générale (ou autre questionnaire) — État : à faire.
    - Origine des lettres : alphabet protosinaïtique, hiéroglyphes simplifiés gardant le son (A ← tête de bœuf,
-     B ← maison, M ← eau, O ← œil, N ← serpent) ; sources : Wikipédia, « Alphabet protosinaïtique » et « Histoire
-     de l'alphabet » (à vérifier : M vient plutôt de l'eau, mem).
+     B ← maison, M ← eau (mem, plutôt que « mer », validé), O ← œil, N ← serpent) ; sources : Wikipédia,
+     « Alphabet protosinaïtique » et « Histoire de l'alphabet ».
    - Fruitiers et rusticité : peut-on planter tel arbre (kaki, abricotier, châtaignier, camerisier, amélanchier,
      feijoa, asiminier, agrumes…) dans telle région, selon les zones de rusticité 7, 8a, 8b, 9a, 9b ?
    - Carafe, pichet, cruche, broc, pot à eau : différences et usages régionaux (nucleaire/pichet-carafe-cruche-broc.png).
@@ -237,5 +244,8 @@ Nouveaux éléments (nucleaire/prompt.txt du 28/11/2026 ; le détail et les text
    - Bactéries lactiques (Lactobacillus, Pediococcus, Lactococcus, Streptococcus, Leuconostoc, Oenococcus…) et
      moisissures (Penicillium, Aspergillus oryzae, Rhizopus) ; sécurité : pH < 3,8 en fin de fermentation.
    - Pratique : légumes adaptés, 10 g de sel par kg, sel sec ou saumure, 18-25 °C une semaine puis 10-15 °C,
-     bocal à joint caoutchouc. Allégations santé du document source à vérifier avant d'en faire des questions.
+     bocal à joint caoutchouc.
+   - Consigne : objectif culinaire, rester factuel ; pas d'allégations santé du document source. On peut dire,
+     si la question s'y prête, que les légumes lactofermentés non pasteurisés apportent des bactéries lactiques
+     vivantes qui rejoignent le microbiote intestinal, sans promettre d'effet sur la santé.
 

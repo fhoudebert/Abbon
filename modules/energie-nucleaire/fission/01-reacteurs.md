@@ -1,7 +1,7 @@
 ---
 id: fission-01
 title: { fr: "Fission et réacteurs : d'hier à demain" }
-description: { fr: "Réaction en chaîne, criticité, modérateur, réacteurs à eau pressurisée, combustible usé, générations de réacteurs, neutrons rapides : Superphénix, ASTRID, Natrium" }
+description: { fr: "Réaction en chaîne, criticité, modérateur, réacteurs à eau pressurisée, combustible usé, générations de réacteurs, neutrons rapides et surgénération : Superphénix, ASTRID, Natrium" }
 level: approfondissement
 tags: [nucléaire, fission, réacteur, Superphénix, ASTRID]
 ---
@@ -86,6 +86,27 @@ Quel était le principal intérêt de Superphénix, réacteur à neutrons rapide
 - [ ] Ne produire aucun déchet radioactif
 
 > Un surgénérateur produit plus de matière fissile qu'il n'en consomme. Avec l'uranium appauvri déjà stocké, la France disposerait ainsi de combustible pour des siècles. Les réacteurs à neutrons rapides peuvent aussi brûler du plutonium et une partie des actinides mineurs.
+
+## ralentir-ou-pas · single
+Dans un réacteur à eau, il faut ralentir les neutrons pour entretenir la réaction ; un réacteur à neutrons rapides s'en passe. Comment est-ce possible ?
+
+- [x] Son combustible est bien plus riche en noyaux fissiles (environ 15 à 25 % de plutonium, contre 3 à 5 % d'uranium 235) : des neutrons rapides, moins efficaces à chaque rencontre, trouvent quand même assez de cibles
+- [ ] Les neutrons rapides provoquent bien plus facilement la fission que les neutrons lents
+- [ ] On ralentit les neutrons dans un réacteur à eau pour éviter de produire du plutonium
+- [ ] Il utilise un autre combustible, le thorium, qui fissionne sans neutrons
+
+> Un neutron lent a des centaines de fois plus de chances de faire fissionner un noyau d'uranium 235 qu'un neutron rapide : avec un combustible peu enrichi, il faut donc un modérateur. Le réacteur à eau produit d'ailleurs lui aussi du plutonium (environ 1 % de son combustible usé) : ralentir ne sert pas à l'éviter. Sans modérateur, il faut beaucoup de matière fissile, mais chaque fission de plutonium par un neutron rapide libère plus de neutrons : il en reste assez pour transformer l'uranium 238 qui entoure le cœur. C'est la **surgénération** : plus de plutonium produit que consommé.
+
+## superphenix-bilan · multiple
+Que retenir de Superphénix ? Cochez les affirmations exactes.
+
+- [x] Il devait tirer parti de l'uranium 238 (uranium appauvri), inutilisé dans les réacteurs à eau, au prix de la manipulation de plutonium et de sodium
+- [x] Ce n'était pas une invention : des surgénérateurs fonctionnaient depuis les années 1950, et Phénix, à Marcoule, avait déjà montré la surgénération ; Superphénix devait passer à l'échelle industrielle
+- [x] Son arrêt mêle des difficultés techniques, une rentabilité incertaine (l'uranium étant devenu abondant et bon marché) et une décision politique en 1997
+- [ ] Il n'a jamais produit d'électricité
+- [ ] Il a été arrêté après un accident qui a contaminé la région
+
+> Le premier surgénérateur, l'EBR-I américain, a produit en 1951 la première électricité d'origine nucléaire. Superphénix a fonctionné à pleine puissance, mais avec de longues interruptions : fuite de sodium en 1987, toit d'une salle des machines effondré sous la neige en 1990, procédures administratives. En 1996, il a enfin fonctionné de façon régulière, juste avant l'annonce de l'arrêt par le gouvernement de Lionel Jospin, dans un accord avec les écologistes. Le projet ASTRID (2010-2019) a buté sur la même question économique : tant que l'uranium reste bon marché, la surgénération n'est pas rentable.
 
 ## superphenix · single
 Superphénix, réacteur de 1 200 MW électriques à Creys-Malville (Isère), a été arrêté sur décision du gouvernement en :
