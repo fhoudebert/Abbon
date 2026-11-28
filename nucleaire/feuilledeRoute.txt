@@ -255,7 +255,13 @@ Nouveaux éléments (nucleaire/prompt.txt du 28/11/2026 ; le détail et les text
    100 % la rapporte (une fois). « Refaire les erreurs » (tentative partielle) n'y donne pas droit. Résultat :
    « Sans faute ! +n points ». En mode examen, suit le réglage « points » du site (0 : aucun point).
 
-13/Module « Transformation » : lactofermentation, fromage, charcuterie — État : à faire.
+13/Module « Transformation » : lactofermentation, fromage, charcuterie
+   État (28/11/2026) : FAIT — org.abbon.transformation 0.1.0, « Transformer et conserver : fermentation, fromage,
+   charcuterie », 5 QCM, 56 questions, 4 fiches. Notes corrigées ou nuancées : le thé noir est oxydé, pas
+   fermenté (sauf pu-erh) ; hareng saur et bifteck maturé ne sont pas fermentés ; cornichons du commerce au
+   vinaigre, marinés ; la fermentation n'a pas « précédé la cuisson » (non repris). Sel : 10 à 20 g/kg au sel
+   sec. Allégations santé du document non reprises ; seule mention : bactéries lactiques vivantes des légumes
+   non pasteurisés, qui rejoignent le microbiote.
    - Fermenté ou pas ? (beurre, cornichons, fromage, olives, saucisson, café, bière, choucroute, hareng saur, vin,
      sauce Worcestershire, chocolat, vanille, anchois, thé, bifteck rassis, yaourts) ; faisandage et maturation.
    - Bactéries lactiques (Lactobacillus, Pediococcus, Lactococcus, Streptococcus, Leuconostoc, Oenococcus…) et

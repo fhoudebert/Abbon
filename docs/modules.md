@@ -49,6 +49,7 @@ abbon/questionnaires/
   fr/technologie/   Abbon-informatique-…qcm, Abbon-sciences-ingenieur-…qcm
   fr/culture-generale/  Abbon-culture-generale-…qcm
   fr/jardin/        Abbon-jardin-elevages-…qcm
+  fr/cuisine/       Abbon-transformation-…qcm
   en/languages/     Abbon-french-traps-…qcm, Abbon-word-stories-…qcm   (modules en anglais)
   en/demo/          Abbon-showcase-…qcm
 ```

@@ -1,0 +1,33 @@
+# Module « Transformer et conserver » — point 13 de la feuille de route (nucleaire/feuilledeRoute.txt).
+# Niveau loisir, objectif culinaire. Rédigé à partir de notes de l'auteur (nucleaire/prompt.txt : fermenté ou
+# pas, bactéries et moisissures, pratique de la lactofermentation), complétées et vérifiées en novembre 2026
+# (décret n° 88-1203 sur le yaourt, cahier des charges du comté, Agroscope pour les trous de l'emmental).
+# Consigne : rester factuel, pas d'allégations santé.
+# Format des sources : docs/modules.md. Vérifier : npm run module:check ; construire : npm run module:build
+
+id: org.abbon.transformation
+version: 0.1.0
+date: 2026-11-28
+title:
+  fr: "Transformer et conserver : fermentation, fromage, charcuterie"
+description:
+  fr: "Pour le cuisinier amateur : fermenté ou pas (thé, chocolat, cornichons, hareng saur…) ; bactéries lactiques, levures et moisissures ; lactofermenter ses légumes (sel, saumure, bocal, température, acidité) ; le fromage, du caillé à l'affinage ; la charcuterie, du salage au séchage. Avec une fiche de révision par thème."
+level: loisir
+license: CC-BY-NC-SA-4.0
+authors: [Abbon]
+homepage: https://github.com/fhoudebert/Abbon
+languages: [fr]
+requires:
+  app: ">=0.2.0"
+defaults:
+  passThreshold: 0.6
+
+categories:
+  - id: fermentation
+    name: { fr: "Fermentations et micro-organismes" }
+  - id: lactofermentation
+    name: { fr: "Lactofermenter ses légumes" }
+  - id: fromage
+    name: { fr: "Le fromage" }
+  - id: charcuterie
+    name: { fr: "La charcuterie" }
