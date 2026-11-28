@@ -48,6 +48,7 @@ abbon/questionnaires/
                     Abbon-energie-nucleaire-…qcm
   fr/technologie/   Abbon-informatique-…qcm, Abbon-sciences-ingenieur-…qcm
   fr/culture-generale/  Abbon-culture-generale-…qcm
+  fr/jardin/        Abbon-jardin-elevages-…qcm
   en/languages/     Abbon-french-traps-…qcm, Abbon-word-stories-…qcm   (modules en anglais)
   en/demo/          Abbon-showcase-…qcm
 ```
@@ -61,6 +62,10 @@ npm run module:catalogue -- ../fhoudebert.github.io/abbon/questionnaires
 après l'ajout ou le remplacement d'un fichier (titre, description, nombre de QCM, de questions et de fiches, taille,
 lus dans chaque `.qcm`). Seules les pages produites par cette commande sont réécrites : un `index.html` écrit à la
 main est laissé intact. Une nouvelle rubrique ou une nouvelle langue est simplement un nouveau dossier.
+On n'y dépose que des fichiers `.qcm`, sans les décompresser : un `.qcm` est une archive zip (`manifest.json`,
+`quizzes/<id>.json`, fiches, images) que l'application lit d'un bloc. Un dossier qui ne contient aucun `.qcm`,
+comme un `quizzes/` issu d'une archive décompressée, n'est ni listé ni indexé : la commande le signale, ainsi que
+les autres fichiers inattendus, pour qu'on le supprime.
 
 ## Dans l'application
 
