@@ -1,0 +1,31 @@
+## Lire son terrain
+
+- **Fougère aigle** : sol acide et filtrant → châtaignier (qui fuit le calcaire), arbousier.
+- **Cornouiller sanguin, sureau noir, noisetier, troène** : sol profond, riche et frais → noyer.
+
+## Fruitiers originaux et rusticité
+
+| Fruitier | Rusticité (ordre de grandeur) | À retenir |
+| --- | --- | --- |
+| Camérisier (baie de mai) | −40 °C | fleurs résistantes, fruits dès mai |
+| Asiminier | −25 °C | goût banane-mangue, mi-ombre dans le Midi |
+| Yuzu | −10 à −12 °C | agrume le plus rustique à fruits comestibles |
+| Feijoa | −10 à −12 °C | « goyavier du Brésil », fruits en novembre |
+| Oponce | variable | sol drainant, pas d'humidité l'hiver |
+| Grenadier | variable | variétés précoces d'Asie centrale |
+| Avocatier | quelques degrés sous zéro | groupe mexicain, feuilles anisées |
+| Bananier du Japon | souche très rustique | fruits immangeables ; la banane dessert est tropicale |
+
+## Botanique du verger
+
+- **Figue** : faux fruit (urne tapissée de fleurs). **Blastophage** : porte le pollen du caprifiguier. Figuier **bifère** : figues-fleurs (bois de l'an passé) + figues d'automne (rameaux de l'année).
+- **Sans pépins** : parthénocarpie (navel, banane), sténospermocarpie (raisin Sultanina), triploïdie (pastèque).
+- **Climactériques** (mûrissent après cueillette, éthylène) : pomme, poire, abricot, kiwi, kaki, banane. Non : cerise, raisin, agrumes, framboise.
+- **Dioïques** : kiwi, argousier. **Monoïques** : noyer, noisetier, châtaignier. **Hermaphrodites** : pommier (souvent autostérile).
+
+## Cueillette et protection
+
+- Glands doux : chêne ballote. **Marron d'Inde** : toxique ; le marron comestible est une châtaigne non cloisonnée.
+- Comestibles : prunelles, cornouilles, sureau noir (cuit), nèfles blettes, cénelles. Non : cornouiller sanguin, fusain.
+- **Carat** : graine de caroube ; 1 carat = 0,2 g.
+- **Cynips du châtaignier** régulé par *Torymus sinensis* (lâchers depuis 2010) : lutte biologique classique.

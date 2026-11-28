@@ -220,7 +220,14 @@ Nouveaux éléments (nucleaire/prompt.txt du 28/11/2026 ; le détail et les text
      ou non ; échec technique, politique ou économique ?
    - physique-chimie, satellite-periode : donner la vitesse dans l'énoncé (question indépendante de l'ordre).
 
-10/Module « Jardin et petits élevages » (niveau loisir : rusticité et qualité plutôt que productivité) — État : à faire.
+10/Module « Jardin et petits élevages » (niveau loisir : rusticité et qualité plutôt que productivité)
+   État (28/11/2026) : FAIT — org.abbon.jardin-elevages 0.1.0, 6 QCM, 71 questions, 5 fiches : abeilles (15),
+   verger insolite en deux QCM (fruitiers ; botanique et cueillette), poules et canes (15), vigne (10, dont
+   cépages résistants et PIWI venus de Culture générale), photosynthèse C3, C4 et CAM (11). La couvaison de la
+   cane quitte aussi Culture générale (2.3.0). Consigne : pas de démarches administratives (déclaration en
+   mairie retirée). Corrections des notes : le quinoa est en C3 (pas en C4) ; le lierre fleurit à l'automne,
+   pas de février à avril. Non repris faute de source sûre : ragouminier (rusticité), châtaigne sardonne,
+   pacanier, genévrier ; noms des graines (avocat, datte : usage flottant).
    - QCM apiculture (nucleaire/apiculture.txt).
    - QCM verger insolite : fruitiers originaux pour l'amateur (nucleaire/vergerInsolite.txt).
    - QCM aviculture amateur : produire des œufs (nucleaire/oeufs.txt).

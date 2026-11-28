@@ -6,12 +6,12 @@
 # Format des sources : docs/modules.md. Vérifier : npm run module:check ; construire : npm run module:build
 
 id: fr.culture-generale.quiz
-version: 2.2.0
+version: 2.3.0
 date: 2026-11-28
 title:
   fr: "Culture générale"
 description:
-  fr: "Histoire et géographie (capitales qui ont déménagé : Abuja, Astana, Brasília, Nusantara…), sciences du ciel et du corps humain, astronomie (les étrangetés de la Lune, étoiles, planètes et galaxies), histoire de l'atome et des éléments chimiques, volcans et roches, aimants et boussoles, animaux étonnants et petites bêtes de la litière, et vie quotidienne (propane ou butane, induction, safran, cépages résistants…). Avec des fiches de révision. D'après des dossiers de science-ecole.fr (Alain Robert, Jeannette Jarlan, Raymond Piolat)."
+  fr: "Histoire et géographie (capitales qui ont déménagé : Abuja, Astana, Brasília, Nusantara…), sciences du ciel et du corps humain, astronomie (les étrangetés de la Lune, étoiles, planètes et galaxies), histoire de l'atome et des éléments chimiques, volcans et roches, aimants et boussoles, animaux étonnants et petites bêtes de la litière, et vie quotidienne (propane ou butane, induction, safran…). Avec des fiches de révision. D'après des dossiers de science-ecole.fr (Alain Robert, Jeannette Jarlan, Raymond Piolat)."
 level: culture générale
 license: CC-BY-NC-SA-4.0
 authors: [Abbon]

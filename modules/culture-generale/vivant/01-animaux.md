@@ -1,7 +1,7 @@
 ---
 id: animaux
 title: { fr: "Animaux étonnants" }
-description: { fr: "Gestation et couvaison, mammifère qui pond, records, koala, écrevisse, poulpe, mouche" }
+description: { fr: "Gestation, mammifère qui pond, records, koala, écrevisse, poulpe, mouche" }
 level: bases
 tags: [culture générale, sciences, animaux]
 ---
@@ -25,16 +25,6 @@ Combien de temps dure la gestation d'une éléphante ?
 - [ ] Environ 30 mois
 
 > Près de deux ans : c'est la plus longue gestation des mammifères terrestres. L'éléphanteau pèse environ 100 kg à la naissance.
-
-## cane · single
-Combien de temps une cane couve-t-elle généralement ses œufs ?
-
-- [x] Environ 28 jours
-- [ ] Environ 14 jours
-- [ ] Environ 40 jours
-- [ ] Environ 60 jours
-
-> C'est le cas du canard domestique commun ; il faut plutôt 35 jours au canard de Barbarie. Une poule couve 21 jours.
 
 ## autruche · single
 Quel est le plus grand oiseau vivant ?

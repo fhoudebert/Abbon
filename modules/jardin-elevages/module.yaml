@@ -1,0 +1,36 @@
+# Module « Jardin et petits élevages » — point 10 de la feuille de route (nucleaire/feuilledeRoute.txt).
+# Niveau loisir : rusticité et qualité plutôt que productivité. Rédigé à partir de notes de l'auteur
+# (nucleaire/apiculture.txt, vergerInsolite.txt, oeufs.txt, prompt.txt), faits vérifiés en novembre 2026
+# (MNHN pour le frelon asiatique, INRAE pour le cynips du châtaignier, pépiniéristes pour les rusticités).
+# Les questions sur les cépages résistants et la couvaison de la cane viennent du module Culture générale 2.2.0.
+# Pas de démarches administratives ni d'allégations santé.
+# Format des sources : docs/modules.md. Vérifier : npm run module:check ; construire : npm run module:build
+
+id: org.abbon.jardin-elevages
+version: 0.1.0
+date: 2026-11-28
+title:
+  fr: "Jardin et petits élevages"
+description:
+  fr: "Pour le jardinier et l'éleveur amateur : la vie de la ruche (reine, ouvrières, varroa, frelon asiatique, du nectar au miel) ; un verger insolite (asiminier, camérisier, yuzu, feijoa, figuier et son blastophage, fruits sauvages comestibles) ; poules et canes pondeuses (couvaison, poussins, ponte, parasites) ; la vigne (cépages résistants, phylloxéra) ; la photosynthèse C3 et C4 au potager. Avec une fiche de révision par thème."
+level: loisir
+license: CC-BY-NC-SA-4.0
+authors: [Abbon]
+homepage: https://github.com/fhoudebert/Abbon
+languages: [fr]
+requires:
+  app: ">=0.2.0"
+defaults:
+  passThreshold: 0.6
+
+categories:
+  - id: abeilles
+    name: { fr: "Abeilles et rucher" }
+  - id: verger
+    name: { fr: "Un verger insolite" }
+  - id: basse-cour
+    name: { fr: "Poules et canes pondeuses" }
+  - id: vigne
+    name: { fr: "La vigne" }
+  - id: plantes
+    name: { fr: "Photosynthèse C3 et C4" }
