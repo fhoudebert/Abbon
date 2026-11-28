@@ -1,6 +1,6 @@
 {
   "name": "abbon",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Abbon — application de QCM multiplateforme (Tauri + Svelte)",
   "type": "module",
   "scripts": {
