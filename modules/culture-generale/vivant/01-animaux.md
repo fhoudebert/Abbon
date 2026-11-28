@@ -1,7 +1,7 @@
 ---
 id: animaux
 title: { fr: "Animaux étonnants" }
-description: { fr: "Gestation et couvaison, mammifère qui pond, records, koala, écrevisse, poulpe, mouche" }
+description: { fr: "Gestation, mammifère qui pond, records, koala, écrevisse, poulpe, mouche, ver de terre" }
 level: bases
 tags: [culture générale, sciences, animaux]
 ---
@@ -25,16 +25,6 @@ Combien de temps dure la gestation d'une éléphante ?
 - [ ] Environ 30 mois
 
 > Près de deux ans : c'est la plus longue gestation des mammifères terrestres. L'éléphanteau pèse environ 100 kg à la naissance.
-
-## cane · single
-Combien de temps une cane couve-t-elle généralement ses œufs ?
-
-- [x] Environ 28 jours
-- [ ] Environ 14 jours
-- [ ] Environ 40 jours
-- [ ] Environ 60 jours
-
-> C'est le cas du canard domestique commun ; il faut plutôt 35 jours au canard de Barbarie. Une poule couve 21 jours.
 
 ## autruche · single
 Quel est le plus grand oiseau vivant ?
@@ -105,3 +95,13 @@ Quel est le seul mammifère capable de voler vraiment, en battant des ailes ?
 - [ ] Le poisson volant
 
 > Ses ailes sont une peau tendue entre de très longs doigts. L'écureuil volant et le colugo ne font que planer, et le poisson volant n'est pas un mammifère. La plupart des chauves-souris se repèrent dans le noir par écholocation.
+
+## ver-de-terre · single
+Comment respire et fait circuler son sang un ver de terre ?
+
+- [x] Il respire par la peau, qui doit rester humide, et son sang est poussé par cinq paires d'arcs contractiles, souvent appelés ses « cœurs »
+- [ ] Il a des poumons minuscules, un dans chaque anneau
+- [ ] Il respire par la bouche et n'a pas de sang
+- [ ] Il a des branchies, comme les poissons
+
+> L'oxygène traverse sa peau, couverte de mucus : c'est pourquoi il fuit le soleil et remonte quand le sol est gorgé d'eau. Son sang est rouge, grâce à une hémoglobine dissoute. Darwin a consacré son dernier livre (1881) aux vers de terre et à leur rôle dans la formation du sol.

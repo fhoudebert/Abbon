@@ -125,7 +125,7 @@ Chambord (*Camboritum*) et Niort (*Novioritum*) cachent le même mot gaulois, *r
 - [ ] Un rite, une cérémonie religieuse
 - [ ] Une rive
 
-> Le gaulois *ritu* et l'anglais *ford*, le gué d'Oxford (« le gué des bœufs »), remontent à la même racine indo-européenne. Attention : Chartres ne contient pas ce mot, la ville tient son nom des Carnutes.
+> Pour Chambord, *cambo-* est la courbe, comme celle du Cosson : une carte de la toponymie gauloise relève une douzaine de lieux du même nom, comme Chambourg-sur-Indre ou Chamboret (Haute-Vienne). Le gaulois *ritu* est de la même famille que l'anglais *ford*, le gué d'Oxford (« le gué des bœufs ») et le latin *portus*, le passage, puis le port.
 
 ## condate · single
 Avant de s'appeler Rennes, la ville se nommait *Condate*. Que désignait ce mot gaulois ?

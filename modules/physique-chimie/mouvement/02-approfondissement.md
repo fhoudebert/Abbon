@@ -28,7 +28,7 @@ Un satellite tourne autour de la Terre sur une orbite circulaire à $\pu{400 km}
 > La deuxième loi de Newton, avec la seule force de gravitation, donne $v = \sqrt{\dfrac{G\,M_T}{r}}$, où $r = R_T + h = \pu{6,77e6 m}$ : $v \approx \pu{7,67e3 m.s-1}$, soit $\pu{7,7 km.s-1}$. Il faut prendre la distance au centre de la Terre, pas l'altitude.
 
 ## satellite-periode · numeric
-Avec la vitesse précédente ($r = \pu{6,77e6 m}$), quelle est la période de révolution du satellite, en minutes ?
+Un satellite décrit une orbite circulaire de rayon $r = \pu{6,77e6 m}$ (400 km d'altitude) à la vitesse $v = \pu{7,67 km.s-1}$. Quelle est sa période de révolution, en minutes ?
 
 = 92 ± 1
 

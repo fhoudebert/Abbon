@@ -3,7 +3,7 @@
 - **Ornithorynque** et échidnés : mammifères qui pondent des œufs (monotrèmes).
 - **Records** : gestation de l'éléphante, environ 22 mois ; plus grand oiseau, l'autruche ; le koala dort jusqu'à 20 heures par jour et a des empreintes digitales semblables aux nôtres.
 - **Poulpe** : trois cœurs, sang bleu (hémocyanine, à base de cuivre). **Écrevisse** : décapode, 10 pattes.
-- **Couvaison** : cane environ 28 jours, poule 21 jours.
+- **Ver de terre** : respire par la peau ; cinq paires d'arcs contractiles (« cœurs ») ; sang rouge (hémoglobine).
 
 ## Les petites bêtes de la litière
 

@@ -19,4 +19,4 @@
 
 - **abricot** : latin *praecoquum* (précoce) → grec → arabe *al-barqūq* → espagnol ou catalan → français.
 - **budget** : ancien français *bougette* (petite bourse) → anglais *budget* → français.
-- **tennis** : français « Tenez ! » (jeu de paume) → anglais *tennis* → français.
+- **tennis** : français « Tenez ! » (jeu de paume) → anglais *tennis* → français. Le compte vient du jeu de paume : quinze, trente, quarante-cinq (devenu quarante) ; « à deux » → *deuce* ; « trentain », trente partout.

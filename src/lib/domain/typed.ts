@@ -18,10 +18,11 @@ export const isTyped = (q: Pick<Question, 'type'>) =>
 
 /**
  * Texte ramené à une forme comparable : espaces superflus retirés, apostrophes et espaces
- * typographiques unifiés, majuscules ignorées (sauf demande contraire). Les accents comptent.
+ * typographiques unifiés, majuscules ignorées (sauf demande contraire). Les accents comptent, sauf avec
+ * `ignoreAccents` : les signes diacritiques sont alors retirés (é, è, ê → e ; ç → c ; œ reste œ).
  */
-export function normalizeText(s: string, caseSensitive = false): string {
-  const t = s
+export function normalizeText(s: string, caseSensitive = false, ignoreAccents = false): string {
+  const t = (ignoreAccents ? s.normalize('NFD').replace(/\p{M}/gu, '') : s)
     .normalize('NFC')
     .replace(/[‘’ʼ]/g, "'")
     .replace(/[   ]/g, ' ')
@@ -52,8 +53,8 @@ export function matchesExpected(question: Pick<Question, 'type' | 'expected'>, t
   const e = question.expected;
   if (!e || text == null || !text.trim()) return false;
   if (question.type === 'short') {
-    const given = normalizeText(text, e.caseSensitive);
-    return (e.accepted ?? []).some((a) => a.trim() !== '' && normalizeText(a, e.caseSensitive) === given);
+    const given = normalizeText(text, e.caseSensitive, e.ignoreAccents);
+    return (e.accepted ?? []).some((a) => a.trim() !== '' && normalizeText(a, e.caseSensitive, e.ignoreAccents) === given);
   }
   if (question.type === 'numeric') {
     const n = parseNumber(text);

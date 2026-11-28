@@ -141,14 +141,14 @@ Que désignait une « ouche », mot qu'on retrouve dans de nombreux noms de lieu
 - [ ] Un chemin creux
 - [ ] Une colline boisée
 
-> Le mot vient du gaulois, comme beaucoup de noms de lieux ruraux. Il a survécu dans le cadastre et sur les panneaux bien après avoir disparu de la langue courante.
+> Le mot vient du gaulois *olca*, la bonne terre labourable, comme beaucoup de noms de lieux ruraux. Il a survécu dans le cadastre et sur les panneaux bien après avoir disparu de la langue courante.
 
 ## breuil · single
-Le Breuil, Breuillet, Breuil-le-Vert : quel paysage ces noms de lieux rappellent-ils ?
+Le Breuil, Breuillet, Breuil-le-Vert, Bruel : quel paysage ces noms de lieux rappellent-ils ?
 
-- [x] Un petit bois clos, un taillis, souvent réservé à la chasse du seigneur
+- [x] Un petit bois, un taillis, souvent réservé à la chasse du seigneur
 - [ ] Un marécage
 - [ ] Un champ de bruyères
 - [ ] Une source chaude
 
-> Du gaulois *brogilo*, « bois enclos ». Les noms de lieux gardent la mémoire des paysages : un Plessis était un enclos de branches entrelacées, les Essarts des terres défrichées, une Ferté une forteresse.
+> Du gaulois *brogilo*, « petit bois » ; Bruel en est la forme occitane. Les noms de lieux gardent la mémoire des paysages : un Plessis était un enclos de branches entrelacées, les Essarts des terres défrichées, une Ferté une forteresse.

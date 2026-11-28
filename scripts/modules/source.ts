@@ -68,6 +68,8 @@ interface RawQuestion {
   type?: QuestionType;
   /** Réponse courte : respecter les majuscules (« · short · case-sensitive »). */
   caseSensitive?: boolean;
+  /** Réponse courte ou trous à saisir : ignorer les accents (« · short · accent-insensitive »). */
+  ignoreAccents?: boolean;
   /** Texte brut par langue ; `answers` : lignes « = réponse » des questions à saisie. */
   langs: Map<string, { prompt: string; choices: { correct: boolean; text: string }[]; answers: string[]; explanation: string }>;
 }
@@ -137,12 +139,22 @@ export function splitQuestions(body: string, mainLang: string): RawQuestion[] {
     if (/^\s*`{3,}/.test(line)) inCode = !inCode;
     const head = !inCode && /^##\s+(.+?)\s*$/.exec(line);
     if (head) {
-      const [, id, type, option] = /^(\S+)(?:\s*[·|]\s*(\S+))?(?:\s*[·|]\s*(\S+))?$/.exec(head[1]) ?? [];
-      if (!id) throw new Error(`titre de question illisible : « ${line} »`);
+      const [id, type, ...options] = head[1].split(/\s*[·|]\s*/);
+      if (!id || /\s/.test(id)) throw new Error(`titre de question illisible : « ${line} »`);
       if (type && !TYPES.includes(type)) throw new Error(`${id} : type « ${type} » inconnu (${TYPES.join(', ')})`);
-      if (option && !(type === 'short' && option === 'case-sensitive'))
-        throw new Error(`${id} : option « ${option} » inconnue (seule « short · case-sensitive » existe)`);
-      q = { id, type: type as RawQuestion['type'], caseSensitive: option === 'case-sensitive' || undefined, langs: new Map() };
+      for (const option of options) {
+        const ok =
+          (option === 'case-sensitive' && type === 'short') || (option === 'accent-insensitive' && (type === 'short' || type === 'cloze'));
+        if (!ok)
+          throw new Error(`${id} : option « ${option} » inconnue (options : « short · case-sensitive », « short · accent-insensitive », « cloze · accent-insensitive »)`);
+      }
+      q = {
+        id,
+        type: type as RawQuestion['type'],
+        caseSensitive: options.includes('case-sensitive') || undefined,
+        ignoreAccents: options.includes('accent-insensitive') || undefined,
+        langs: new Map(),
+      };
       out.push(q);
       lang = mainLang;
       part = 'prompt';
@@ -391,12 +403,13 @@ export function compileModule(files: readonly SourceFile[], assets: readonly Ass
               err(f.path, `texte à trous : les trous en « ${l} » diffèrent de ceux en « ${main} »`, ref);
             text[l] = other.text;
           }
-          expected = { text, gaps: main0.gaps };
+          expected = { text, gaps: raw.ignoreAccents ? main0.gaps.map((g) => (g.kind === 'text' ? { ...g, ignoreAccents: true } : g)) : main0.gaps };
         } else if (typed) {
           const all = [...new Set(languages.flatMap((l) => raw.langs.get(l)?.answers ?? []).map((a) => a.trim()))];
           if (flags.length) err(f.path, `question « ${type} » : pas de réponses à cocher (« - [ ] »), seulement des lignes « = réponse »`, ref);
           if (!all.length) err(f.path, 'réponse attendue manquante (ligne « = réponse »)', ref);
-          if (type === 'short') expected = { accepted: all, ...(raw.caseSensitive ? { caseSensitive: true } : {}) };
+          if (type === 'short')
+            expected = { accepted: all, ...(raw.caseSensitive ? { caseSensitive: true } : {}), ...(raw.ignoreAccents ? { ignoreAccents: true } : {}) };
           else if (type === 'expression') {
             if (all.length > 1) err(f.path, 'expression : une seule formule attendue (la même dans chaque langue)', ref);
             else if (all.length) {

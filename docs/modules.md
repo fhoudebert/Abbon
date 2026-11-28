@@ -44,9 +44,12 @@ abbon/questionnaires/
   fr/histoire/      Abbon-histoire-…qcm, Abbon-histoire-terminale-…qcm
   fr/philosophie/   Abbon-philosophie-…qcm
   fr/sciences/      Abbon-maths-specialite-…qcm, Abbon-maths-expertes-…qcm, Abbon-physique-chimie-…qcm,
-                    Abbon-enseignement-scientifique-…qcm, Abbon-svt-…qcm
+                    Abbon-enseignement-scientifique-…qcm, Abbon-svt-…qcm,
+                    Abbon-energie-nucleaire-…qcm
   fr/technologie/   Abbon-informatique-…qcm, Abbon-sciences-ingenieur-…qcm
   fr/culture-generale/  Abbon-culture-generale-…qcm
+  fr/jardin/        Abbon-jardin-elevages-…qcm
+  fr/cuisine/       Abbon-transformation-…qcm
   en/languages/     Abbon-french-traps-…qcm, Abbon-word-stories-…qcm   (modules en anglais)
   en/demo/          Abbon-showcase-…qcm
 ```
@@ -60,6 +63,10 @@ npm run module:catalogue -- ../fhoudebert.github.io/abbon/questionnaires
 après l'ajout ou le remplacement d'un fichier (titre, description, nombre de QCM, de questions et de fiches, taille,
 lus dans chaque `.qcm`). Seules les pages produites par cette commande sont réécrites : un `index.html` écrit à la
 main est laissé intact. Une nouvelle rubrique ou une nouvelle langue est simplement un nouveau dossier.
+On n'y dépose que des fichiers `.qcm`, sans les décompresser : un `.qcm` est une archive zip (`manifest.json`,
+`quizzes/<id>.json`, fiches, images) que l'application lit d'un bloc. Un dossier qui ne contient aucun `.qcm`,
+comme un `quizzes/` issu d'une archive décompressée, n'est ni listé ni indexé : la commande le signale, ainsi que
+les autres fichiers inattendus, pour qu'on le supprime.
 
 ## Dans l'application
 
@@ -187,7 +194,9 @@ What is the past simple of *to go*?
 
   Plusieurs lignes `=` donnent plusieurs formes acceptées ; celles des autres langues s'y ajoutent (`= Londres`
   en français, `= London` en anglais : les deux sont acceptées partout). `· short · case-sensitive` fait
-  respecter les majuscules. Une réponse numérique s'écrit `= valeur`, `= valeur ± écart`, avec une unité facultative
+  respecter les majuscules ; `· short · accent-insensitive` (ou `· cloze · accent-insensitive`, pour ses trous à
+  saisir) accepte la réponse sans ses accents (« cleopatre vii » pour « Cléopâtre VII ») : à réserver aux questions
+  où l'orthographe n'est pas l'objet de l'exercice. Les deux options se cumulent. Une réponse numérique s'écrit `= valeur`, `= valeur ± écart`, avec une unité facultative
   à la fin.
 - **Textes à trous** : `· cloze`, avec le texte sur une ou plusieurs lignes `=` et les trous entre accolades :
 

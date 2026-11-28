@@ -34,6 +34,15 @@ describe('réponse courte', () => {
     expect(matchesExpected(q, 'python')).toBe(false);
   });
 
+  it('ignore les accents sur demande (« · accent-insensitive »), sans toucher au reste', () => {
+    expect(normalizeText('Cléopâtre VII', false, true)).toBe('cleopatre vii');
+    expect(normalizeText('Œuvre ÇA', false, true)).toBe('œuvre ca');
+    const q: Question = { ...short(['Cléopâtre VII']), expected: { accepted: ['Cléopâtre VII'], ignoreAccents: true } };
+    expect(['cleopatre vii', 'CLÉOPATRE VII', 'Cléopâtre VII', 'Cléopâtre  vii'].map((t) => matchesExpected(q, t))).toEqual([true, true, true, true]);
+    expect(matchesExpected(q, 'Cleopatra VII')).toBe(false);
+    expect(matchesExpected(short(['Cléopâtre VII']), 'cleopatre vii')).toBe(false);
+  });
+
   it('une forme acceptée vide ne valide pas une réponse vide', () => {
     expect(matchesExpected(short(['']), '')).toBe(false);
   });

@@ -18,7 +18,7 @@ $X$ suit la loi binomiale $\mathcal{B}(n\,;0,1)$. Écrivez $P(X \geq 1)$ en fonc
 
 = $1 - 0{,}9^{n}$
 
-> Événement contraire : $P(X \geq 1) = 1 - P(X = 0) = 1 - 0,9^n$. C'est la formule utilisée pour le seuil de la question précédente.
+> Événement contraire : $P(X \geq 1) = 1 - P(X = 0) = 1 - 0,9^n$. C'est la formule qui sert à chercher un nombre d'essais minimal : $1 - 0,9^n \geq 0,99$ dès $n = 44$.
 
 ## binomiale-milieu · numeric
 $X$ suit la loi binomiale $\mathcal{B}(20\,;0,5)$. Calculez $P(X = 10)$ (à $0,001$ près).

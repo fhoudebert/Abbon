@@ -13,8 +13,8 @@
 | Mot | Origine |
 | --- | --- |
 | bougie | Bougie (Béjaïa, Algérie), port de la cire |
-| jean | Gênes |
-| denim | « de Nîmes » (serge de Nîmes) |
+| jean | Gênes (futaine de Gênes, « bleu de Gênes ») |
+| denim | « de Nîmes » (serge de Nîmes ; filiation discutée) |
 | sardine | Sardaigne (la sardoine, elle, vient de Sardes) |
 
 ## Des images

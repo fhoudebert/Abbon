@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { strToU8, zipSync } from 'fflate';
@@ -33,9 +33,10 @@ describe('catalogue des questionnaires', () => {
     mkdirSync(join(root, 'fr', 'langues'), { recursive: true });
     mkdirSync(join(root, 'fr', 'sciences'), { recursive: true });
     writeFileSync(join(root, 'fr', 'langues', 'Abbon-anglais.qcm'), qcm('Anglais'));
+    writeFileSync(join(root, 'fr', 'sciences', 'Abbon-physique.qcm'), qcm('Physique'));
     writeFileSync(join(root, 'fr', 'sciences', 'index.html'), '<p>à la main</p>');
     const r = writeCatalogue(root, 'Questionnaires', '22 novembre 2026');
-    expect(r).toMatchObject({ files: 1, questions: 3, written: 3, skipped: [join('fr', 'sciences', 'index.html')] });
+    expect(r).toMatchObject({ files: 2, questions: 6, written: 3, skipped: [join('fr', 'sciences', 'index.html')], empty: [], stray: [] });
     expect(readFileSync(join(root, 'fr', 'sciences', 'index.html'), 'utf8')).toBe('<p>à la main</p>');
 
     const top = readFileSync(join(root, 'index.html'), 'utf8');
@@ -44,11 +45,26 @@ describe('catalogue des questionnaires', () => {
     const fr = readFileSync(join(root, 'fr', 'index.html'), 'utf8');
     expect(fr).toContain('href="langues/"');
     expect(fr).toContain('1 questionnaire, 3 questions');
+    expect(fr).toContain('href="sciences/"');
     const langues = readFileSync(join(root, 'fr', 'langues', 'index.html'), 'utf8');
     expect(langues).toContain('href="Abbon-anglais.qcm" download');
     expect(langues).toContain('href="../../">Questionnaires</a>');
     expect(langues).toContain('Pour &lt;réviser&gt;');
     // Nouvelle exécution : les pages produites sont réécrites.
     expect(writeCatalogue(root, 'Questionnaires', 'd').written).toBe(3);
+  });
+
+  it('dossier sans .qcm (paquet décompressé par erreur) : ni listé ni indexé, signalé', () => {
+    const root = mkdtempSync(join(tmpdir(), 'catalogue-'));
+    mkdirSync(join(root, 'fr', 'langues', 'quizzes'), { recursive: true });
+    writeFileSync(join(root, 'fr', 'langues', 'Abbon-anglais.qcm'), qcm('Anglais'));
+    writeFileSync(join(root, 'fr', 'langues', 'quizzes', 'org-abbon-x_y-01.json'), '{}');
+    writeFileSync(join(root, 'fr', 'langues', 'manifest.json'), '{}');
+    const r = writeCatalogue(root, 'Questionnaires', 'd');
+    expect(r).toMatchObject({ files: 1, written: 3 });
+    expect(r.empty).toEqual([join('fr', 'langues', 'quizzes')]);
+    expect(r.stray).toEqual([join('fr', 'langues', 'manifest.json'), join('fr', 'langues', 'quizzes', 'org-abbon-x_y-01.json')]);
+    expect(existsSync(join(root, 'fr', 'langues', 'quizzes', 'index.html'))).toBe(false);
+    expect(readFileSync(join(root, 'fr', 'langues', 'index.html'), 'utf8')).not.toContain('href="quizzes/"');
   });
 });

@@ -9,7 +9,7 @@
   import MathInput from '$lib/rich/MathInput.svelte';
   import { standardLatex } from '$lib/rich/macros';
   import { fileSafe, saveFile } from '$lib/files';
-  import { formulaError, fromMarkdown, renderFormula, toLatex, toLibreOfficeMathML, toMarkdown, toMathML, type Entry } from './formulas';
+  import { formulaError, fromMarkdown, renderFormula, toLatex, toLibreOfficeMathML, toHtmlDocument, toMarkdown, toMathML, type Entry } from './formulas';
   import { formulaPng } from './image';
 
   const KEY = 'abbon-atelier';
@@ -183,6 +183,20 @@
     if (editing === e.id) editing = null;
   }
 
+  /** Formule (ou carnet) en page HTML : à ouvrir dans un navigateur, puis copier-coller vers WordCraft, Word… */
+  async function saveHtml(items: { title: string; latex: string }[], name: string, docTitle: string) {
+    const bytes = new TextEncoder().encode(toHtmlDocument(items, docTitle, i18n.lang));
+    await saveFile(`${name}.html`, bytes, [{ name: 'HTML', extensions: ['html'] }]);
+  }
+  const saveFormulaHtml = () =>
+    saveHtml([{ title, latex }], fileSafe(title, t('atelier.fileName')), title.trim() || t('atelier.title'));
+  const saveNotebookHtml = () =>
+    saveHtml(
+      entries.map((e) => ({ title: e.title, latex: toLatex(e.source, e.chem) })),
+      t('atelier.notebookFile'),
+      t('atelier.notebook'),
+    );
+
   async function saveNotebook() {
     const bytes = new TextEncoder().encode(toMarkdown(entries, t('atelier.notebook')));
     await saveFile(`${t('atelier.notebookFile')}.md`, bytes, [{ name: 'Markdown', extensions: ['md'] }]);
@@ -245,8 +259,10 @@
       </div>
     {/if}
 
-    <h3 class="label">{t('atelier.preview')}</h3>
-    <div class="preview">
+    <h3 class="label" id="atelier-preview">{t('atelier.preview')}</h3>
+    <!-- Focusable : une longue formule y défile au clavier. -->
+    <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+    <div class="preview" tabindex="0" role="region" aria-labelledby="atelier-preview">
       {#if error}
         <p class="error" role="alert"><strong>{t('atelier.error')}</strong> : {error}</p>
       {:else if preview}
@@ -272,6 +288,10 @@
       <li>
         <button type="button" class="secondary" disabled={!ready} onclick={copyLatex}>{t('atelier.copyLatex')}</button>
         <span class="help">{t('atelier.copyLatexHelp')}</span>
+      </li>
+      <li>
+        <button type="button" class="secondary" disabled={!ready} onclick={saveFormulaHtml}>{t('atelier.saveHtml')}</button>
+        <span class="help">{t('atelier.saveHtmlHelp')}</span>
       </li>
       <li class="image">
         <span class="actions">
@@ -306,8 +326,9 @@
         {#each entries as e (e.id)}
           <li class:current={e.id === editing}>
             <span class="entry-title">{e.title}</span>
+            <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
             <!-- eslint-disable-next-line svelte/no-at-html-tags -- rendu KaTeX, trust:false -->
-            <span class="entry-math">{@html entryHtml(e)}</span>
+            <span class="entry-math" tabindex="0" role="region" aria-label={e.title}>{@html entryHtml(e)}</span>
             <span class="actions">
               <button type="button" class="secondary small" onclick={() => openEntry(e)} aria-label={t('atelier.openEntry', { title: e.title })}>
                 {t('atelier.open')}
@@ -325,6 +346,7 @@
 
     <div class="actions">
       <button type="button" class="secondary" disabled={!entries.length} onclick={saveNotebook}>{t('atelier.save')}</button>
+      <button type="button" class="secondary" disabled={!entries.length} onclick={saveNotebookHtml}>{t('atelier.saveNotebookHtml')}</button>
       <label class="button secondary">
         {t('atelier.load')}
         <input class="visually-hidden" type="file" accept=".md,.markdown,.txt,text/markdown,text/plain" onchange={loadNotebook} />
@@ -337,6 +359,10 @@
   .workshop {
     display: grid;
     gap: 1rem;
+  }
+  /* Une longue formule défile dans son champ au lieu d'élargir la page (téléphone). */
+  .workshop > :global(*) {
+    min-width: 0;
   }
   h2 {
     font-size: 1.15rem;

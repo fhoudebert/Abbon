@@ -181,12 +181,20 @@ interface Walked {
   questions: number;
   written: number;
   skipped: string[];
+  /** Dossiers sans aucun .qcm (même dans leurs sous-dossiers) : ni listés, ni indexés. */
+  empty: string[];
+  /** Fichiers qui ne sont ni des .qcm ni un index.html : ignorés. */
+  stray: string[];
 }
 
-/** Écrit un index.html dans `dir` et dans tous ses sous-dossiers ; renvoie les totaux. */
+/**
+ * Écrit un index.html dans `dir` et dans tous ses sous-dossiers qui contiennent des .qcm ; renvoie les totaux.
+ * Un dossier sans .qcm (par exemple le contenu d'un paquet décompressé par erreur) n'est ni listé ni indexé :
+ * il est signalé dans `empty`, et les autres fichiers inattendus dans `stray`.
+ */
 export function writeCatalogue(root: string, title: string, date: string, dir = root): Walked {
   const names = readdirSync(dir).filter((n) => !n.startsWith('.')).sort((a, b) => a.localeCompare(b, 'fr'));
-  const out: Walked = { files: 0, questions: 0, written: 0, skipped: [] };
+  const out: Walked = { files: 0, questions: 0, written: 0, skipped: [], empty: [], stray: [] };
   const dirs: DirEntry[] = [];
   const files: QcmInfo[] = [];
   for (const name of names) {
@@ -195,15 +203,23 @@ export function writeCatalogue(root: string, title: string, date: string, dir = 
       const sub = writeCatalogue(root, title, date, p);
       out.written += sub.written;
       out.skipped.push(...sub.skipped);
+      out.empty.push(...sub.empty);
+      out.stray.push(...sub.stray);
       out.files += sub.files;
       out.questions += sub.questions;
-      dirs.push({ name, files: sub.files, questions: sub.questions });
+      if (sub.files > 0) dirs.push({ name, files: sub.files, questions: sub.questions });
     } else if (name.toLowerCase().endsWith('.qcm')) {
       const info = readQcm(new Uint8Array(readFileSync(p)), name);
       files.push(info);
       out.files += 1;
       out.questions += info.questions;
+    } else if (name !== 'index.html') {
+      out.stray.push(relative(root, p));
     }
+  }
+  if (dir !== root && out.files === 0) {
+    out.empty.push(relative(root, dir));
+    return out;
   }
   files.sort((a, b) => a.title.localeCompare(b.title, 'fr'));
   const index = join(dir, 'index.html');
@@ -230,4 +246,8 @@ if (process.argv[1] && basename(process.argv[1]).startsWith('catalogue')) {
   const r = writeCatalogue(root, title, date);
   console.log(`Catalogue : ${r.files} questionnaire(s), ${r.questions} questions, ${r.written} page(s) index écrite(s).`);
   for (const s of r.skipped) console.warn(`  ${s} écrit à la main : laissé intact`);
+  const top = r.empty.filter((d) => !r.empty.some((o) => o !== d && d.startsWith(o + sep)));
+  for (const d of top) console.warn(`  ${d}${sep} : aucun .qcm, dossier ignoré (à supprimer s'il ne sert à rien d'autre)`);
+  const strays = r.stray.filter((f) => !top.some((d) => f.startsWith(d + sep)));
+  for (const f of strays) console.warn(`  ${f} : ni .qcm ni index.html, ignoré`);
 }

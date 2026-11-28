@@ -71,6 +71,7 @@ export const ExpectedSchema = z.object({
   /** Réponse courte : formes acceptées. */
   accepted: z.array(z.string().max(500)).max(50).optional(),
   caseSensitive: z.boolean().optional(),
+  ignoreAccents: z.boolean().optional(),
   /** Réponse numérique : valeur, écart toléré (absolu), unité affichée. */
   value: z.number().optional(),
   tolerance: z.number().min(0).optional(),
@@ -83,6 +84,7 @@ export const ExpectedSchema = z.object({
         kind: z.enum(['text', 'select']),
         accepted: z.array(z.string().max(500)).max(50),
         caseSensitive: z.boolean().optional(),
+        ignoreAccents: z.boolean().optional(),
         options: z.array(z.string().max(500)).max(50).optional(),
       }),
     )

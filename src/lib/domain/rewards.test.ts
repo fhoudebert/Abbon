@@ -17,6 +17,7 @@ import {
   promotion,
   rankOf,
   reviewRewards,
+  rewardKey,
   totalPoints,
   type Reward,
 } from './rewards';
@@ -77,14 +78,31 @@ describe('récompenses de révision', () => {
 
   it('QCM réussi : 2 points ; module terminé quand tous ses QCM sont réussis', () => {
     const q = { id: 'm_a', moduleId: 'org.m' };
-    expect(attemptRewards(q, false, true, ['m_a'], new Set(), now)).toEqual([]);
-    expect(attemptRewards(q, true, false, ['m_a'], new Set(), now)).toEqual([]); // « refaire les erreurs »
-    expect(attemptRewards(q, true, true, ['m_a', 'm_b'], new Set(), now).map((r) => r.kind)).toEqual(['quiz']);
-    expect(attemptRewards(q, true, true, ['m_a', 'm_b'], new Set(['m_b']), now).map((r) => [r.kind, r.ref, r.points])).toEqual([
+    expect(attemptRewards(q, false, true, false, ['m_a'], new Set(), now)).toEqual([]);
+    expect(attemptRewards(q, true, false, false, ['m_a'], new Set(), now)).toEqual([]); // « refaire les erreurs »
+    expect(attemptRewards(q, true, true, false, ['m_a', 'm_b'], new Set(), now).map((r) => r.kind)).toEqual(['quiz']);
+    expect(attemptRewards(q, true, true, false, ['m_a', 'm_b'], new Set(['m_b']), now).map((r) => [r.kind, r.ref, r.points])).toEqual([
       ['quiz', 'm_a', 2],
       ['module', 'org.m', 10],
     ]);
-    expect(attemptRewards({ id: 'perso' }, true, true, [], new Set(), now).map((r) => r.kind)).toEqual(['quiz']);
+    expect(attemptRewards({ id: 'perso' }, true, true, false, [], new Set(), now).map((r) => r.kind)).toEqual(['quiz']);
+  });
+
+  it('sans faute : 3 points de plus, une seule fois par QCM (clé perfect:<id>)', () => {
+    const q = { id: 'm_a', moduleId: 'org.m' };
+    const first = attemptRewards(q, true, true, true, ['m_a', 'm_b'], new Set(), now);
+    expect(first.map((r) => [r.kind, r.ref, r.points])).toEqual([
+      ['quiz', 'm_a', 2],
+      ['perfect', 'm_a', POINTS.perfect],
+    ]);
+    // QCM déjà réussi, refait jusqu'à 100 % : seul « perfect » est nouveau ; refait encore : rien de nouveau.
+    const keys = new Set([rewardKey(first[0])]);
+    const redo = attemptRewards(q, true, true, true, ['m_a', 'm_b'], new Set(['m_a']), now).filter((r) => !keys.has(rewardKey(r)));
+    expect(redo.map((r) => r.kind)).toEqual(['perfect']);
+    keys.add(rewardKey(redo[0]));
+    expect(attemptRewards(q, true, true, true, ['m_a', 'm_b'], new Set(['m_a']), now).filter((r) => !keys.has(rewardKey(r)))).toEqual([]);
+    // Tentative partielle (« refaire les erreurs ») : rien, même à 100 %.
+    expect(attemptRewards(q, true, false, true, ['m_a'], new Set(), now)).toEqual([]);
   });
 });
 
@@ -192,12 +210,13 @@ describe('récompenses dans la sauvegarde complète', () => {
 });
 
 describe('points en mode examen (réglage « points » d\'un site)', () => {
-  const rewards = attemptRewards({ id: 'q1', moduleId: 'm' }, true, true, ['q1', 'q2'], new Set(['q2']), new Date('2026-01-01'));
-  it('null : comme à l\'entraînement ; 0 : aucun point ; n : n points pour le QCM, bonus de module gardé', () => {
+  const rewards = attemptRewards({ id: 'q1', moduleId: 'm' }, true, true, true, ['q1', 'q2'], new Set(['q2']), new Date('2026-01-01'));
+  it('null : comme à l\'entraînement ; 0 : aucun point ; n : n points pour le QCM, bonus gardés', () => {
     expect(examRewards(rewards, null)).toEqual(rewards);
     expect(examRewards(rewards, 0)).toEqual([]);
     expect(examRewards(rewards, 3).map((r) => [r.kind, r.points])).toEqual([
       ['quiz', 3],
+      ['perfect', POINTS.perfect],
       ['module', POINTS.module],
     ]);
   });

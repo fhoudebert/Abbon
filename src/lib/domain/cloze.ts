@@ -48,8 +48,9 @@ export function gapMatches(gap: ClozeGap, value: string | null | undefined): boo
   // Liste déroulante : comparaison exacte avec la bonne réponse.
   const cs = isSelectGap(gap) ? true : gap.caseSensitive;
   const accepted = isSelectGap(gap) ? (gap.accepted ?? []).slice(0, 1) : (gap.accepted ?? []);
-  const given = normalizeText(value, cs);
-  return accepted.some((a) => a.trim() !== '' && normalizeText(a, cs) === given);
+  const accents = !isSelectGap(gap) && !!gap.ignoreAccents;
+  const given = normalizeText(value, cs, accents);
+  return accepted.some((a) => a.trim() !== '' && normalizeText(a, cs, accents) === given);
 }
 
 /** Résultat trou par trou. */

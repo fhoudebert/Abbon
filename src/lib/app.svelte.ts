@@ -64,7 +64,7 @@ class AppState {
     return this.rewardsSetting && !examOnly();
   }
   /** Points gagnés par la dernière tentative terminée (affichés sur son résultat). */
-  attemptPoints = $state<{ attemptId: string; points: number } | null>(null);
+  attemptPoints = $state<{ attemptId: string; points: number; perfect: boolean } | null>(null);
   /** Nouveau rang à annoncer (passage de ceinture ou de dan), jusqu'à ce qu'il soit lu. */
   promotion = $state<Rank | null>(null);
   /** Un code PIN protège-t-il l'administration ? */
@@ -249,23 +249,27 @@ class AppState {
   }
 
   /**
-   * Récompenses d'une tentative qui vient de se terminer (QCM réussi, module terminé). En mode examen, les points
+   * Récompenses d'une tentative qui vient de se terminer (QCM réussi, sans faute, module terminé). En mode examen, les points
    * ne s'affichent pas (ni sur le résultat, ni en annonce de ceinture) ; sur un site, le réglage `points` de
    * reglages.js les fixe (« 0 » pour un examen corrigé par le serveur : aucun point).
    */
   async rewardAttempt(quiz: Pick<Quiz, 'id' | 'moduleId' | 'questions'>, attempt: Attempt, passed: boolean): Promise<number> {
     const complete = attempt.questionOrder.length >= quiz.questions.length;
     if (!passed || !complete) return 0;
-    const passedIds = new Set((await (await this.repo()).listRewards()).filter((r) => r.kind === 'quiz').map((r) => r.ref));
+    const earned = await (await this.repo()).listRewards();
+    const passedIds = new Set(earned.filter((r) => r.kind === 'quiz').map((r) => r.ref));
+    const max = attempt.maxScore ?? 0;
+    const perfect = max > 0 && (attempt.score ?? 0) >= max - 1e-9;
+    const newPerfect = perfect && !earned.some((r) => r.kind === 'perfect' && r.ref === quiz.id);
     const moduleId = this.quizzes.find((q) => q.id === quiz.id)?.moduleId ?? quiz.moduleId ?? null;
     const moduleQuizIds = moduleId
       ? this.quizzes.filter((q) => q.moduleId === moduleId && q.status === 'published').map((q) => q.id)
       : [];
     const exam = attempt.mode === 'exam';
-    let rewards = attemptRewards({ id: quiz.id, moduleId }, passed, complete, moduleQuizIds, passedIds);
+    let rewards = attemptRewards({ id: quiz.id, moduleId }, passed, complete, perfect, moduleQuizIds, passedIds);
     if (exam) rewards = examRewards(rewards, siteExamPoints());
     const points = await this.#grant(rewards, exam);
-    if (points && !exam) this.attemptPoints = { attemptId: attempt.id, points };
+    if (points && !exam) this.attemptPoints = { attemptId: attempt.id, points, perfect: newPerfect };
     return points;
   }
 

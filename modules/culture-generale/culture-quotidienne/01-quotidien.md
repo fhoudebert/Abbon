@@ -1,7 +1,7 @@
 ---
 id: culture-quotidienne
 title: { fr: "Sciences de la vie quotidienne" }
-description: { fr: "Propane ou butane, induction, calorie, couleurs primaires, safran, chocolat, thé, pizza Margherita, marathon" }
+description: { fr: "Propane ou butane, induction, calorie, couleurs primaires, safran, chocolat, thé, pizza Margherita, marathon, pichet, carafe, cruche ou broc" }
 level: bases
 tags: [culture générale, vie quotidienne, sciences]
 ---
@@ -102,3 +102,33 @@ Quelle est la distance officielle d'un marathon, en kilomètres ?
 = 42,195 ± 0,005 km
 
 > Elle a été fixée d'après le parcours des Jeux olympiques de Londres, en 1908, et officialisée en 1921. Le nom rappelle la légende du messager grec qui aurait couru de Marathon à Athènes pour annoncer la victoire de 490 avant notre ère.
+
+## pot-a-eau · single
+Sur la table, le récipient d'eau a un nom différent selon les régions. Comment l'appelle-t-on le plus souvent en Bretagne et dans tout l'Ouest de la France ?
+
+- [x] Un pichet
+- [ ] Une cruche
+- [ ] Un pot d'eau
+- [ ] Une carafe
+
+> D'après les enquêtes « Français de nos régions » du linguiste Mathieu Avanzi, le pichet domine dans tout l'Ouest, de la Bretagne aux Charentes, et dans une partie du Nord. On dit plutôt carafe dans le Sud-Ouest, en Provence et en Corse ; cruche dans le Nord-Est ; pot d'eau ou pot à eau de la Bourgogne aux Alpes et vers le Massif central ; broc, prononcé parfois « brodo », du Bassin parisien au Berry.
+
+## cruche-est · single
+Dans quelle région demande-t-on plutôt « une cruche d'eau » à table ?
+
+- [x] Dans le Nord-Est : Lorraine, Alsace, Champagne, Ardennes
+- [ ] En Provence
+- [ ] En Bretagne
+- [ ] Au Pays basque
+
+> La cruche désigne d'abord un récipient de terre ou de grès, ventru, à anse et à col étroit, qu'on emportait à la fontaine. L'usage régional a gardé le mot pour l'eau de la table, quelle que soit la matière.
+
+## carafe-broc · single
+Hors des usages régionaux, qu'est-ce qui distingue, dans les dictionnaires, une carafe d'un broc ?
+
+- [x] La carafe est un récipient de verre, à large base et col étroit, souvent sans anse ; le broc, plus grand, a une anse et un bec évasé, pour transporter et verser l'eau
+- [ ] La carafe sert au vin, le broc au lait
+- [ ] La carafe est en terre cuite, le broc en cristal
+- [ ] Il n'y a aucune différence
+
+> Le pichet est un petit broc, en terre, en grès ou en métal, à anse et à bec, qui sert aussi pour le vin ou le cidre. Le mot « carafe » vient de l'italien, lui-même de l'arabe *gharrâfa*, « récipient à puiser » ; « pichet » de l'ancien français *pichier*, de même famille que *bicchiere*, le verre en italien.

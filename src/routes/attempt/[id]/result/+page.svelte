@@ -64,6 +64,7 @@
     chosen = [];
   }
   const attemptPoints = $derived(app.showRewards && app.attemptPoints?.attemptId === id ? app.attemptPoints.points : 0);
+  const perfectBonus = $derived(!!attemptPoints && !!app.attemptPoints?.perfect);
 
   async function retry(onlyMissed: boolean) {
     if (!quiz || !attempt || busy) return;
@@ -96,7 +97,7 @@
       <span>{t('result.threshold', { pct: pct(quiz.passThreshold) })}</span>
       <span>{attempt.mode === 'exam' ? t('quiz.exam') : t('quiz.training')}</span>
     </p>
-    {#if attemptPoints}<p class="gain">{t('result.quizPoints', { n: attemptPoints })}</p>{/if}
+    {#if attemptPoints}<p class="gain">{t(perfectBonus ? 'result.perfectPoints' : 'result.quizPoints', { n: attemptPoints })}</p>{/if}
     {#if serverGrading() && collectCopies()}<p class="muted">{t('site.copySent')}</p>{/if}
     <div class="actions">
       {#if solution}

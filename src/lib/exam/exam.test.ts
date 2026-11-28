@@ -89,6 +89,17 @@ const quiz: Quiz = {
     ...EXPRESSIONS.map(([latex, constant]) =>
       q('expression', { expected: { latex: constant ? stripConstant(latex) : latex, ...(constant ? { constant: true } : {}) } }),
     ),
+    // Accents ignorés (« · accent-insensitive ») : réponse courte et trou à saisir.
+    q('short', { expected: { accepted: ['Cléopâtre VII', 'l’île'], ignoreAccents: true } }),
+    q('cloze', {
+      expected: {
+        text: fr('Il {{1}} hier, en {{2}}.'),
+        gaps: [
+          { kind: 'text', accepted: ['est parti', 'est allé'], ignoreAccents: true },
+          { kind: 'select', accepted: ['train'], options: ['avion', 'bateau'] },
+        ],
+      },
+    }),
   ],
 };
 
@@ -124,11 +135,11 @@ function variants(x: Question): Partial<Answer>[] {
     case 'multiple':
       return [{ selected: ['c0', 'c2'] }, { selected: ['c0'] }, { selected: ['c0', 'c1'] }, { selected: ['c0', 'c1', 'c2', 'c3'] }, { selected: ['c1', 'c3'] }, { selected: [] }];
     case 'short':
-      return [{ text: 'went' }, { text: '  DID   go ' }, { text: 'goed' }, { text: 'paris' }, { text: 'Paris' }, { text: "l'île" }, { text: 'l’ile' }, { text: '' }, {}];
+      return [{ text: 'went' }, { text: '  DID   go ' }, { text: 'goed' }, { text: 'paris' }, { text: 'Paris' }, { text: "l'île" }, { text: 'l’ile' }, { text: 'cleopatre vii' }, { text: 'CLÉOPATRE  VII' }, { text: 'Cléopâtre VII' }, { text: 'Cleopatra' }, { text: '' }, {}];
     case 'numeric':
       return [{ text: '9,81' }, { text: '9.8' }, { text: '9,82' }, { text: '9,83' }, { text: '0,3' }, { text: '.3' }, { text: '3e-1' }, { text: '8 388 608' }, { text: '8388609' }, { text: '8,4e6' }, { text: '−0,3' }, { text: 'abc' }, { text: '' }];
     case 'cloze':
-      return [{ texts: ['est parti', 'train'] }, { texts: ['Est  Allé', 'train'] }, { texts: ['est parti', 'avion'] }, { texts: ['partit', 'Train'] }, { texts: [null as unknown as string, 'train'] }, { texts: [] }];
+      return [{ texts: ['est parti', 'train'] }, { texts: ['Est  Allé', 'train'] }, { texts: ['est parti', 'avion'] }, { texts: ['partit', 'Train'] }, { texts: ['est alle', 'train'] }, { texts: ['Est Allé', 'tràin'] }, { texts: [null as unknown as string, 'train'] }, { texts: [] }];
     case 'flashcard':
       return [{ text: 'known' }, { text: 'unknown' }, {}];
     case 'expression': {
@@ -227,15 +238,15 @@ describe('examen corrigé par le serveur : lecteur', () => {
   it('note du serveur → tentative close, résultat relu depuis les réponses enregistrées', () => {
     const perQuestion = Object.fromEntries(quiz.questions.map((x) => [x.id, { points: 0, correct: false }]));
     perQuestion.q0 = { points: 1, correct: true };
-    const grade: GradeResponse = { score: 1, maxScore: 19, ratio: 1 / 19, passed: false, perQuestion };
+    const grade: GradeResponse = { score: 1, maxScore: 21, ratio: 1 / 21, passed: false, perQuestion };
     expect(isGradeResponse(grade, Object.keys(perQuestion))).toBe(true);
     expect(isGradeResponse({ ...grade, perQuestion: {} }, ['q0'])).toBe(false);
     expect(isGradeResponse('<?php …', ['q0'])).toBe(false);
     const done = finishWithGrade(pub, attempt, answers, grade);
-    expect(done.attempt).toMatchObject({ status: 'finished', score: 1, maxScore: 19 });
+    expect(done.attempt).toMatchObject({ status: 'finished', score: 1, maxScore: 21 });
     expect(done.answers.find((a) => a.questionId === 'q0')).toMatchObject({ correct: true, points: 1 });
     const again = resultOf(pub, done.attempt, done.answers, true);
-    expect(again).toMatchObject({ score: 1, maxScore: 19, passed: false });
+    expect(again).toMatchObject({ score: 1, maxScore: 21, passed: false });
     expect(again.perQuestion.q0).toEqual({ points: 1, correct: true });
   });
 
@@ -381,7 +392,7 @@ echo json_encode(array('corrige' => abbon_corrige('fin', $reglages), 'collecte' 
       expect(html).not.toContain('<b>');
       const csv = view({ motdepasse: 'Secret23abcd', format: 'csv' });
       expect(csv.split('\r\n')[0]).toBe('﻿"Date";"Nom";"Classe ou groupe";"QCM";"Note";"Sur";"Pourcentage";"Réussi";"Durée";"Remarques";"Identifiant"');
-      expect(csv).toContain(`"'=HYPERLINK(""x"") Ada <b>";"TG2";"Examen";"2";"19";"10,53";"non";"0:00";"";"a1"`);
+      expect(csv).toContain(`"'=HYPERLINK(""x"") Ada <b>";"TG2";"Examen";"2";"21";"9,52";"non";"0:00";"";"a1"`);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -417,7 +428,7 @@ echo json_encode(array(
       );
       const before = JSON.parse(execFileSync('php', [join(dir, 'test.php')]).toString());
       expect(before.corrige).toBe('enseignant');
-      expect(before.avant).toEqual({ score: 1, maxScore: 19, ratio: 1 / 19, passed: false, locked: true });
+      expect(before.avant).toEqual({ score: 1, maxScore: 21, ratio: 1 / 21, passed: false, locked: true });
       expect(before.apres.perQuestion.q0).toEqual({ points: 1, correct: true });
       expect(before.apres.solutions.q0.choices[1].correct).toBe(true);
       expect(before.fin).toEqual(['score', 'maxScore', 'ratio', 'passed', 'perQuestion', 'solutions']);
@@ -445,15 +456,15 @@ echo json_encode(array(
 describe('corrigé publié par l’enseignant : lecteur', () => {
   const pub = publicQuiz(quiz);
   const answers = [answer('q0', { selected: ['c1'] })];
-  const locked: GradeResponse = { score: 1, maxScore: 19, ratio: 1 / 19, passed: false, locked: true };
+  const locked: GradeResponse = { score: 1, maxScore: 21, ratio: 1 / 21, passed: false, locked: true };
 
   it('la note seule : réponses sans détail, résultat relu depuis la tentative', () => {
     expect(isGradeResponse(locked, ['q0', 'q1'])).toBe(true);
     const done = finishWithGrade(pub, attempt, answers, locked);
-    expect(done.attempt).toMatchObject({ status: 'finished', score: 1, maxScore: 19 });
+    expect(done.attempt).toMatchObject({ status: 'finished', score: 1, maxScore: 21 });
     expect(done.answers.every((a) => a.points === null && a.correct === null)).toBe(true);
     expect(detailLocked(pub, done.attempt, done.answers)).toBe(true);
-    expect(resultOf(pub, done.attempt, done.answers, true)).toEqual({ score: 1, maxScore: 19, ratio: 1 / 19, passed: false, perQuestion: {} });
+    expect(resultOf(pub, done.attempt, done.answers, true)).toEqual({ score: 1, maxScore: 21, ratio: 1 / 21, passed: false, perQuestion: {} });
     // Détail publié : réponses notées, plus de verrou.
     const perQuestion = Object.fromEntries(quiz.questions.map((x) => [x.id, { points: x.id === 'q0' ? 1 : 0, correct: x.id === 'q0' }]));
     const graded = withDetail(pub, done.attempt, done.answers, perQuestion);
@@ -481,7 +492,7 @@ describe('corrigé publié par l’enseignant : lecteur', () => {
         mkdirSync(dirname(join(dir, f)), { recursive: true });
         writeFileSync(join(dir, f), text);
       }
-      writeFileSync(join(dir, 'reglages.js'), settingsScript({ modes: 'exam', solutions: 'teacher' }, true).replace('seuil: ""', 'seuil: "5"'));
+      writeFileSync(join(dir, 'reglages.js'), settingsScript({ modes: 'exam', solutions: 'teacher' }, true).replace('seuil: ""', 'seuil: "4"'));
       const pub = publicQuiz(quiz);
       const copy = (id: string, name: string) => ({
         ...gradeRequest(pub, { ...attempt, id }, [answer('q0', { selected: ['c1'] })], { name, group: '' }),
@@ -529,8 +540,8 @@ echo json_encode($out, JSON_UNESCAPED_UNICODE);
       expect(r[5]).toEqual([403, { error: 'code' }]);
       expect(r[6]).toEqual([200, { ok: true, limitSec: 600, questions: null }]); // code sans majuscules ni espaces
       expect(r[7][0]).toBe(200);
-      // Seuil de reglages.js (5 %) : 1 point sur 19 suffit ; corrigé pas publié : la note seule.
-      expect(r[9]).toEqual([200, { score: 1, maxScore: 19, ratio: 1 / 19, passed: true, locked: true, recorded: true }]);
+      // Seuil de reglages.js (4 %) : 1 point sur 21 suffit ; corrigé pas publié : la note seule.
+      expect(r[9]).toEqual([200, { score: 1, maxScore: 21, ratio: 1 / 21, passed: true, locked: true, recorded: true }]);
       expect(r[10][0]).toBe(200);
       expect(r[12]).toEqual([403, { error: 'ferme' }]);
       const copies = r[13];

@@ -74,7 +74,7 @@ Pour démontrer par l'absurde que $\sqrt{2}$ est irrationnel, que suppose-t-on a
 - [ ] Que $\sqrt{2}$ est un entier
 - [ ] Que $\sqrt{2} \approx 1{,}414$
 
-> On suppose le contraire de ce qu'on veut prouver. De $p^2 = 2q^2$, on déduit que $p$ est pair (contraposée de la question précédente), puis que $q$ l'est aussi : la fraction n'était pas irréductible. Contradiction : $\sqrt{2}$ est irrationnel.
+> On suppose le contraire de ce qu'on veut prouver. De $p^2 = 2q^2$, on déduit que $p$ est pair (par contraposée : si $p$ était impair, $p^2$ le serait aussi), puis que $q$ l'est aussi : la fraction n'était pas irréductible. Contradiction : $\sqrt{2}$ est irrationnel.
 
 ## produit-cartesien · numeric
 L'ensemble $A$ a 3 éléments et l'ensemble $B$ en a 4. Combien d'éléments le produit cartésien $A \times B$ (ensemble des couples $(a, b)$) contient-il ?

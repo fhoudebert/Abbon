@@ -46,6 +46,46 @@ export function formulaError(latex: string): string | null {
   }
 }
 
+const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+/**
+ * Document HTML autonome : un titre par formule, la formule en MathML (affichée par les navigateurs, reprise
+ * comme équation par Word, WordCraft ou LibreOffice quand on la colle depuis la page ouverte), puis son code
+ * LaTeX. Les formules fausses sont signalées au lieu d'être omises.
+ */
+export function toHtmlDocument(items: readonly { title: string; latex: string }[], docTitle: string, lang = 'fr'): string {
+  const blocks = items.map(({ title, latex }) => {
+    let math: string;
+    try {
+      math = toMathML(latex).replace('<math xmlns', '<math display="block" xmlns');
+    } catch (e) {
+      math = `<p class="erreur">${escapeHtml((e as Error).message)}</p>`;
+    }
+    const heading = title.trim() ? `<h2>${escapeHtml(title.trim())}</h2>\n` : '';
+    return `<section>\n${heading}${math}\n<pre><code>${escapeHtml(latex)}</code></pre>\n</section>`;
+  });
+  return `<!DOCTYPE html>
+<html lang="${escapeHtml(lang)}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="Abbon — atelier de formules">
+<title>${escapeHtml(docTitle)}</title>
+<style>
+body { font-family: system-ui, sans-serif; max-width: 48rem; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; }
+math[display="block"] { font-size: 1.25em; margin: 1rem 0; }
+pre { color: #555; font-size: 0.85em; white-space: pre-wrap; }
+.erreur { color: #b3261e; }
+</style>
+</head>
+<body>
+<h1>${escapeHtml(docTitle)}</h1>
+${blocks.join('\n')}
+</body>
+</html>
+`;
+}
+
 // ---- Carnet de formules -------------------------------------------------------------------------------
 
 export interface Entry {

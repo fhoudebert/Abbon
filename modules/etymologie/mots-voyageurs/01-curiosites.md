@@ -84,7 +84,7 @@ Que cache le mot anglais *tennis* ?
 - [ ] Le nom de la ville de Tennis, en Égypte, réputée pour ses toiles
 - [ ] Le filet (*net*) lu à l'envers
 
-> Le jeu de paume, très populaire en France, s'est exporté en Angleterre, où l'injonction du serveur est devenue le nom du jeu. Le tennis moderne, codifié en 1874 en Angleterre, est revenu en France avec ce nom. Le « *deuce* » viendrait aussi du français « à deux » (de jeu).
+> Le jeu de paume, très populaire en France, s'est exporté en Angleterre, où l'injonction du serveur est devenue le nom du jeu. Le tennis moderne, breveté en 1874 en Angleterre, est revenu en France avec ce nom, et avec le compte du jeu de paume : quinze, trente, quarante (autrefois quarante-cinq, les trois quarts d'un jeu de soixante). À égalité, il fallait encore deux points, « à deux » de jeu : c'est le *deuce* anglais. Et quand les deux joueurs avaient trente, le marqueur criait « Trentain ! », mot que donne encore le dictionnaire de l'Académie en 1878 ; on dit aujourd'hui « trente A ».
 
 ## vasistas · single
 D'où vient le « vasistas », petite fenêtre qui s'ouvre dans une porte ou une fenêtre ?

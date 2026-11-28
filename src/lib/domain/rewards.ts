@@ -19,11 +19,13 @@ export const POINTS = {
   collect: 1,
   /** Première tentative complète au-dessus du seuil du QCM. */
   quiz: 2,
+  /** Première tentative complète sans faute (100 %), du premier coup ou en refaisant un QCM déjà réussi. */
+  perfect: 3,
   /** Tous les QCM d'un module réussis au moins une fois. */
   module: 10,
 } as const;
 
-export type RewardKind = 'review' | 'day' | 'acquired' | 'collect' | 'quiz' | 'module';
+export type RewardKind = 'review' | 'day' | 'acquired' | 'collect' | 'quiz' | 'perfect' | 'module';
 
 export interface Reward {
   kind: RewardKind;
@@ -107,13 +109,16 @@ export function collectRewards(questionId: string, failed: boolean, now = new Da
 }
 
 /**
- * Récompenses d'une tentative terminée : QCM réussi (tentative complète au-dessus du seuil), puis module
- * terminé si tous ses QCM sont réussis. `passedQuizIds` : QCM déjà récompensés auparavant.
+ * Récompenses d'une tentative terminée : QCM réussi (tentative complète au-dessus du seuil), sans faute (100 %),
+ * puis module terminé si tous ses QCM sont réussis. `passedQuizIds` : QCM déjà récompensés auparavant. Comme
+ * toute récompense, le bonus « sans faute » ne compte qu'une fois par QCM (clé `perfect:<id>`) : refaire un QCM
+ * déjà réussi jusqu'à 100 % le rapporte une fois, le refaire encore ne rapporte plus rien.
  */
 export function attemptRewards(
   quiz: { id: string; moduleId?: string | null },
   passed: boolean,
   complete: boolean,
+  perfect: boolean,
   moduleQuizIds: readonly string[],
   passedQuizIds: ReadonlySet<string>,
   now = new Date(),
@@ -121,6 +126,7 @@ export function attemptRewards(
   if (!passed || !complete) return [];
   const at = now.toISOString();
   const out: Reward[] = [{ kind: 'quiz', ref: quiz.id, points: POINTS.quiz, at }];
+  if (perfect) out.push({ kind: 'perfect', ref: quiz.id, points: POINTS.perfect, at });
   if (quiz.moduleId && moduleQuizIds.length && moduleQuizIds.every((id) => id === quiz.id || passedQuizIds.has(id)))
     out.push({ kind: 'module', ref: quiz.moduleId, points: POINTS.module, at });
   return out;
@@ -132,7 +138,7 @@ export const rewardKey = (r: Pick<Reward, 'kind' | 'ref'>) => `${r.kind}:${r.ref
 /**
  * Récompenses d'une tentative en mode examen, selon le réglage `points` d'un site (`resolveExamPoints`) :
  * null, comme à l'entraînement ; 0, aucune (ni QCM ni module : un examen ne fait pas avancer les ceintures) ;
- * n, n points pour le QCM réussi (bonus de module inchangé).
+ * n, n points pour le QCM réussi (bonus « sans faute » et de module inchangés).
  */
 export function examRewards(rewards: readonly Reward[], examPoints: number | null): Reward[] {
   if (examPoints === null) return [...rewards];

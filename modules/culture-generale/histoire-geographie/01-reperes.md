@@ -95,7 +95,7 @@ Quel peuple a inventé l'écriture cunéiforme, l'une des plus anciennes au mond
 
 > Vers 3300 avant notre ère, les Sumériens tracent des signes en forme de clous (*cuneus* en latin) dans l'argile fraîche, avec un roseau taillé. Les hiéroglyphes égyptiens apparaissent à peu près à la même époque.
 
-## cleopatre · short
+## cleopatre · short · accent-insensitive
 Quelle reine d'Égypte fut l'alliée, et la compagne, de Jules César puis de Marc Antoine ?
 
 = Cléopâtre

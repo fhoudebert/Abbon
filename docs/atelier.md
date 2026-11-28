@@ -22,6 +22,7 @@ Une formule incorrecte est signalée sous l'aperçu ; les boutons de copie reste
 |---|---|---|
 | Microsoft Word (365, 2016 ou plus récent) | **Pour Word** | Coller (Ctrl+V) : la formule devient une équation modifiable. |
 | [WordCraft](https://getartcraft.com/apps/wordcraft) (Linux) | **Pour Word** | Collage spécial → format HTML. |
+| Tout traitement de texte, plus tard ou sur un autre ordinateur | **Enregistrer en HTML** | Ouvrir le fichier dans un navigateur, sélectionner, copier, puis coller (WordCraft : Collage spécial → format HTML). Le carnet s'enregistre aussi en HTML. |
 | LibreOffice Writer | **Pour LibreOffice** | Insertion → Objet → Formule, puis Outils → Importer MathML depuis le presse-papiers. Sous Linux, installer d'abord le paquet `libreoffice-math`. |
 | LaTeX, Overleaf, Pandoc, Markdown, Wikipédia | **LaTeX** | Coller la source (chimie : `\ce{…}`, extension `mhchem`). |
 | Google Docs, présentations, courriels… | **Image** (ou **Enregistrer l'image**) | Image PNG à haute résolution, fond transparent ou blanc ; non modifiable. |
